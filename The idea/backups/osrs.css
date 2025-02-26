@@ -1,0 +1,233 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #000;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.game-container {
+    width: 1280px;
+    height: 720px;
+    background-color: #1a1a1a;
+    border: 2px solid #333;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    background-color: #333;
+    padding: 10px;
+    text-align: center;
+}
+
+.content-wrapper {
+    display: flex;
+    flex: 1;
+}
+
+.sidebar {
+    width: 200px;
+    background-color: #2a2a2a;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+
+.osrs-tab {
+    background-color: #444;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.osrs-tab.active {
+    background-color: #666;
+}
+
+.main-content {
+    flex: 1;
+    padding: 10px;
+    background-color: #1a1a1a;
+    overflow-y: auto;
+}
+
+.osrs-panel {
+    display: none;
+}
+
+.osrs-panel.active {
+    display: block;
+}
+
+.status-bar {
+    background-color: #333;
+    padding: 10px;
+    display: flex;
+    justify-content: space-around;
+}
+
+.status-item {
+    flex: 1;
+    text-align: center;
+}
+
+.footer {
+    background-color: #333;
+    padding: 10px;
+    text-align: center;
+}
+
+/* Additional CSS for tooltips and achievements */
+.tooltip {
+    position: absolute;
+    background-color: #222;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 10px;
+    z-index: 1000;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.tooltip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tooltip-header.unlocked {
+    color: #4CAF50;
+}
+
+.tooltip-header.locked {
+    color: #FF4444;
+}
+
+.tooltip-body {
+    margin-top: 10px;
+}
+
+.tooltip-progress {
+    margin-top: 10px;
+}
+
+.tooltip-reward {
+    margin-top: 10px;
+}
+
+.collection-category {
+    margin-bottom: 20px;
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    padding: 10px;
+    border: 1px solid #444;
+}
+
+.collection-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    background-color: #222;
+    border: 1px solid #444;
+}
+
+.achievement-slot {
+    width: 100px;
+    height: 100px;
+    background-color: #444;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #555;
+    cursor: pointer;
+}
+
+.achievement-slot.unlocked {
+    background-color: #4CAF50;
+}
+
+.achievement-slot.locked {
+    background-color: #FF4444;
+}
+
+.achievement-icon {
+    position: relative;
+}
+
+.complete-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    padding: 2px 5px;
+    font-size: 12px;
+}
+
+.champions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    padding: 10px;
+    border: 1px solid #444;
+}
+
+.champions-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    background-color: #222;
+    border: 1px solid #444;
+}
+
+.champion-slot {
+    width: 200px;
+    background-color: #444;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #555;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.champion-slot.unlocked {
+    background-color: #4CAF50;
+}
+
+.champion-slot.locked {
+    background-color: #FF4444;
+}
+
+.champion-icon img {
+    width: 100px;
+    height: 100px;
+}
+
+.champion-info {
+    text-align: center;
+}
+
+.champion-stats {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 10px;
+}

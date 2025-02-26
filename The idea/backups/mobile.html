@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Idle Gielinor Mobile</title>
+    <link rel="stylesheet" href="mobile.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Navigation Bar -->
+        <div class="nav-bar">
+            <button class="nav-btn active" data-panel="combat">⚔️</button>
+            <button class="nav-btn" data-panel="inventory">🎒</button>
+            <button class="nav-btn" data-panel="shop">🛍️</button>
+            <button class="nav-btn" data-panel="stats">📊</button>
+            <button class="nav-btn" data-panel="champions">👥</button>
+        </div>
+
+        <!-- Panels Container -->
+        <div class="panels-container">
+            <!-- Combat Panel -->
+            <div class="panel combat-panel active">
+                <!-- Region/Zone Selection -->
+                <div class="location-select">
+                    <select id="region-select">
+                        <option value="lumbridge">Lumbridge</option>
+                        <option value="varrock">Varrock</option>
+                    </select>
+                    <select id="zone-select">
+                        <option value="cowpen">Cow Pen</option>
+                        <option value="goblinvillage">Goblin Village</option>
+                    </select>
+                </div>
+
+                <!-- Combat Area -->
+                <div class="combat-area">
+                    <div class="monster-info">
+                        <h3 id="monster-name">Monster Name</h3>
+                        <img id="monster-sprite" src="" alt="Monster">
+                        <div class="health-bar-container">
+                            <div id="health-bar"></div>
+                            <span id="health-text">100/100</span>
+                        </div>
+                    </div>
+
+                    <div class="progress-container">
+                        <div class="progress-fill"></div>
+                        <div class="progress-label">
+                            Kills: <span>0/10</span>
+                        </div>
+                    </div>
+
+                    <button id="attack-button" class="action-btn">Attack!</button>
+                </div>
+
+                <!-- Level Selection -->
+                <div class="level-select-container">
+                    <button id="prev-levels">←</button>
+                    <div id="level-select" class="level-select"></div>
+                    <button id="next-levels">→</button>
+                </div>
+            </div>
+
+            <!-- Inventory Panel -->
+            <div class="panel inventory-panel">
+                <div class="gold-display">
+                    <img src="assets/items/coins-low.png" alt="Gold">
+                    <span id="stat-gold">0</span> gp
+                </div>
+                <div class="sell-buttons"></div>
+                <div class="inventory-grid"></div>
+            </div>
+
+            <!-- Shop Panel -->
+            <div class="panel shop-panel">
+                <div class="shop-items-container"></div>
+            </div>
+
+            <!-- Stats Panel -->
+            <div class="panel stats-panel">
+                <div class="stats-list">
+                    <div class="stat-entry">
+                        <span class="stat-label">Damage:</span>
+                        <span id="stat-damage">1</span>
+                    </div>
+                    <!-- Add other stats here -->
+                </div>
+            </div>
+
+            <!-- Champions Panel -->
+            <div class="panel champions-panel">
+                <div class="champions-header">
+                    <h2>Champions</h2>
+                    <div class="total-dps">Total DPS: <span id="total-champion-dps">0</span></div>
+                </div>
+                <div class="champions-container"></div>
+            </div>
+        </div>
+
+        <!-- Loot Feed -->
+        <div id="loot-feed"></div>
+
+        <!-- Modal Container -->
+        <div id="modal-container"></div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

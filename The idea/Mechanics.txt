@@ -1,0 +1,173 @@
+1. Combat Mechanics
+    Monster Stats:
+        Each monster has HP, Attack Speed, and Damage. Example:
+            Goblin: 10 HP, 1 attack/sec, 2 damage.
+            Cow: 20 HP, 0.5 attacks/sec, 3 damage.
+            Bosses: 1,000+ HP, AoE attacks, and special abilities (e.g., Lumbridge Goblin Boss summons minions).
+
+    Player Stats:
+        Damage/Sec: Determines how fast you kill monsters.
+        Defense: Reduces incoming damage (based on armor upgrades).
+        Luck: Boosts rare drop chances (from charms/gear).
+
+    Auto-Combat:
+        Unlocked via upgrades (e.g., "Auto-Slayer Contract" for 5,000g).
+        Progress offline, but at 50% efficiency unless upgraded.
+
+    Death Penalty:
+        Lose 10% of current gold if HP hits 0 (unless you have a "Ring of Life" equipped).
+
+--------------------
+
+2. Loot Mechanics
+    Drop Tables:
+        Every monster has a unique weighted drop table inspired by OSRS. For example:
+            Cow Drop Table:
+                - Bones (60%)
+                - Cowhide (30%)
+                - Beef (10%)
+            Rare: Cow Mask (1%, B-tier cosmetic).
+
+    Cascading Rarity Rolls:
+        Roll for drop tier (e.g., 70% Common, 20% Uncommon, etc.).
+        Roll for specific item within that tier.
+            Example: Killing a Goblin might first roll a 5% chance for B-tier, then pick between an Iron Scimitar or Steel Dagger.
+
+    Boss Drops:
+        Guaranteed 1 rare+ item per kill.
+        Boss-exclusive loot (e.g., Lumbridge Goblin Boss drops "Bronze Defender" for +5% defense).
+
+    Pets:
+        Ultra-rare (0.001% base chance) but grant passive bonuses.
+        Pet Chaos Elemental: +1% luck permanently.
+    
+    Loot Multipliers:
+        Stacking buffs (e.g., "Clover Charm" + "Luck Potion" = +15% rare drops).
+
+--------------------
+
+3. Gold Economy
+    Selling Items:
+        Common items sell for 1-10g, S-tier for 10,000-100,000g.
+        "Sell All" button with filters (e.g., "Sell all C-tier items").
+    
+    Gold Sinks:
+        Exponential upgrade costs:
+            -Clover Charm: 500g → 1,000g → 2,000g (each purchase).
+        Cosmetics: Unlock OSRS-themed skins (e.g., "Fancy Boots" for 50,000g).
+
+    Prestige Gold Bonus:
+        After prestiging, gain +10% gold per region unlocked (stacks multiplicatively).
+
+--------------------
+
+4. Upgrade System
+    Upgrades are split into categories:
+        Luck:
+            - Tiered Charms: +1%/5%/10% rare drop chance.
+            - Divine Blessing: Double loot rolls for 10 minutes (costs 1,000g).
+
+        Gear:
+            - Weapons (increase damage/sec): Bronze → Iron → Rune → Dragon.
+            - Armor (reduce damage taken): Leather → Chainmail → Platebody.
+
+        Automation:
+            - Auto-Looter: Collect items without clicking (200g).
+            - Slayer Master: Auto-farm monsters for 1 hour (5,000g).
+
+        Prestige Upgrades:
+            - Permanent bonuses like "+1% drop chance per prestige".
+
+--------------------
+
+5. Prestige Mechanics
+    Requirements:
+        - Defeat the region’s boss 10 times.
+        - Earn 50,000 total gold (scales with each region).
+
+    Prestige Bonuses:
+        - Global Multipliers: +10% gold, +5% drop chance.
+        - Region-Specific Bonuses:
+            - Lumbridge: +2% pet chance.
+            - Varrock: Monsters drop 1 extra item.
+
+    Soft Reset:
+        Lose all items, gold, and upgrades BUT keep:
+            - Pets
+            - Cosmetic unlocks
+            - Prestige multipliers
+
+--------------------
+
+6. Progression & Region Unlocking
+    New Regions:
+        Varrock: Requires Prestige 1.
+            - New resource: Coal (used to upgrade smithing gear).
+
+        Wilderness: Requires Prestige 3 + 100 boss kills.
+            - Risk: 20% chance to lose items on death.
+
+        Region-Locked Items:
+            - You can’t get a Rune Scimitar in Lumbridge—it’s exclusive to Varrock.
+
+--------------------
+
+7. UI/UX Features
+    Loot Feed: Live text showing drops (e.g., “Rare! You got a Mithril Sword!”).
+
+    Progress Bars:
+        - Boss kill counter (e.g., “Goblin Boss: 7/10 kills”).
+        - Region unlock requirements.
+
+    Stats Panel:
+        - Track lifetime kills, gold earned, rare drops.
+
+--------------------
+
+8. Monster & Boss Examples
+    Lumbridge Goblin Boss:
+        - HP: 1,000
+        - Mechanics:
+            Spawns 3 Goblins every 20 seconds.
+            Drops “Goblin Champion’s Ring” (+5% damage to Goblins).
+
+    Varrock Chaos Druid:
+        - HP: 5,000
+        - Mechanics:
+            Throws poison spells (DoT damage).
+            Drops “Chaos Rune” (used to craft luck potions).
+
+--------------------
+
+9. Endgame & Long-Term Goals
+    Pet Collection: Hunt for all 15 OSRS-themed pets.
+
+    Achievements:
+        - “Dragon Slayer”: Kill 1,000 Dragons.
+        - “Billionaire”: Earn 1,000,000,000g.
+
+    Leaderboards: Compare prestige tiers and rare drops with others.
+
+--------------------
+
+10. Balancing Considerations
+    Exponential Scaling:
+        - Monster HP/damage increases by 50% per region.
+        - Upgrade costs rise by 20% per purchase.
+
+    Diminishing Returns:
+        - Luck bonuses cap at +50% (to prevent 100% S-tier drops).
+
+    Risk vs. Reward:
+        - Wilderness has better loot but higher death penalties.
+
+--------------------
+
+Example Player Strategy:
+    Grind Lumbridge Goblins to buy “Clover Charm” and “Auto-Looter”.
+
+    Farm the Goblin Boss 10x to prestige.
+
+    Reset, unlock Varrock, and use Prestige bonuses to farm Coal faster.
+
+    Repeat until you can tackle the Wilderness for SSS-tier loot.

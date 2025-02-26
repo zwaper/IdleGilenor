@@ -1,0 +1,2011 @@
+/* Zone-specific backgrounds */
+body[data-zone="cowpen"] {
+  background-image: url('assets/backgrounds/cowpen.png');
+}
+
+body[data-zone="goblinvillage"] {
+  background-image: url('assets/backgrounds/goblinvillage.png');
+}
+
+body {
+  font-family: 'RuneScape', Arial, sans-serif;
+  background-image: url('assets/backgrounds/cowpen.png');
+  transition: background-image 0.3s ease, opacity 0.3s ease;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat; /* Add this */
+  color: #fff;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Main game container */
+#game-container {
+  width: 1280px;
+  height: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+
+}
+/* Header section */
+.osrs-header {
+    height: 40px;
+    min-height: 40px;
+    background-color: #3d3228;
+    padding: 5px;
+    text-align: center;
+    border-bottom: 2px solid #5a4b3d;
+}
+
+.osrs-header h1 {
+    margin: 0;
+    font-size: 20px;
+    color: #ffd700;
+}
+
+.header-border {
+  height: 2px;
+  background-color: #5a4b3d;
+  margin-top: 5px;
+}
+
+.region-tabs, .osrs-subtabs {
+  display: flex;
+  justify-content: center;
+  background-color: #3d3228;
+  border-bottom: 2px solid #5a4b3d;
+}
+
+.osrs-tab, .osrs-subtab {
+  background: none;
+  border: none;
+  color: #ffd700;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.osrs-tab:hover, .osrs-subtab:hover {
+  background-color: #5a4b3d;
+}
+
+.osrs-tab.active, .osrs-subtab.active {
+  background-color: #5a4b3d;
+  font-weight: bold;
+}
+
+/* Main content area */
+.main-content {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  height: calc(100% - 70px); /* Subtract header (40px) and tabs (30px) */
+  min-height: 0;
+}
+
+.left-panel .osrs-panel,
+.right-panel .osrs-panel {
+  display: none;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.left-panel .osrs-panel.active,
+.right-panel .osrs-panel.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Separate left and right panel styles */
+.left-panel .osrs-interface-tabs {
+  border-bottom: 2px solid #5a4b3d;
+}
+
+.right-panel .osrs-interface-tabs {
+  border-bottom: 2px solid #5a4b3d;
+}
+
+.left-panel, .right-panel {
+  background-color: rgba(25, 19, 15, 0.85); /* Darker semi-transparent background */
+  width: calc((1280px - 32px) * 0.3); /* Container width minus total padding/gaps divided by 3 */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #3d3228;
+  border-radius: 8px;
+  overflow: hidden; /* Add this */
+}
+
+/* Center panel adjustments */
+.center-panel {
+  width: calc((1280px - 32px) * 0.4); /* 25% of available space */
+  height: 100%;
+  background-color: rgba(25, 19, 15, 0.85);
+  border: 2px solid #3d3228;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.osrs-interface-tabs {
+  display: flex;
+  justify-content: space-around;
+  background-color: #3d3228;
+  border-bottom: 2px solid #5a4b3d;
+}
+
+.osrs-interface-tab {
+  background: none;
+  border: none;
+  color: #ffd700;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.osrs-interface-tab:hover {
+  background-color: #5a4b3d;
+}
+
+.osrs-interface-tab.active {
+  background-color: #5a4b3d;
+  font-weight: bold;
+}
+
+/* Panel Content */
+.osrs-panels {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.osrs-panel {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden; /* Add this */
+}
+
+.osrs-panel.active {
+  display: block;
+}
+
+/* Inventory Panel Specific */
+.inventory-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 columns */
+  grid-template-rows: repeat(7, 1fr);    /* 7 rows */
+  gap: 4px;
+  padding: 8px;
+  background-color: #2b2622;
+  border: 2px solid #5a4b3d;
+  border-radius: 4px;
+}
+
+.inventory-slot {
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%; /* Makes slots square */
+  background-color: #3d3228;
+  border: 1px solid #5a4b3d;
+  border-radius: 4px;
+}
+
+.inventory-slot .item-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 70%;
+  max-height: 70%;
+  pointer-events: none;
+}
+
+.inventory-slot .item-count {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.inventory-slot .sell-button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: none;
+  border: none;
+  color: #ffd700;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.inventory-slot:hover .sell-button {
+  opacity: 1;
+}
+
+/* Empty slot styling */
+.inventory-slot:empty {
+  background-color: #3d3228;
+  border: 1px solid #5a4b3d;
+}
+
+.gold-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.gold-icon {
+  margin-right: 5px;
+}
+
+.stat-entry {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+}
+
+.stat-label {
+  font-weight: bold;
+}
+
+.stat-value {
+  color: #ffd700;
+}
+
+.settings-section {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.osrs-button {
+  background-color: #3d3228;
+  border: 2px solid #5a4b3d;
+  color: #ffd700;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.osrs-button:hover {
+  background-color: #5a4b3d;
+}
+
+.danger-button {
+  background-color: #ff4444;
+  border-color: #aa2222;
+}
+
+.danger-button:hover {
+  background-color: #ff6666;
+}
+
+/* Level select container */
+.level-select-container {
+  height: 60px;
+  width: 100%;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+.level-nav-btn {
+  background: #3d3228;
+  border: 1px solid #5a4b3d;
+  color: #ffd700;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.level-nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.level-nav-btn:not(:disabled):hover {
+  background: #5a4b3d;
+}
+
+.level-select {
+  display: flex;
+  gap: 5px;
+  transition: transform 0.3s ease;
+  min-width: auto; /* Set minimum width to prevent shrinking */
+  width: 100%;
+  padding: 5px;
+  background-color: rgba(43, 38, 34, 0.9);
+  border: 1px solid #5a4b3d;
+  border-radius: 4px;
+}
+
+.level-box {
+  width: 50px; /* Fixed width */
+  height: 50px; /* Fixed height */
+  background-color: #3d3228;
+  border: 2px solid #5a4b3d;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.3s;
+  flex-shrink: 0; /* Prevent boxes from shrinking */
+  position: relative;
+}
+
+.level-box.placeholder {
+  background-color: rgba(61, 50, 40, 0.3);
+  border: 1px dashed #5a4b3d;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Keep existing hover and active states */
+.level-box:hover {
+  background-color: #5a4b3d;
+}
+
+.level-box.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.level-box.completed {
+  border-color: #4CAF50;
+}
+
+.level-box.active {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: gold;
+}
+/* Combat panel adjustments */
+.combat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 65px); /* Subtract level-select-container height */
+  overflow: hidden;
+}
+
+/* Panel header */
+.panel-header {
+  padding: 2px; /* Reduced from 5px */
+  background: #2b2622;
+  border-bottom: 1px solid #5a4b3d;
+  text-align: center;
+  height: auto;
+  min-height: auto;
+  margin-bottom: 0;
+  font-size: 14px; /* Added to ensure text isn't too large */
+}
+
+
+/* Combat content */
+.combat-content {
+  flex: 1; /* Take remaining space */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Changed from auto to hidden */
+  padding: 3px;
+}
+
+.inventory-controls {
+  display: flex;
+  gap: 5px;
+  padding: 5px;
+  background: #2b2622;
+  border: 1px solid #5a4b3d;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.sell-batch-btn {
+  flex: 1;
+  font-size: 12px;
+  padding: 4px 8px;
+  min-width: 60px;
+  transition: background-color 0.2s, transform 0.1s;
+  /* Ensure clean default state */
+  background-color: #3d3228;
+}
+
+.sell-batch-btn:hover {
+  background-color: #5a4b3d;
+}
+
+.sell-batch-btn.active {
+  background-color: #7a6b5d;
+  transform: scale(0.95);
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+}
+
+.scene-container {
+  position: relative;
+  height: 350px;
+  min-height: 350px;
+  background-color: transparent;
+  border: 2px solid #5a4b3d;
+  border-radius: 8px;
+  margin-bottom: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.scene-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  opacity: 1; /* Changed from any previous value */
+  transition: opacity 0.3s ease, background-image 0.3s ease;
+}
+
+.monster-display {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.health-container {
+  width: 90%;
+  margin-bottom: 10px;
+}
+
+.health-bar {
+  width: 100%;
+  height: 20px;
+  background-color: #3d3228;
+  border: 2px solid #5a4b3d;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.health-fill {
+  height: 100%;
+  background-color: #45B323;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.health-text {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  line-height: 20px;
+  pointer-events: none;
+}
+
+.monster-title {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.variant-indicator {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background-color: #3d3228;
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.monster-container {
+  width: 300px; /* Fixed width */
+  height: 300px; /* Fixed height */
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  margin: auto;
+  z-index: 1;
+  cursor: pointer;
+}
+
+hit-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: hitFlash 0.2s ease-out forwards;
+}
+
+.damage-number {
+  position: absolute;
+  color: #ff4444;
+  font-weight: bold;
+  font-size: 20px;
+  text-shadow: 1px 1px 0 #000;
+  pointer-events: none;
+  transition: all 0.5s ease-out;
+  z-index: 10;
+}
+
+.hit-shake {
+  animation: shake 0.2s ease-in-out;
+}
+
+@keyframes hitFlash {
+  0% { opacity: 1; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(1.2); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+.monster-sprite {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  position: relative;
+  transform: scale(0.8); /* Slightly smaller to ensure fit */
+  transition: transform 0.1s ease-out; /* Add transition for click effect */
+  user-select: none; /* Prevent text selection */
+}
+
+.monster-sprite:active {
+  transform: scale(0.75); /* Slight scale down when clicked */
+}
+
+/* Add click ripple effect */
+.click-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(0);
+  animation: ripple 0.6s linear;
+  pointer-events: none;
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Combat controls */
+.combat-controls {
+  height: 40px;
+  min-height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 5px 0;
+}
+
+.boss-container {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.boss-timer {
+  background-color: #3d3228;
+  border: 2px solid #5a4b3d;
+  padding: 5px 10px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.progress-container {
+  height: 60px;
+  min-height: auto;
+  margin-top: 5px;
+  background: #2b2622;
+  border: 2px solid #5a4b3d;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.osrs-progress-bar {
+  width: 100%;
+  height: 15px;
+  background-color: #3d3228;
+  border: 2px solid #5a4b3d;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background-color: #4CAF50;
+  transition: width 0.3s ease-in-out;
+}
+
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  background: #2b2622;
+  border: 2px solid #5a4b3d;
+  border-radius: 4px;
+}
+
+.right-panel .osrs-interface-tabs {
+  padding: 5px;
+  border-bottom: 2px solid #5a4b3d;
+}
+
+.right-panel .osrs-panel {
+  display: none;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.right-panel .osrs-panel.active {
+  display: block;
+}
+
+.auto-clicker-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auto-clicker-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  transition: opacity 0.2s;
+}
+
+.auto-clicker-btn:hover {
+  opacity: 0.8;
+}
+
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  padding: 8px;
+}
+
+.collection-slot {
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%;
+  background-color: #3d3228;
+  border: 1px solid #5a4b3d;
+  border-radius: 4px;
+}
+
+.collection-slot .item-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 70%;
+  max-height: 70%;
+  opacity: 0.3; /* Default greyed out */
+  filter: grayscale(100%);
+  transition: all 0.3s ease;
+}
+
+.collection-slot.unlocked .item-image {
+  opacity: 1;
+  filter: none;
+}
+
+.collection-slot .item-name {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #ffd700;
+  text-align: center;
+  width: 90%;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+}
+
+/* Collection category styling */
+.collection-category {
+  margin-bottom: 15px;
+  background-color: #3d3228;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.category-header {
+  padding: 8px;
+  background-color: #4d4133;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.completion-badge {
+  float: right;
+  font-size: 0.8em;
+  padding: 2px 6px;
+  background: #3d3228;
+  border-radius: 4px;
+}
+
+.collection-category-selector {
+  position: sticky;
+  top: 0;
+  background: #2b2622;
+  padding: 10px;
+  border-bottom: 2px solid #5a4b3d;
+  z-index: 2;
+}
+
+.category-btn, .zone-btn {
+  background: #3d3228;
+  border: 1px solid #5a4b3d;
+  color: #ffd700;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.category-btn.active, .zone-btn.active,
+.category-btn:hover, .zone-btn:hover {
+  opacity: 1;
+  background: #5a4b3d;
+}
+
+.game-tabs {
+  width: 100%;
+  text-align: center;
+}
+
+.zone-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin: auto;
+  padding: 0 10px;
+  max-width: 600px;
+}
+
+.osrs-subtab {
+  background-color: #3d3228;
+  border: 1px solid #5a4b3d;
+  color: #fff;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.osrs-subtab:hover {
+  background-color: #5a4b3d;
+}
+
+.osrs-subtab.active {
+  background-color: #5a4b3d;
+  font-weight: bold;
+}
+
+.zone-selector {
+  position: sticky;
+  top: 0;
+  background: #2b2622;
+  padding: 10px 0;
+  border-bottom: 2px solid #5a4b3d;
+  z-index: 1;
+}
+
+.zone-content {
+  margin-top: 10px;
+}
+
+.collection-subcategory-container {
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.collection-panel, .loot-panel {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar styling for Webkit browsers */
+#collection-log::-webkit-scrollbar {
+  width: 8px;
+}
+
+#collection-log::-webkit-scrollbar-track {
+  background: #2b2622;
+  border-radius: 4px;
+}
+
+#collection-log::-webkit-scrollbar-thumb {
+  background-color: #5a4b3d;
+  border-radius: 4px;
+}
+
+#collection-log::-webkit-scrollbar-thumb:hover {
+  background-color: #6a5b4d;
+}
+
+.osrs-loot-feed {
+  height: calc(100% - 20px);
+  overflow-y: auto;
+}
+
+#collection-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #5a4b3d #2b2622;
+}
+
+.collection-log-panel {
+  background-color: #2b2622;
+  border: 2px solid #5a4b3d;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.log-entries {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.osrs-loot-feed {
+  background-color: #2b2622;
+  border: 2px solid #5a4b3d;
+  border-radius: 8px;
+  padding: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.modal-container {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal {
+  background: #2b2622;
+  border: 2px solid #5a4b3d;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  color: white;
+}
+
+#tooltip {
+  position: fixed;
+  z-index: 1000;
+  background: #2b2622;
+  border: 2px solid #5a4b3d;
+  border-radius: 4px;
+  padding: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  max-width: 250px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.tooltip-header {
+  padding: 5px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #5a4b3d;
+}
+
+.tooltip-header.S-tier { background: #ffd700; color: #2b2622; }
+.tooltip-header.A-tier { background: #ff44ff; color: #2b2622; }
+.tooltip-header.B-tier { background: #4444ff; color: #ffffff; }
+.tooltip-header.C-tier { background: #44ff44; color: #2b2622; }
+
+.tooltip-name {
+  font-weight: bold;
+}
+
+.tooltip-tier {
+  font-size: 0.9em;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.tooltip-body {
+  padding: 10px;
+  color: #ffffff;
+}
+
+.tooltip-value {
+  margin-top: 5px;
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.region-progress {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #2b2622;
+  border: 2px solid #5a4b3d;
+  padding: 10px;
+  border-radius: 8px;
+  color: white;
+}
+
+.attack-animation {
+  animation: shake 0.2s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.level-box.miniboss {
+  border: 2px solid #ffd700;
+  background: linear-gradient(45deg, #2b2622, #3d3228);
+}
+
+.level-box.defeated .boss-indicator {
+  color: #00ff00;
+  filter: drop-shadow(0 0 2px #00ff00);
+}
+
+.progress-fill {
+  transition: width 0.3s ease-in-out;
+}
+
+.workling-management {
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  margin-top: 20px;
+}
+
+.workling-assignments {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.zone-assignment {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: rgba(61, 50, 40, 0.8);
+  border-radius: 4px;
+}
+
+.assigned-worklings {
+  min-height: 50px;
+  padding: 5px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.workling-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  margin: 5px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid gold;
+  border-radius: 4px;
+  min-width: 150px;
+}
+
+.workling-count {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  color: #ffd700;
+}
+
+.workling-item.dragging {
+  opacity: 0.5;
+}
+
+.workling-item:active {
+  cursor: grabbing;
+}
+
+.workling-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+.workling-info {
+  display: flex;
+  flex-direction: column;
+  margin-right: 10px;
+}
+
+.workling-damage {
+  color: #ff4444;
+  font-size: 0.9em;
+}
+
+.recall-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2em;
+}
+
+.recall-button:hover {
+  transform: scale(1.1);
+}
+
+/* Panel Content */
+.osrs-panels {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Add this */
+}
+
+/* Shop Panel Specific */
+.shop-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.shop-items-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #5a4b3d #2b2622;
+}
+
+/* Webkit scrollbar styling */
+.shop-items-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.shop-items-container::-webkit-scrollbar-track {
+  background: #2b2622;
+  border-radius: 4px;
+}
+
+.shop-items-container::-webkit-scrollbar-thumb {
+  background: #5a4b3d;
+  border-radius: 4px;
+}
+
+.shop-items-container::-webkit-scrollbar-thumb:hover {
+  background: #6a5b4d;
+}
+
+.shop-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.shop-section {
+  background-color: #3d3228;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+/* Shop Items */
+.shop-item {
+  background-color: #3d3228;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  padding: 10px;
+}
+
+.shop-title {
+  color: #ffd700;
+  font-size: 1.2em;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.management-section {
+  border-top: 2px solid #3d3228;
+  margin-top: 10px;
+  padding-top: 20px;
+}
+
+.worklings-section .shop-item {
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #3d3228;
+  border-radius: 4px;
+}
+
+.gold-icon {
+  position: relative;
+  width: 24px;  /* Fixed width */
+  height: 24px; /* Same as width to maintain square aspect ratio */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gold-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* This maintains aspect ratio */
+  image-rendering: pixelated;
+}
+
+.gold-display {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+.workling-stats {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #ffd700;
+}
+
+/* Champions Panel Styles */
+.champions-panel {
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.champions-panel.active {
+  display: flex;
+}
+
+.champions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: #3d3d3d;
+  border-radius: 4px;
+}
+
+.champions-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.champion-card {
+  background: #2b2b2b;
+  border: 2px solid #3d3d3d;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.champion-card.can-afford {
+  border-color: #4CAF50;
+}
+
+.champion-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.champion-info {
+  flex: 1;
+}
+
+.champion-info h3 {
+  margin: 0;
+  color: #ffd700;
+}
+
+.champion-upgrades {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.upgrade {
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.upgrade.unlocked {
+  background: #4CAF50;
+  color: white;
+}
+
+.upgrade.locked {
+  background: #666;
+  color: #999;
+}
+
+.champion-card.locked {
+  opacity: 0.8;
+  background: #1a1a1a;
+}
+
+.champion-card.locked .locked-image {
+  filter: grayscale(100%);
+}
+
+.champion-card.locked.can-unlock {
+  border-color: #4CAF50;
+  opacity: 0.9;
+}
+
+.unlock-conditions {
+  padding: 0.5rem;
+  background: #2a2a2a;
+  border-radius: 4px;
+  margin: 0.5rem 0;
+}
+
+.unlock-conditions ul {
+  list-style: none;
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+}
+
+.unlock-conditions li {
+  color: #aaa;
+  margin: 0.2rem 0;
+}
+
+.unlock-conditions li.met {
+  color: #4CAF50;
+}
+
+.achievements-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: #2b2b2b;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.collection-category {
+  margin-bottom: 20px;
+  background: #2b2b2b;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: #333;
+  border-bottom: 2px solid #444;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+  padding: 10px;
+}
+
+.achievement-slot {
+  width: 48px;
+  height: 48px;
+  border: 2px solid #444;
+  border-radius: 4px;
+  position: relative;
+  cursor: help;
+  transition: all 0.3s ease;
+}
+
+.achievement-slot:hover {
+  transform: scale(1.1);
+  z-index: 1;
+}
+
+.achievement-slot.locked {
+  opacity: 0.5;
+  filter: grayscale(100%);
+}
+
+.achievement-slot.unlocked {
+  border-color: #ffd700;
+}
+
+.achievement {
+  display: flex;
+  gap: 10px;
+  padding: 15px;
+  background: #2b2b2b;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.achievement.locked {
+  opacity: 0.6;
+  filter: grayscale(100%);
+}
+
+.achievement.unlocked {
+  border: 1px solid #ffd700;
+  background: linear-gradient(45deg, #2b2b2b, #3d3d2b);
+}
+
+.achievement-icon {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.achievement-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.complete-overlay {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #4CAF50;
+  color: white;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border: 1px solid #388E3C;
+}
+
+.achievement-info {
+  flex: 1;
+}
+
+.achievement-info h4 {
+  margin: 0 0 5px 0;
+  color: #ffd700;
+}
+
+.achievement-info p {
+  margin: 0;
+  font-size: 0.9em;
+  color: #ccc;
+}
+
+.achievement-reward {
+  margin-top: 5px;
+  color: #4CAF50;
+  font-size: 0.9em;
+}
+
+.tooltip-header.unlocked {
+  background: linear-gradient(45deg, #2b2b2b, #3d3d2b);
+  border-color: #ffd700;
+}
+
+.tooltip-header.locked {
+  background: #2b2b2b;
+  border-color: #444;
+}
+
+.tooltip-reward {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #444;
+}
+
+.tooltip-requirements {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #444;
+}
+
+.requirement-label, .reward-label {
+  color: #ffd700;
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.completion-text {
+  color: #4CAF50;
+  font-weight: bold;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.version-modal {
+  max-width: 500px;
+}
+
+.version-modal .changelog {
+  margin: 20px 0;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.version-modal .changelog ul {
+  list-style: none;
+  padding: 0;
+}
+
+.version-modal .changelog li {
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.version-modal .changelog li:last-child {
+  border-bottom: none;
+}
+
+.version-btn {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  font-size: 12px;
+  padding: 5px 10px;
+  opacity: 0.7;
+}
+
+.version-btn:hover {
+  opacity: 1;
+  }
+
+  /* Map Modal Styles */
+  .map-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+}
+
+.modal-content {
+  position: relative;
+  width: 90%;
+  max-width: 1200px;
+  height: 90vh;
+  margin: 20px auto;
+  background-color: #2b2622;
+  border: 2px solid #5a4b3d;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-header {
+    position: relative;
+    padding: 10px 20px;
+    background-color: #1f1f1f;
+    border-bottom: 2px solid #5a4b3d;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: 100px 1fr 100px;
+    align-items: center;
+    height: 50px;
+}
+
+.map-header .back-button {
+    padding: 8px 16px;
+    background: #3d3228;
+    color: #ffd700;
+    border: 2px solid #5a4b3d;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    grid-column: 1;
+}
+
+.map-header .title {
+    grid-column: 2;
+    text-align: center;
+    color: #ffd700;
+    font-size: 18px;
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
+.map-container {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    cursor: grab;
+}
+
+#base-view {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform-origin: center;
+  will-change: transform;
+  transition: transform 0.5s ease-out;
+}
+
+#base-map {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.map-buttons {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.zone-button {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 8px 16px;
+  background: #3d3228;
+  color: #ffd700;
+  border: 2px solid #5a4b3d;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out, transform 0.3s ease;
+  z-index: 5;
+  opacity: 1;
+}
+
+.zone-button.region-button {
+    padding: 6px 12px;
+    font-size: 14px;
+    background: #2b1810;
+    border: 3px solid #8b4513;
+}
+
+.zone-button.kingdom-button {
+  padding: 1px 2px;  /* Reduced from 6px 12px */
+  font-size: 8px;   /* Reduced from 14px */
+  background: #2b1810;
+  border: 1px solid #8b4513;  /* Reduced from 3px */
+  min-width: 40px;   /* Add minimum width to keep consistent sizing */
+}
+
+.zone-button.subzone-button {
+  padding: 4px 8px;
+  font-size: 12px;
+  background: #2b1810;
+  border: 2px solid #8b4513;
+  min-width: 30px;
+}
+
+.zone-button:hover:not(.locked) {
+  transform: translate(-50%, -50%) scale(1.05);  /* Reduced from 1.1 */
+  background: #5a4b3d;
+}
+
+.zone-button.locked {
+    background: #2b2622;
+    color: #666;
+    border-color: #444;
+    cursor: not-allowed;
+}
+
+.zone-button.fade-in {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+}
+
+.zone-button.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+}
+
+.zone-button.hidden {
+  display: none;
+  opacity: 0;
+  pointer-events: none;
+}
+.zone-button:not(.hidden) {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.map-container.grabbing {
+    cursor: grabbing;
+}
+
+.map-layout {
+  display: flex;
+  height: 100%;
+}
+
+.map-sidebar {
+  width: 250px;
+  background: #2b2622;
+  border-right: 2px solid #5a4b3d;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.region-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.region-item, .kingdom-item, .subzone-item {
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.region-header, .kingdom-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background: #3d3228;
+  border: 1px solid #8b4513;
+  border-radius: 4px;
+}
+
+.kingdom-list, .subzone-list {
+  margin-left: 20px;
+  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.subzone-item {
+  padding: 6px 8px;
+  background: #2b1810;
+  border: 1px solid #8b4513;
+  border-radius: 4px;
+}
+
+.region-item.locked,
+.kingdom-item.locked,
+.subzone-item.locked {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+
+.region-item:not(.locked):hover,
+.kingdom-item:not(.locked):hover,
+.subzone-item:not(.locked):hover {
+    background-color: #3d3228;
+}
+
+.locked {
+  color: #666;
+  border-color: #444;
+  cursor: not-allowed;
+}
+
+.expand-icon {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+.collapsed .expand-icon {
+  transform: rotate(-90deg);
+}
+
+.map-container {
+  flex: 1;
+  overflow: hidden;
+}
+
+.collapsed .kingdom-list,
+.collapsed .subzone-list {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+/* Real-time gold updates and button state management */
+.champion-card {
+    background-color: #2b2b2b;
+    border: 1px solid #3e3e3e;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 5px;
+    transition: all 0.3s ease;
+}
+
+.champion-card.unlocked {
+    border-color: #4a4;
+}
+
+.champion-card.can-unlock {
+    border-color: #44a;
+}
+
+.upgrade-button {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    background-color: #666;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.upgrade-button.can-afford {
+    background-color: #4a4;
+}
+
+.upgrade-button:disabled {
+    background-color: #444;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.champion-stats {
+    margin-top: 8px;
+    padding: 4px;
+    background-color: #333;
+    border-radius: 4px;
+}
+
+.buy-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px;
+  margin-top: 10px;
+  padding: 5px;
+}
+
+.buy-buttons .osrs-button {
+  width: 100%;
+  padding: 8px;
+  font-size: 0.9em;
+  text-align: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.buy-buttons .osrs-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buy-buttons .osrs-button.can-afford {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.buy-buttons .osrs-button.can-afford:hover {
+  background-color: #45a049;
+  transform: scale(1.02);
+}
+
+/* Make max buy button span full width */
+.buy-buttons .osrs-button:last-child {
+  grid-column: 1 / -1;
+}
+
+.requirements {
+  margin-top: 10px;
+  font-size: 0.9em;
+}
+
+.requirements p {
+  margin: 5px 0;
+  color: #ddd;
+}
+
+.requirements p.met {
+  color: #4CAF50;
+}
+
+.requirements p.unmet {
+  color: #FF5252;
+}
+
+.champion-card .champion-info {
+  flex-grow: 1;
+  padding: 0 10px;
+}
+
+.upgrades-section {
+  margin: 10px 0;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.upgrade-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upgrade-item {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #3e3e3e;
+}
+
+.upgrade-item.purchased {
+  background: rgba(76, 175, 80, 0.2);
+  border-color: #4CAF50;
+}
+
+.upgrade-item.locked {
+  opacity: 0.7;
+}
+
+.upgrade-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.upgrade-name {
+  font-weight: bold;
+  color: #ffd700;
+}
+
+.upgrade-details {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9em;
+  margin-bottom: 8px;
+}
+
+.upgrade-effect {
+  color: #4CAF50;
+}
+
+.upgrade-level {
+  color: #bbb;
+}
+
+.upgrade-btn {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.upgrade-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Add to styles.css */
+.auto-progress-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 16px;
+  background-color: #3d3228;
+  border: 2px solid #5a4b3d;
+  color: #ffd700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auto-progress-btn.active {
+  background-color: #4CAF50;
+  border-color: #388E3C;
+}
+
+.auto-progress-btn .auto-icon {
+  font-size: 16px;
+}
+
+.auto-progress-btn:hover {
+  background-color: #5a4b3d;
+}
+
+.auto-progress-btn.active:hover {
+  background-color: #45a049;
+}

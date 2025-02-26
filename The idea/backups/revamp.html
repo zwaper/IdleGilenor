@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Idle Gielinor</title>
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      background-color: #1a1a1a;
+      color: #fff;
+      font-family: 'MedievalSharp', cursive;
+    }
+
+    #game-container {
+      width: 1280px;
+      height: 720px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      background-color: #2b2b2b;
+      border: 2px solid #000;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .osrs-header {
+      background-color: #333;
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+      border-bottom: 2px solid #000;
+    }
+
+    .osrs-header h1 {
+      margin: 0;
+      font-family: 'MedievalSharp', cursive;
+    }
+
+    .header-border {
+      height: 2px;
+      background-color: #000;
+      margin-top: 5px;
+    }
+
+    .main-content {
+  display: flex;
+  flex: 1;
+  height: 720px; /* Set fixed height */
+}
+
+.left-panel,
+.center-panel,
+.right-panel {
+  height: 720px; /* Set fixed height */
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #2b2b2b;
+  border: 1px solid #000;
+}
+
+.left-panel,
+.right-panel {
+  flex: 1;
+  width: 25%; /* Set width for side panels */
+}
+
+.center-panel {
+  flex: 2;
+  width: 50%; /* Set width for center panel */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Add custom scrollbar styling */
+.left-panel::-webkit-scrollbar,
+.center-panel::-webkit-scrollbar,
+.right-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.left-panel::-webkit-scrollbar-track,
+.center-panel::-webkit-scrollbar-track,
+.right-panel::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.left-panel::-webkit-scrollbar-thumb,
+.center-panel::-webkit-scrollbar-thumb,
+.right-panel::-webkit-scrollbar-thumb {
+  background: #666;
+  border-radius: 4px;
+}
+
+.left-panel::-webkit-scrollbar-thumb:hover,
+.center-panel::-webkit-scrollbar-thumb:hover,
+.right-panel::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+
+    .osrs-interface-tabs {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 10px;
+    }
+
+    .osrs-panels {
+      flex: 1;
+    }
+
+    .osrs-button {
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 5px 0;
+      font-family: 'MedievalSharp', cursive;
+    }
+
+    .osrs-button.danger-button {
+      background-color: #dc3545;
+    }
+
+    .osrs-button:hover {
+      background-color: #0056b3;
+    }
+
+    .osrs-boss-button {
+      background-color: #ffc107;
+      color: #000;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 5px 0;
+      font-family: 'MedievalSharp', cursive;
+    }
+
+    .osrs-boss-button:hover {
+      background-color: #e0a800;
+    }
+
+    .osrs-progress-bar {
+      background-color: #e0e0e0;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .progress-fill {
+      background-color: #007bff;
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .stat-entry {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-weight: bold;
+    }
+
+    .stat-value {
+      font-weight: normal;
+    }
+
+    .auto-clicker-controls {
+      display: flex;
+      align-items: center;
+    }
+
+    .auto-clicker-btn {
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      padding: 5px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin-left: 10px;
+      font-family: 'MedievalSharp', cursive;
+    }
+
+    .auto-clicker-btn:hover {
+      background-color: #218838;
+    }
+
+    .scene-container {
+      position: relative;
+      height: 300px;
+      background-color: #fff;
+      border: 2px solid #000;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .scene-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('assets/background.png');
+      background-size: cover;
+    }
+
+    .monster-display {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .monster-sprite {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .health-container {
+      width: 80%;
+      margin-bottom: 10px;
+    }
+
+    .health-bar {
+      background-color: #e0e0e0;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .health-fill {
+      background-color: #dc3545;
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    .health-text {
+      text-align: center;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .combat-controls {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .combat-controls .osrs-button {
+      margin: 0 5px;
+    }
+
+    .boss-container {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .boss-timer {
+      font-weight: bold;
+    }
+
+    .level-select-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  width: 100%;
+  background-color: #333;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #000;
+}
+
+.level-nav-btn {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 8px 15px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-family: 'MedievalSharp', cursive;
+  font-size: 16px;
+  min-width: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.level-nav-btn:hover {
+  background-color: #0056b3;
+}
+
+.level-nav-btn:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+}
+
+.level-select {
+  flex: 0 1 auto;
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #222;
+  padding: 8px 15px;
+  border-radius: 5px;
+  margin: 0 10px;
+  min-width: 200px;
+  font-size: 16px;
+}
+
+.center-panel {
+  flex: 1.1;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.combat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #2b2b2b;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+    .modal-container,
+    .tooltip,
+    .region-progress {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="game-container">
+    <!-- Header -->
+    <div class="osrs-header">
+      <h1>
+        <span class="rune">⚔️</span>
+        Idle Gielinor
+        <span class="rune">🛡️</span>
+      </h1>
+      <div class="header-border"></div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <!-- Left Panel (Tabs + Inventory/Shop/Stats) -->
+      <div class="left-panel">
+        <div class="osrs-interface-tabs">
+          <button class="osrs-interface-tab" data-panel="shop">🏪 Shop</button>
+          <button class="osrs-interface-tab" data-panel="stats">📊 Stats</button>
+          <button class="osrs-interface-tab" data-panel="champions">⚔️ Champions</button>
+        </div>
+        <div class="osrs-panels">
+          <!-- Shop -->
+          <div class="osrs-panel shop-panel" id="shop-panel">
+            <div class="shop-items-container"></div>
+          </div>
+
+          <!-- Stats -->
+          <div class="osrs-panel stats-panel" id="stats-panel">
+            <div class="stat-entry">
+              <span class="stat-label">Damage:</span>
+              <span class="stat-value" id="stat-damage">1</span>
+            </div>
+            <div class="stat-entry">
+              <span class="stat-label">Auto-Clicker:</span>
+              <span class="stat-value" id="stat-auto">None</span>
+            </div>
+            <div class="stat-entry">
+              <span class="stat-label">Luck:</span>
+              <span class="stat-value" id="stat-luck">1.0x</span>
+            </div>
+            <div class="stat-entry">
+              <span class="stat-label">Prestige:</span>
+              <span class="stat-value" id="stat-prestige">0</span>
+            </div>
+            <div class="stat-entry">
+              <span class="stat-label">Monsters Killed:</span>
+              <span class="stat-value" id="stat-monsters">0</span>
+            </div>
+            <div class="stat-entry">
+              <span class="stat-label">Bosses Killed:</span>
+              <span class="stat-value" id="stat-bosses">0</span>
+            </div>
+            <div class="stat-entry">
+              <span class="stat-label">Auto-Clicker:</span>
+              <div class="auto-clicker-controls">
+                <span class="stat-value" id="stat-auto">None</span>
+                <button id="auto-clicker-toggle" class="auto-clicker-btn" style="display: none;">
+                  <span class="play-icon">▶️</span>
+                  <span class="pause-icon" style="display: none;">⏸️</span>
+                </button>
+              </div>
+            </div>
+            <div class="settings-section">
+              <button id="hard-reset-btn" class="osrs-button danger-button">
+                🔄 Hard Reset Game
+              </button>
+            </div>
+          </div>
+
+          <!-- Champions Panel -->
+          <div class="osrs-panel champions-panel" id="champions-panel">
+            <div class="champions-header">
+              <h2>Champions</h2>
+              <div class="total-dps">Total DPS: <span id="total-champion-dps">0</span></div>
+            </div>
+            <div class="champions-container">
+              <!-- Champions will be dynamically added here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Panel (Combat) -->
+      <div class="center-panel">
+        <!-- Level Select -->
+        <div class="level-select-container">
+          <button class="level-nav-btn" id="prev-levels">←</button>
+          <div class="level-select" id="level-select">Level 1</div>
+          <button class="level-nav-btn" id="next-levels">→</button>
+        </div>
+
+        <!-- Combat Panel -->
+        <div class="combat-panel">
+          <div class="panel-header">
+            <h2>
+              <span id="zone-name">Cow Pen</span>
+              <span class="level-badge">Level <span id="zone-level">1</span></span>
+            </h2>
+          </div>
+
+          <div class="combat-content">
+            <div class="scene-container">
+              <div class="scene-background"></div>
+              <div class="monster-display">
+                <div class="health-container">
+                  <div class="health-bar">
+                    <div id="health-bar" class="health-fill" style="width: 100%;">
+                      <div id="health-text" class="health-text">100/100 HP</div>
+                    </div>
+                  </div>
+                  <div class="monster-title">
+                    <span id="monster-name"></span>
+                    <span class="variant-indicator common">C</span>
+                  </div>
+                </div>
+                <div class="monster-container">
+                  <img src="assets/cow.png" class="monster-sprite" id="monster-sprite">
+                </div>
+              </div>
+            </div>
+
+            <div class="combat-controls">
+              <button class="osrs-button" id="attack-button">⚔️ Attack</button>
+              <button id="region-boss-btn" class="osrs-boss-button" style="display: none;">
+                🔥 Fight Region Boss
+              </button>
+            </div>
+
+            <div class="boss-container">
+              <div id="boss-timer" class="boss-timer" style="display: none;">
+                Time Remaining: <span id="boss-time">30</span>s
+              </div>
+            </div>
+
+            <div class="progress-container">
+              <div class="progress-label">
+                <span>Kills:</span>
+                <span><span id="current-kills">0</span>/10</span>
+              </div>
+              <div class="osrs-progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel (Collection Log, Loot Feed, Achievements) -->
+      <div class="right-panel">
+        <div class="osrs-interface-tabs">
+          <button class="osrs-interface-tab active" data-panel="collection">📚 Collection Log</button>
+          <button class="osrs-interface-tab" data-panel="loot">💎 Loot Feed</button>
+          <button class="osrs-interface-tab" data-panel="achievements">🏆 Achievements</button>
+        </div>
+        <div class="osrs-panels">
+          <!-- Collection Log Panel -->
+          <div id="collection-panel" class="osrs-panel collection-panel">
+            <div id="collection-log"></div>
+          </div>
+
+          <!-- Loot Feed Panel -->
+          <div class="osrs-panel loot-panel" id="loot-panel">
+            <div class="osrs-loot-feed" id="loot-feed"></div>
+          </div>
+
+          <!-- Achievements Panel -->
+          <div class="osrs-panel achievements-panel" id="achievements-panel">
+            <div id="achievements-container" class="achievements-grid">
+              <!-- Achievements will be dynamically added here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-container" class="modal-container"></div>
+    <div id="tooltip" class="tooltip item-tooltip"></div>
+    <div id="region-progress" class="region-progress"></div>
+    <script src="src/js/game.js"></script>
+  </div>
+</body>
+
+</html>

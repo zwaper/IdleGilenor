@@ -1,0 +1,145 @@
+1. Core Idle/Clicker Mechanics
+    Active Play:
+        Click monsters to deal damage (e.g., 1 click = 1 attack).
+        Spam-clicking speeds up kills for instant loot.
+
+    Idle Play:
+        Automatically attack monsters over time (e.g., 1 attack every 2 seconds).
+        Progress continues offline (at reduced efficiency).
+
+--------------------
+
+2. Automation Upgrades
+    Unlock tools to automate grinding:
+
+        Auto-Clicker:
+            - Basic: 1 click/sec (costs 500g).
+            - Advanced: 5 clicks/sec (costs 5,000g).
+
+        Hirelings:
+            - "Goblin Worker": Fights for you, dealing 1 damage/sec (1,000g).
+            - "Knight of Varrock": 5 damage/sec (10,000g).
+
+        Auto-Loot:
+            - Instantly collects drops without clicking (200g).
+
+        Idle Efficiency:
+            - Upgrades improve offline speed (e.g., "Time Warp Charm" doubles offline gains).
+
+--------------------
+
+3. Balancing Active vs. Idle
+    Active Play Bonus:
+        - Clicking grants +50% loot/gold temporarily (stackable with upgrades).
+        - Critical hits: 5% chance to deal 10x damage when clicking.
+
+    Idle Penalty:
+        - Offline gains are 50% slower unless upgraded.
+        - Can’t fight bosses offline (must click to challenge them).
+
+--------------------
+
+4. Clicker-Specific Features
+    Combo Meter:
+        - Chain clicks to fill a meter for bonuses (e.g., 100 clicks = +10% drop chance for 30 sec).
+
+    Power Gloves:
+        - Clicker upgrades (e.g., "Rune Gauntlets" make each click count as 2 attacks).
+
+    Clicker Achievements:
+        - "Finger Crusher": Click 10,000 times → Unlock +1% critical chance.
+
+--------------------
+
+5. Idle-Specific Features
+    AFK Mode:
+        - Toggle to prioritize specific monsters or loot tiers while idle.
+
+    Offline Earnings:
+        - Return to a log showing loot/gold earned while away (e.g., “You AFK’d for 2 hours: 120 Bones, 3,000g”).
+
+    Idle Buffs:
+        -"Resting Bonus": After 1 hour offline, gain +20% loot for 10 minutes.
+
+--------------------
+
+6. Prestige Synergy
+    Prestige Upgrades for Idle/Clicker:
+        - "Ancient Tome of Patience": +25% offline efficiency (permanent).
+        - "Berserker’s Fury": +10% click damage per prestige.
+
+    Region-Specific Automation:
+        - Unlock "Auto-Boss Killer" in later regions (e.g., Wilderness auto-farms bosses at 50% speed).
+
+--------------------
+
+7. UI Integration
+
+    [ Combat Panel ]
+---------------------------------------
+    - Goblin (Lv. 2) [HP: 15/50]
+        [Click to Attack!]  
+        [Auto-Attack: ON/OFF]  
+
+    [ Idle Settings ]  
+        - Prioritize: ☑️ Common loot ☑️ Bosses  
+        - Hirelings: Goblin Worker (1/3 slots)  
+
+    [ Clicker Stats ]  
+        - Clicks/min: 120  
+        - Critical Rate: 5%  
+        - Combo Meter: ▰▰▰▰▱ (80%) 
+
+--------------------
+
+8. Example Progression Loop
+    Early Game: Click frantically to kill Goblins for gold → Buy "Auto-Clicker" to automate basic attacks.
+
+    Mid Game: Unlock Hirelings to idle-farm while you focus on bosses → Use clicker combos for rare loot bursts.
+
+    Late Game: Prestige to boost idle efficiency → Let the game farm high-tier regions overnight.
+
+--------------------
+
+9. Why It Works
+    Flexibility: Players choose their playstyle (active, idle, or hybrid).
+
+    Addictive Feedback: Constant rewards from clicking and idle gains.
+
+    Strategic Depth: Prestige upgrades reward long-term planning for both styles.
+
+--------------------
+
+10. New Upgrade Ideas
+    Clicker Tree:
+        - "Double-Tap Technique": Every 10th click deals 3x damage.
+        - "Adrenaline Rush": Clicking speeds up attack rate temporarily.
+
+    Idle Tree:
+        - "Masterwork Anvil": Idle attacks have a 1% chance to drop double loot.
+        - "Ethereal Courier": Idle loot is automatically sold for +10% gold.
+
+--------------------
+
+11. Monster Interaction Tweaks
+    Clicker Bait Monsters:
+        - "Chicken Swarm": Requires 50 rapid clicks to defeat but drops bonus feathers.
+
+    Idle-Friendly Monsters:
+        - "Rock Crab": High HP but guaranteed loot every 10 seconds (ideal for AFK).
+
+--------------------
+
+12. Boss Mechanics for Hybrid Play
+    Lumbridge Goblin Boss:
+        - Active Play: Click to dodge AoE attacks (fail = lose 50% HP).
+        - Idle Play: Hirelings take 2x longer to kill it, but no risk of death.
+
+--------------------
+
+This turns the game into a "play your way" experience—whether you want to relax with idle gains or go full RuneScape sweatlord with click-spamming.
+
+Search/filter for inventory items
+Bulk selling
+Item tooltips
+Equipment slots?

@@ -1,0 +1,104 @@
+Core Concept:
+    Players grind monsters in region-locked zones (starting in Lumbridge) to collect OSRS-themed items.
+    Items are sold for gold to buy upgrades, improving chances for rare drops.
+    To unlock new regions (e.g., Varrock, Wilderness), players must prestige, resetting progress but granting permanent bonuses.
+
+--------------------
+
+Gameplay Loop:
+    1. Kill Monsters → Get random loot based on OSRS drop tables.
+
+    2. Sell Items → Earn gold to buy upgrades.
+
+    3. Upgrade Gear/Tools → Boost drop rates, stats, or gold gains.
+
+    4. Prestige → Reset progress to unlock harder regions with better loot.
+
+--------------------
+
+Regions & Progression.
+Regions are unlocked sequentially by prestiging. Example regions:
+
+    1. Lumbridge (Start)
+        Monsters: Goblins, Cows, Chickens
+        Boss: Lumbridge Goblin Boss (unlocks prestige)
+
+    2. Varrock (Prestige 1)
+        Monsters: Skeletons, Guards, Zombies
+        Boss: Chaos Druid
+
+    3. Wilderness (Prestige 3)
+        Monsters: Dark Wizards, Black Knights
+        Boss: King Black Dragon
+
+Prestige Requirement:
+Defeat the region’s boss X times (e.g., 10x Lumbridge Goblin Boss kills).
+Prestiging resets your current region progress but unlocks the next zone.
+
+--------------------
+
+Item Tiers & Drop Rates
+Items are categorized by rarity (using OSRS drop rates):
+
+    Common (C-tier): Bones, Coal, Trout (50-80% drop chance)
+
+    Uncommon (B-tier): Mithril Scimitar, Lobster (10-30%)
+
+    Rare (A-tier): Rune Platebody, Dragon Dagger (1-5%)
+
+    Epic (S-tier): Abyssal Whip, Dragon Chainbody (0.1-1%)
+
+    Legendary (SS-tier): 3rd Age Items, Elyisian Spirit Shield (0.01-0.1%)
+
+    Mythic (SSS-tier): Pet Drops (e.g., Pet Chaos Elemental, 0.001%)
+
+--------------------
+
+Gold & Upgrades
+Sell items to buy permanent or temporary upgrades:
+
+    1. Luck Boosters:
+        "Clover Charm" (+5% rare drop chance)
+        "Ring of Wealth" (+10% epic drop chance)
+
+    2. Gear Upgrades:
+        Better weapons/armor (e.g., Rune → Dragon) to kill monsters faster.
+
+    3. Prestige Bonuses:
+        Permanent multipliers (e.g., +25% gold gain after prestiging).
+
+    4. Auto-Grind:
+        Unlock auto-combat for 1 hour (costs gold).
+
+--------------------
+
+Combat & Loot Mechanics
+    Each monster has a drop table (e.g., Cow = Hide, Beef, Bones).
+    Bosses guarantee a rare+ item on kill.
+    Higher-tier regions have tougher monsters but better loot.
+
+--------------------
+
+Prestige Strategy
+    Players must decide when to prestige: early for faster progression or later to farm rare items.
+    Each prestige adds a region-specific bonus (e.g., Lumbridge prestige = +10% chance for pet drops).
+
+--------------------
+
+Example UI Layout:
+
+    [ Lumbridge ]  
+        Monsters:  
+            - Goblin [Fight]  
+            - Cow [Fight]  
+            - Boss [Fight] (5/10 kills to prestige)  
+
+        Inventory:  
+            - Bones x32 | Coal x15 | Lobster x4  
+
+        Gold: 1,250  
+            Upgrades:  
+                - Buy Clover Charm (500g)  
+                - Upgrade to Adamant Sword (1,000g)  
+
+--------------------
