@@ -1,3 +1,5 @@
+import { formatLargeNumber, showLoot, renderAchievements, renderShop, updateInventory, renderChampionsPanel, renderCollectionLog } from './game.js';
+
 export const DOMCache = {
     elements: new Map(),
 

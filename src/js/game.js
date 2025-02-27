@@ -1,4 +1,73 @@
-import { DOMCache, initDOMCache, updateUI, setupTabPanels } from './domManager.js';
+const DOMCache = {
+    elements: new Map(),
+
+    get(selector) {
+        if (!this.elements.has(selector)) {
+            const element = document.querySelector(selector);
+            if (element) {
+                this.elements.set(selector, element);
+            }
+        }
+        return this.elements.get(selector);
+    },
+
+    invalidate(selector) {
+        this.elements.delete(selector);
+    },
+
+    clear() {
+        this.elements.clear();
+    }
+};
+
+function initDOMCache() {
+    const selectors = [
+        '#loot-feed',
+        '#zone-name',
+        '#zone-level',
+        '#monster-name',
+        '#monster-sprite',
+        '#health-bar',
+        '#health-text',
+        '.progress-container',
+        '.progress-fill',
+        '.progress-label span:last-child',
+        '#stat-gold',
+        '#stat-damage',
+        '#stat-luck',
+        '#stat-prestige',
+        '#stat-monsters',
+        '#stat-bosses',
+        '#region-boss-btn',
+        '#boss-timer',
+        '#prestige-btn',
+        '.inventory-grid',
+        '.sell-buttons',
+        '.left-panel',
+        '.right-panel',
+        '.zone-tabs',
+        '#scene-background',
+        '#modal-container',
+        '#auto-progress',
+        '#version-btn',
+        '#hard-reset-btn',
+        '.level-select',
+        '#prev-levels',
+        '#next-levels',
+        '.shop-items-container',
+        '.collection-log',
+        '.collection-category-selector',
+        '.collection-subcategory-container',
+        '.zone-selector',
+        '.zone-content',
+        '.tooltip',
+        '.monster-container',
+        '.nav-btn',
+        '#attack-button'
+    ];
+
+    selectors.forEach(selector => DOMCache.get(selector));
+}
 
 const DROP_TABLES = {
     // Lumbridge - Cow Pen
@@ -6402,8 +6471,8 @@ function showResetConfirmation() {
 
         if (confirmBtn) {
             confirmBtn.addEventListener('click', () => {
-                resetGame();
-                modalContainer.style.display = 'none';
+                localStorage.clear();
+                location.reload();
             });
         }
 
@@ -6423,66 +6492,6 @@ function showResetConfirmation() {
     } catch (error) {
         console.error('Error showing reset confirmation:', error);
         showLoot('Error showing reset dialog', 'error');
-    }
-}
-
-function resetGame() {
-    try {
-        // Clear local storage
-        localStorage.clear();
-
-        // Reset player data
-        player = {
-            gold: 0,
-            damage: 1,
-            inventory: [],
-            prestigeLevel: 0,
-            luck: 1.0,
-            champions: {
-                owned: {},
-                totalDPS: 0
-            },
-            stats: {
-                monstersKilled: 0,
-                bossesKilled: 0,
-                totalGoldEarned: 0
-            },
-            settings: {
-                autoSave: true,
-                notifications: true
-            },
-            upgrades: [],
-            activeBuffs: {},
-            collectionLog: []
-        };
-
-        // Reset game state
-        currentRegion = "lumbridge";
-        currentZone = "cowpen";
-        isAutoProgressEnabled = false;
-
-        // Reset regions and zones
-        Object.values(gameData.regions).forEach(region => {
-            region.unlocked = region.name === "Lumbridge";
-            region.miniBossesDefeated = 0;
-            region.bossDefeated = false;
-            Object.values(region.zones).forEach(zone => {
-                zone.currentLevel = 1;
-                zone.highestLevel = 1;
-                zone.completedLevels = [];
-                zone.currentKills = 0;
-                zone.unlocked = zone.requiredForUnlock ? false : true;
-                zone.defeatedMiniBosses = [];
-            });
-        });
-
-        // Re-initialize game
-        initGame();
-
-        showLoot("Game has been reset!", "info");
-    } catch (error) {
-        console.error("Error resetting game:", error);
-        showLoot("Error resetting game", "error");
     }
 }
 
