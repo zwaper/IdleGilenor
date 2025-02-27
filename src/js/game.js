@@ -1,4 +1,8 @@
-import { CHAMPION_CONFIG, championsData } from './champions.js'; // Import champions data
+// filepath: i:\Github\IdleGilenor\src\js\game.js
+import { CHAMPION_CONFIG, championsData } from './champions.js';
+import { DROP_TABLES } from './dropTables.js';
+import { gameData } from './gameData.js';
+import { ZONE_VARIANTS } from './zoneVariants.js';
 
 const DOMCache = {
     elements: new Map(),
@@ -71,70 +75,22 @@ function initDOMCache() {
     selectors.forEach(selector => DOMCache.get(selector));
 }
 
-const DROP_TABLES = {
-    // Lumbridge - Cow Pen
-    cow: {
-        normal: [
-            { item: "Cowhide", chance: 1/1, tier: "C" },
-            { item: "Raw Beef", chance: 1/1, tier: "C" },
-            { item: "Bones", chance: 1/1, tier: "C" }
-        ],
-        zombie: [
-            { item: "Rotting Hide", chance: 1/2, tier: "C" },
-            { item: "Cursed Bones", chance: 1/4, tier: "A" }
-        ],
-        skeletal: [
-            { item: "Bone Fragments", chance: 1/2, tier: "B" },
-            { item: "Ancient Bones", chance: 1/5, tier: "A" }
-        ],
-        zanaris: [
-            { item: "Shiny Hide", chance: 1/2, tier: "B" },
-            { item: "Moon Beef", chance: 1/5, tier: "A" }
-        ],
-        miniBoss: [
-            { item: "Golden Hide", chance: 1/1, tier: "B" },
-            { item: "Cow Crown", chance: 1/50, tier: "S" }
-        ],
-        eliteBoss: [
-            { item: "Elite Hide", chance: 1/1, tier: "S" },
-            { item: "Elite Horn", chance: 1/2, tier: "S" },
-            { item: "Elite Crown", chance: 1/4, tier: "S" }
-        ]
-    },
-
-    // Lumbridge - Goblin Village
-    goblin: {
-        normal: [
-            { item: "Bones", chance: 1/1, tier: "C" },
-            { item: "Rusty Sword", chance: 1/3, tier: "B" }
-        ],
-        chief: [
-            { item: "Ornate Bracelet", chance: 1/3, tier: "A" },
-            { item: "Chief's Helm", chance: 1/10, tier: "S" }
-        ],
-        brute: [
-            { item: "Broken Chainmail", chance: 1/2, tier: "B" },
-            { item: "Brute Force Potion", chance: 1/5, tier: "A" }
-        ]
-    }
-};
-
 // Game Constants
 const GAME_CONFIG = {
     VERSION: {
-        NUMBER: "0.3.0",
-        NAME: "Auto-Progress Update",
+        NUMBER: "0.4.0",
+        NAME: "Major Update",
         CHANGELOG: [
-            "Added Auto-Progress system with toggle functionality",
-            "Improved monster spawning and level progression",
-            "Enhanced boss battle mechanics",
-            "Fixed level completion and progression issues",
-            "Added proper state management for auto-progress",
-            "Improved save/load system reliability",
-            "Added proper backup save system",
-            "Enhanced UI feedback for auto-progress state",
-            "Fixed miniboss progression issues",
-            "Added proper zone completion tracking"
+            "Added new region: Varrock",
+            "Implemented new champion system",
+            "Enhanced UI and tooltips",
+            "Improved inventory and collection log",
+            "Added new items and drop tables",
+            "Fixed various bugs and performance issues",
+            "Updated auto-save and game state management",
+            "Enhanced boss and mini-boss mechanics",
+            "Improved region and zone progression",
+            "Added new achievements and rewards"
         ]
     },
     AUTO_PROGRESS: {
@@ -183,90 +139,6 @@ const GAME_CONFIG = {
         description: "The ultimate challenge with unlimited progression"
     }
     },
-};
-
-const ZONE_VARIANTS = {
-    cowpen: {
-        "Pasture": {  // First zone name (levels 1-20)
-            minLevel: 1,
-            maxLevel: 20,
-            variants: [
-                {
-                    name: "Cow",
-                    baseHP: 30,
-                    baseDamage: 2,
-                    images: [
-                        "cow.png",
-                        "cow2.png",
-                        "cow3.png",
-                        "cow_brown.png",
-                        "cow_spotted.png"
-                    ],
-                    weight: 100,    // Higher weight = more common
-                    tier: "C",      // C, B, A, or S tier
-                    dropTable: [
-                        { item: "Cowhide", chance: 1/1, tier: "C" },    
-                        { item: "Raw Beef", chance: 1/1, tier: "C" },         
-                        { item: "Bones", chance: 1/1, tier: "C" },     
-                    ]
-                }
-            ]
-        },
-        "Graveyard": {  // Levels 21-40
-            minLevel: 21,
-            maxLevel: 40,
-            variants: [
-                {
-                    name: "Zombie Cow",
-                    baseHP: 60,
-                    baseDamage: 4,
-                    image: "zombie_cow.png",
-                    weight: 100,
-                    tier: "B",
-                    dropTable: [
-                        { item: "Rotting Hide", chance: 0.8, tier: "C" },
-                        { item: "Cursed Bones", chance: 0.3, tier: "A" }
-                    ]
-                },
-                // Add new monster variant
-                {
-                    name: "Skeletal Cow",
-                    baseHP: 45,
-                    baseDamage: 6,
-                    image: "skeletal_cow.png",
-                    weight: 70,    // Less common than Zombie Cow
-                    tier: "A",     // Higher tier
-                    dropTable: [
-                        { item: "Bone Fragments", chance: 0.7, tier: "B" },
-                        { item: "Ancient Bones", chance: 0.2, tier: "A" }
-                    ]
-                }
-            ]
-        },
-        "Celestial Plains": {
-            minLevel: 41,
-            maxLevel: 80,
-            variants: [
-                {
-                    name: "Zanaris Cow",
-                    baseHP: 100,
-                    baseDamage: 8,
-                    image: "zanaris_cow.png",
-                    weight: 100,
-                    tier: "A",
-                    dropTable: [
-                        { item: "Shiny Hide", chance: 0.5, tier: "B" },
-                        { item: "Moon Beef", chance: 0.2, tier: "A" }
-                    ]
-                }
-            ]
-        },
-        "Convergence": {
-            minLevel: 81,
-            maxLevel: Infinity,
-            variants: [] // This will be populated with all previous variants
-        }
-    }
 };
 
 const ACHIEVEMENTS = [
@@ -602,7 +474,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ...other initialization code...
 });
 
-let currentLevelPage = 0;
 let tooltipTimeout = null;
 let isAutoProgressEnabled = false;
 
@@ -667,299 +538,6 @@ const REGION_DIFFICULTY_MULTIPLIERS = {
     // Future regions can scale up from here
     // falador: 4.0,
     // ardougne: 6.0,
-};
-
-// Game Data
-const gameData = {
-  regions: {
-    lumbridge: {
-      name: "Lumbridge",
-      unlocked: true,
-      miniBossesDefeated: 0,
-      bossDefeated: false,
-      zones: {
-        cowpen: {
-          name: "Cow Pen",
-          currentLevel: 1,
-          highestLevel: 1,
-          completedLevels: [],
-          monstersPerLevel: 10,
-          currentKills: 0,
-          monster: null,
-          requiredForUnlock: null, // No requirements for starting zone
-          variants: [
-            {
-              name: "Cow", // Levels 1-9
-              baseHP: 30,
-              baseDamage: 2,
-              images: [
-                "cow.png",
-              ],
-              weight: 100,
-              tier: "C",
-              dropTable: DROP_TABLES.cow.normal
-            },
-            {
-              name: "Zanaris Cow", // Unlocks at level 10-19
-              baseHP: 45,
-              baseDamage: 3,
-              image: "zanaris_cow.png",
-              weight: 70,
-              tier: "B",
-              dropTable: DROP_TABLES.cow.zanaris
-            },
-            {
-              name: "Zombie Cow", // Unlocks at level 20+
-              baseHP: 60,
-              baseDamage: 4,
-              image: "zombie_cow.png",
-              weight: 50,
-              tier: "A",
-              dropTable: DROP_TABLES.cow.zombie
-            },
-            {
-              name: "Elite Cow", // Level 100 Boss
-              baseHP: 5000,
-              baseDamage: 50,
-              images: [
-                  "elite_cow1.png",
-                  "elite_cow2.png",
-                  "elite_cow_gold.png"
-              ],
-              weight: 0, // Weight 0 means it won't spawn randomly
-              tier: "S",
-              level: 100, // Required level
-              timeLimit: 120,
-              dropTable: DROP_TABLES.cow.eliteBoss
-          },
-          ],
-          miniBoss: {
-            name: "Cow King",
-            hp: 500,
-            maxHP: 500,
-            image: "cow_king.png",
-            timeLimit: 45,
-            dropTable: DROP_TABLES.cow.miniBoss,
-            unlocked: false,
-          },
-        },
-        lumbridgeswamp: {
-          name: "Lumbridge Swamp",
-          currentLevel: 1,
-          highestLevel: 1,
-          completedLevels: [],
-          monstersPerLevel: 10,
-          currentKills: 0,
-          monster: null,
-          unlocked: false,  // Start locked
-          requiredForUnlock: {
-            zone: 'cowpen',
-            level: 50    // Requires level 50 in cowpen to unlock
-          },
-          variants: [
-            {
-              name: "Goblin", // Levels 1-9
-              baseHP: 25,
-              baseDamage: 3,
-              image: "goblin.png",
-              weight: 100,
-              tier: "C",
-              dropTable: DROP_TABLES.goblin.normal
-            },
-            {
-              name: "Goblin Chief", // Unlocks at level 10-19
-              baseHP: 40,
-              baseDamage: 5,
-              image: "goblin_chief.png",
-              weight: 70,
-              tier: "B",
-              dropTable: DROP_TABLES.goblin.chief
-            },
-            {
-              name: "Goblin Brute", // Unlocks at level 20+
-              baseHP: 55,
-              baseDamage: 7,
-              image: "goblin_brute.png",
-              weight: 50,
-              tier: "A",
-              dropTable: DROP_TABLES.goblin.brute
-            },
-          ],
-          miniBoss: {
-            name: "Goblin Warlord",
-            hp: 800,
-            maxHP: 800,
-            image: "goblin_warlord.png",
-            timeLimit: 60,
-            dropTable: DROP_TABLES.goblin.miniBoss,
-            unlocked: false,
-          },
-        },
-      },
-      regionBoss: {
-        name: "Lumbridge Giant",
-        hp: 2000,
-        maxHP: 2000,
-        image: "giant.png",
-        timeLimit: 120,
-        dropTable: DROP_TABLES.lumbridgeBoss,
-      },
-    },
-// Replace the varrock section in gameData.regions
-varrock: {
-    name: "Varrock",
-    unlocked: false,
-    miniBossesDefeated: 0,
-    bossDefeated: false,
-    zones: {
-        marketplace: {
-            name: "Marketplace",
-            currentLevel: 1,
-            highestLevel: 1,
-            completedLevels: [],
-            monstersPerLevel: 10,
-            currentKills: 0,
-            monster: null,
-            variants: [
-                {
-                    name: "Thief", // Levels 1-10
-                    baseHP: 75,     // Higher base stats than Lumbridge
-                    baseDamage: 5,
-                    images: ["thief1.png", "thief2.png", "thief3.png"],
-                    weight: 100,
-                    tier: "C",
-                    dropTable: [
-                        { item: "Stolen Valuables", chance: 0.7, tier: "C" },
-                        { item: "Lockpick", chance: 0.3, tier: "C" }
-                    ]
-                },
-                {
-                    name: "Guard", // Levels 11-20
-                    baseHP: 120,
-                    baseDamage: 8,
-                    image: "guard.png",
-                    weight: 70,
-                    tier: "B",
-                    dropTable: [
-                        { item: "Guard Badge", chance: 0.5, tier: "B" },
-                        { item: "Steel Sword", chance: 0.2, tier: "A" }
-                    ]
-                },
-                {
-                    name: "Elite Guard", // Levels 21+
-                    baseHP: 200,
-                    baseDamage: 12,
-                    image: "elite_guard.png",
-                    weight: 50,
-                    tier: "A",
-                    dropTable: [
-                        { item: "Elite Badge", chance: 0.4, tier: "A" },
-                        { item: "Guard Captain's Sword", chance: 0.1, tier: "S" }
-                    ]
-                },
-                {
-                    name: "Master Assassin", // Special variant for levels 50+
-                    baseHP: 500,
-                    baseDamage: 25,
-                    image: "master_assassin.png",
-                    weight: 30,
-                    tier: "S",
-                    dropTable: [
-                        { item: "Assassin's Blade", chance: 0.3, tier: "S" },
-                        { item: "Shadow Cape", chance: 0.1, tier: "S" }
-                    ]
-                }
-            ],
-            miniBoss: {
-                name: "Master Thief",
-                hp: 2500,  // Increased from 1000
-                maxHP: 2500,
-                damage: 25,  // Increased from 10
-                image: "master_thief.png",
-                timeLimit: 60,
-                dropTable: [
-                    { item: "Thief's Cape", chance: 1, tier: "A" },
-                    { item: "Master's Lockpick", chance: 0.2, tier: "S" }
-                ],
-                unlocked: false
-            }
-        },
-        slums: {  // New zone
-            name: "Slums",
-            currentLevel: 1,
-            highestLevel: 1,
-            completedLevels: [],
-            monstersPerLevel: 10,
-            currentKills: 0,
-            monster: null,
-            variants: [
-                {
-                    name: "Street Rat", // Levels 1-10
-                    baseHP: 85,
-                    baseDamage: 6,
-                    image: "street_rat.png",
-                    weight: 100,
-                    tier: "C",
-                    dropTable: [
-                        { item: "Rusty Dagger", chance: 0.6, tier: "C" },
-                        { item: "Tattered Clothes", chance: 0.4, tier: "C" }
-                    ]
-                },
-                {
-                    name: "Gang Member", // Levels 11-20
-                    baseHP: 140,
-                    baseDamage: 9,
-                    image: "gang_member.png",
-                    weight: 70,
-                    tier: "B",
-                    dropTable: [
-                        { item: "Gang Insignia", chance: 0.5, tier: "B" },
-                        { item: "Black Market Map", chance: 0.2, tier: "A" }
-                    ]
-                },
-                {
-                    name: "Gang Leader", // Levels 21+
-                    baseHP: 250,
-                    baseDamage: 15,
-                    image: "gang_leader.png",
-                    weight: 50,
-                    tier: "A",
-                    dropTable: [
-                        { item: "Leader's Ring", chance: 0.3, tier: "A" },
-                        { item: "Black Market Key", chance: 0.1, tier: "S" }
-                    ]
-                }
-            ],
-            miniBoss: {
-                name: "Crime Lord",
-                hp: 3000,
-                maxHP: 3000,
-                damage: 30,
-                image: "crime_lord.png",
-                timeLimit: 60,
-                dropTable: [
-                    { item: "Lord's Signet", chance: 1, tier: "S" },
-                    { item: "Black Market Access", chance: 0.15, tier: "S" }
-                ],
-                unlocked: false
-            }
-        }
-    },
-    regionBoss: {
-        name: "Varrock Guard Captain",
-        hp: 5000,    // Increased from 2500
-        maxHP: 5000,
-        damage: 50,  // Added damage stat
-        image: "guard_captain.png",
-        timeLimit: 120,
-        dropTable: [
-            { item: "Captain's Badge", chance: 1, tier: "S" },
-            { item: "Captain's Sword", chance: 0.5, tier: "S" },
-            { item: "Guard Captain's Armor", chance: 0.25, tier: "S" }
-            ]
-        }
-    },
-  },
 };
 
 const varrockItems = {
@@ -1668,6 +1246,11 @@ function buyChampionLevels(championId, amount) {
     }
 }
 
+window.purchaseChampionUpgrade = purchaseChampionUpgrade;
+window.buyChampionLevels = buyChampionLevels;
+window.unlockChampion = unlockChampion;
+window.formatRequirement = formatRequirement;
+
 // Ensure the Champions Panel is always rendered
 document.addEventListener('DOMContentLoaded', () => {
     renderChampionsPanel();
@@ -1845,13 +1428,6 @@ function calculateItemValue(tier, dropLevel) {
     };
 
     return Math.floor(baseGold * tierMultipliers[tier]);
-}
-
-// Add this function to update item values when level changes
-function updateItemValues(level) {
-    Object.entries(itemData).forEach(([itemName, data]) => {
-        data.value = calculateItemValue(data.tier, level);
-    });
 }
 
 function initializeMapControls() {
@@ -3988,43 +3564,6 @@ function handleTabSwitch(tabId) {
   }
 }
 
-function preloadAssets() {
-  return new Promise((resolve, reject) => {
-      try {
-          const imagePromises = [];
-          const images = new Set();
-
-          // Add game assets
-          Object.values(gameData.regions).forEach(region => {
-              Object.values(region.zones).forEach(zone => {
-                  zone.variants.forEach(variant => {
-                      const imagePath = `assets/${variant.image}`;
-                      if (!images.has(imagePath)) {
-                          images.add(imagePath);
-                          imagePromises.push(loadImage(imagePath));
-                      }
-                  });
-              });
-          });
-
-          // Add item assets
-          Object.values(itemData).forEach(item => {
-              const imagePath = `assets/items/${item.image}`;
-              if (!images.has(imagePath)) {
-                  images.add(imagePath);
-                  imagePromises.push(loadImage(imagePath));
-              }
-          });
-
-          Promise.all(imagePromises)
-              .then(() => resolve())
-              .catch(error => reject(error));
-      } catch (error) {
-          reject(error);
-      }
-  });
-}
-
 function loadImage(src) {
   return new Promise((resolve, reject) => {
       const img = new Image();
@@ -4395,13 +3934,6 @@ function startRegionBoss() {
   } catch (error) {
       console.error("Error starting region boss:", error);
       showLoot("Error starting boss fight", "error");
-  }
-}
-
-function closeModal() {
-  const modalContainer = document.getElementById("modal-container");
-  if (modalContainer) {
-    modalContainer.style.display = 'none';
   }
 }
 
@@ -6673,3 +6205,129 @@ function triggerRegionBossEncounter() {
     updateBossUI(region.boss);
 }
 window.addEventListener('beforeunload', cleanupGame);
+// Add functions and constants to the global scope
+window.DOMCache = DOMCache;
+window.initDOMCache = initDOMCache;
+window.DROP_TABLES = DROP_TABLES;
+window.GAME_CONFIG = GAME_CONFIG;
+window.ZONE_VARIANTS = ZONE_VARIANTS;
+window.ACHIEVEMENTS = ACHIEVEMENTS;
+window.checkAchievements = checkAchievements;
+window.handleGoldEarned = handleGoldEarned;
+window.showTab = showTab;
+window.renderAchievements = renderAchievements;
+window.showVersionInfo = showVersionInfo;
+window.positionTooltip = positionTooltip;
+window.showAchievementTooltip = showAchievementTooltip;
+window.getAchievementRequirementText = getAchievementRequirementText;
+window.formatReward = formatReward;
+window.toggleAutoProgress = toggleAutoProgress;
+window.REGION_DIFFICULTY_MULTIPLIERS = REGION_DIFFICULTY_MULTIPLIERS;
+window.gameData = gameData;
+window.varrockItems = varrockItems;
+window.checkZoneUnlocks = checkZoneUnlocks;
+window.calculateChampionBonus = calculateChampionBonus;
+window.calculateChampionBonusMultiplier = calculateChampionBonusMultiplier;
+window.calculateChampionCost = calculateChampionCost;
+window.calculateChampionDPS = calculateChampionDPS;
+window.buyChampion = buyChampion;
+window.updateTotalChampionDPS = updateTotalChampionDPS;
+window.applyChampionDPS = applyChampionDPS;
+window.initializeChampions = initializeChampions;
+window.checkChampionUnlock = checkChampionUnlock;
+window.purchaseChampionUpgrade = purchaseChampionUpgrade;
+window.renderChampionsPanel = renderChampionsPanel;
+window.renderChampionRequirements = renderChampionRequirements;
+window.calculateBulkChampionCost = calculateBulkChampionCost;
+window.calculateMaxAffordableLevels = calculateMaxAffordableLevels;
+window.buyChampionLevels = buyChampionLevels;
+window.unlockChampion = unlockChampion;
+window.formatRequirement = formatRequirement;
+window.updateVersionButton = updateVersionButton;
+window.calculateBaseGold = calculateBaseGold;
+window.calculateItemValue = calculateItemValue;
+window.initializeMapControls = initializeMapControls;
+window.openMapModal = openMapModal;
+window.initializeSidebar = initializeSidebar;
+window.toggleExpand = toggleExpand;
+window.updateSidebarStates = updateSidebarStates;
+window.zoomToButton = zoomToButton;
+window.resetZoom = resetZoom;
+window.updateMapZones = updateMapZones;
+window.closeMapModal = closeMapModal;
+window.handleMapNavigation = handleMapNavigation;
+window.loadImage = loadImage;
+window.handleBossDefeat = handleBossDefeat;
+window.handleRegionBossDefeat = handleRegionBossDefeat;
+window.unlockVarrock = unlockVarrock;
+window.initializeRegionMechanics = initializeRegionMechanics;
+window.startPatrolSystem = startPatrolSystem;
+window.handlePrestige = handlePrestige;
+window.unlockNewRegion = unlockNewRegion;
+window.showBossConfirmation = showBossConfirmation;
+window.startRegionBoss = startRegionBoss;
+window.renderRegionTabs = renderRegionTabs;
+window.prestige = prestige;
+window.startBossTimer = startBossTimer;
+window.calculateWeaponPrice = calculateWeaponPrice;
+window.calculateWeaponDamage = calculateWeaponDamage;
+window.generateMoreWeaponTiers = generateMoreWeaponTiers;
+window.shopItems = shopItems;
+window.itemPrices = itemPrices;
+window.findCurrentTier = findCurrentTier;
+window.renderEquipmentShop = renderEquipmentShop;
+window.renderShop = renderShop;
+window.buyItem = buyItem;
+window.applyItemEffect = applyItemEffect;
+window.findItemByName = findItemByName;
+window.getNextUpgrade = getNextUpgrade;
+window.toggleSellButton = toggleSellButton;
+window.sellItem = sellItem;
+window.initializeSellButtons = initializeSellButtons;
+window.sellStackedItem = sellStackedItem;
+window.getTierForItem = getTierForItem;
+window.updateAutoProgressButton = updateAutoProgressButton;
+window.loadGame = loadGame;
+window.loadBackupSave = loadBackupSave;
+window.handleVersionMigration = handleVersionMigration;
+window.compareVersions = compareVersions;
+window.checkDataIntegrity = checkDataIntegrity;
+window.lootItem = lootItem;
+window.renderCollectionLog = renderCollectionLog;
+window.createCollectionSlot = createCollectionSlot;
+window.showItemTooltip = showItemTooltip;
+window.sellBatch = sellBatch;
+window.hideItemTooltip = hideItemTooltip;
+window.addSlotInteractions = addSlotInteractions;
+window.updateTooltipPosition = updateTooltipPosition;
+window.preloadAssets = preloadAssets;
+window.getStackedInventory = getStackedInventory;
+window.showLoot = showLoot;
+window.setupTabPanels = setupTabPanels;
+window.updateUI = updateUI;
+window.getMonsterVariantsForLevel = getMonsterVariantsForLevel;
+window.getTierForVariant = getTierForVariant;
+window.updateInventory = updateInventory;
+window.cleanupEventListeners = cleanupEventListeners;
+window.createInventorySlot = createInventorySlot;
+window.initMobileUI = initMobileUI;
+window.setupMonsterClickHandler = setupMonsterClickHandler;
+window.initGame = initGame;
+window.toggleAutoSave = toggleAutoSave;
+window.GameLoop = GameLoop;
+window.UIBatcher = UIBatcher;
+window.cleanupGameState = cleanupGameState;
+window.PerformanceMonitor = PerformanceMonitor;
+window.cleanupGame = cleanupGame;
+window.showResetConfirmation = showResetConfirmation;
+window.closeModal = closeModal;
+window.formatZoneName = formatZoneName;
+window.setupEventListeners = setupEventListeners;
+window.renderZoneTabs = renderZoneTabs;
+window.switchRegion = switchRegion;
+window.updateZoneBackground = updateZoneBackground;
+window.switchZone = switchZone;
+window.checkAllZonesCapped = checkAllZonesCapped;
+window.checkRegionBossAvailability = checkRegionBossAvailability;
+window.handleZoneCompletion = handleZoneCompletion;
+window.triggerRegionBossEncounter = triggerRegionBossEncounter;
