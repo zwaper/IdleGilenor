@@ -172,14 +172,20 @@ body {
 }
 
 .osrs-panel {
-  display: none;
-  flex-direction: column;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 100%;
-  overflow: hidden; /* Add this */
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .osrs-panel.active {
-  display: block;
+  visibility: visible;
+  opacity: 1;
+  position: relative;
 }
 
 /* Inventory Panel Specific */

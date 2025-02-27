@@ -1,3 +1,5 @@
+import { DOMCache, initDOMCache, updateUI, setupTabPanels } from './domManager.js';
+
 const DROP_TABLES = {
     // Lumbridge - Cow Pen
     cow: {
@@ -1464,22 +1466,38 @@ function renderChampionsPanel() {
         const container = document.getElementById('champions-panel');
         if (!container) return;
 
+        // Save the current scroll position
+        const scrollPosition = container.scrollTop;
+
         // Get selected buy amount from active button
         const activeBuyAmount = document.querySelector('.buy-amount-btn.active')?.dataset.amount || '1';
 
-        let html = `
-            <div class="champions-header">
-                <h2>Champions</h2>
-                <div class="total-dps">Total DPS: ${formatNumber(player.champions.totalDPS)}</div>
-            </div>
-            <div class="buy-controls">
-                <button class="osrs-button buy-amount-btn ${activeBuyAmount === '1' ? 'active' : ''}" data-amount="1">Buy 1x</button>
-                <button class="osrs-button buy-amount-btn ${activeBuyAmount === '10' ? 'active' : ''}" data-amount="10">Buy 10x</button>
-                <button class="osrs-button buy-amount-btn ${activeBuyAmount === '100' ? 'active' : ''}" data-amount="100">Buy 100x</button>
-                <button class="osrs-button buy-amount-btn ${activeBuyAmount === 'max' ? 'active' : ''}" data-amount="max">Buy Max</button>
-            </div>
-            <div class="champions-container">
+        // Create a document fragment to batch DOM updates
+        const fragment = document.createDocumentFragment();
+
+        // Create header
+        const header = document.createElement('div');
+        header.className = 'champions-header';
+        header.innerHTML = `
+            <h2>Champions</h2>
+            <div class="total-dps">Total DPS: ${formatNumber(player.champions.totalDPS)}</div>
         `;
+        fragment.appendChild(header);
+
+        // Create buy controls
+        const buyControls = document.createElement('div');
+        buyControls.className = 'buy-controls';
+        buyControls.innerHTML = `
+            <button class="osrs-button buy-amount-btn ${activeBuyAmount === '1' ? 'active' : ''}" data-amount="1">Buy 1x</button>
+            <button class="osrs-button buy-amount-btn ${activeBuyAmount === '10' ? 'active' : ''}" data-amount="10">Buy 10x</button>
+            <button class="osrs-button buy-amount-btn ${activeBuyAmount === '100' ? 'active' : ''}" data-amount="100">Buy 100x</button>
+            <button class="osrs-button buy-amount-btn ${activeBuyAmount === 'max' ? 'active' : ''}" data-amount="max">Buy Max</button>
+        `;
+        fragment.appendChild(buyControls);
+
+        // Create champions container
+        const championsContainer = document.createElement('div');
+        championsContainer.className = 'champions-container';
 
         // Find the highest unlocked champion index
         let highestUnlockedIndex = -1;
@@ -1506,94 +1524,99 @@ function renderChampionsPanel() {
                 max: calculateMaxAffordableLevels(champion, owned.level, player.gold)
             };
 
-            html += `
-                <div class="champion-card ${isUnlocked ? 'unlocked' : ''} ${canUnlock ? 'can-unlock' : ''}">
-                    <div class="champion-header">
-                        <img src="assets/champions/${champion.image}" alt="${champion.name}">
-                        <div class="champion-info">
-                            <h3>${champion.name}</h3>
-                            ${isUnlocked ? `
-                                <p>Level ${owned.level}</p>
-                                <p>${champion.id === "clickWarrior" ? 
-                                    `Click Damage: ${formatNumber(owned.clickDamageBonus || 0)}` : 
-                                    `DPS: ${formatNumber(owned.currentDPS || 0)}`}</p>
-                            ` : `
-                                <div class="requirements">
-                                    <p>Requirements:</p>
-                                    ${champion.id === "clickWarrior" ? 
-                                        `<p>💰 ${formatNumber(champion.baseCost)} gold</p>` :
-                                        renderChampionRequirements(champion.id)
-                                    }
+            const championCard = document.createElement('div');
+            championCard.className = `champion-card ${isUnlocked ? 'unlocked' : ''} ${canUnlock ? 'can-unlock' : ''}`;
+            championCard.innerHTML = `
+                <div class="champion-header">
+                    <img src="assets/champions/${champion.image}" alt="${champion.name}">
+                    <div class="champion-info">
+                        <h3>${champion.name}</h3>
+                        ${isUnlocked ? `
+                            <p>Level ${owned.level}</p>
+                            <p>${champion.id === "clickWarrior" ? 
+                                `Click Damage: ${formatNumber(owned.clickDamageBonus || 0)}` : 
+                                `DPS: ${formatNumber(owned.currentDPS || 0)}`}</p>
+                        ` : `
+                            <div class="requirements">
+                                <p>Requirements:</p>
+                                ${champion.id === "clickWarrior" ? 
+                                    `<p>💰 ${formatNumber(champion.baseCost)} gold</p>` :
+                                    renderChampionRequirements(champion.id)
+                                }
+                            </div>
+                        `}
+                    </div>
+                </div>
+                <div class="champion-description">${champion.description}</div>
+                ${isUnlocked ? `
+                    <div class="upgrades-section">
+                        <h4>Upgrades</h4>
+                        <div class="upgrade-list">
+                            ${champion.upgrades.map(upgrade => `
+                                <div class="upgrade-item ${upgrade.purchased ? 'purchased' : ''} 
+                                            ${owned.level >= upgrade.level ? 'available' : 'locked'}">
+                                    <div class="upgrade-header">
+                                        <span class="upgrade-name">${upgrade.name}</span>
+                                        <span class="upgrade-cost">${formatNumber(upgrade.cost)} gold</span>
+                                    </div>
+                                    <div class="upgrade-details">
+                                        <span class="upgrade-effect">${upgrade.effect}</span>
+                                        <span class="upgrade-level">Requires Level ${upgrade.level}</span>
+                                    </div>
+                                    <button class="osrs-button upgrade-btn" 
+                                        onclick="purchaseChampionUpgrade('${champion.id}', '${upgrade.name}')"
+                                        ${upgrade.purchased || owned.level < upgrade.level || player.gold < upgrade.cost ? 
+                                        'disabled' : ''}>
+                                        ${upgrade.purchased ? 'Purchased' : 
+                                          owned.level < upgrade.level ? `Requires Level ${upgrade.level}` :
+                                          player.gold < upgrade.cost ? 'Not Enough Gold' : 'Purchase'}
+                                    </button>
                                 </div>
-                            `}
+                            `).join('')}
                         </div>
                     </div>
-                    <div class="champion-description">${champion.description}</div>
-
-                    ${isUnlocked ? `
-                        <div class="upgrades-section">
-                            <h4>Upgrades</h4>
-                            <div class="upgrade-list">
-                                ${champion.upgrades.map(upgrade => `
-                                    <div class="upgrade-item ${upgrade.purchased ? 'purchased' : ''} 
-                                                ${owned.level >= upgrade.level ? 'available' : 'locked'}">
-                                        <div class="upgrade-header">
-                                            <span class="upgrade-name">${upgrade.name}</span>
-                                            <span class="upgrade-cost">${formatNumber(upgrade.cost)} gold</span>
-                                        </div>
-                                        <div class="upgrade-details">
-                                            <span class="upgrade-effect">${upgrade.effect}</span>
-                                            <span class="upgrade-level">Requires Level ${upgrade.level}</span>
-                                        </div>
-                                        <button class="osrs-button upgrade-btn" 
-                                            onclick="purchaseChampionUpgrade('${champion.id}', '${upgrade.name}')"
-                                            ${upgrade.purchased || owned.level < upgrade.level || player.gold < upgrade.cost ? 
-                                            'disabled' : ''}>
-                                            ${upgrade.purchased ? 'Purchased' : 
-                                              owned.level < upgrade.level ? `Requires Level ${upgrade.level}` :
-                                              player.gold < upgrade.cost ? 'Not Enough Gold' : 'Purchase'}
-                                        </button>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-
-                        <div class="buy-buttons">
-                            <button class="osrs-button ${player.gold >= costs.single ? 'can-afford' : ''}"
-                                onclick="buyChampionLevels('${champion.id}', 1)"
-                                ${player.gold >= costs.single ? '' : 'disabled'}>
-                                Buy 1x (${formatNumber(costs.single)} gold)
-                            </button>
-                            <button class="osrs-button ${player.gold >= costs.ten ? 'can-afford' : ''}"
-                                onclick="buyChampionLevels('${champion.id}', 10)"
-                                ${player.gold >= costs.ten ? '' : 'disabled'}>
-                                Buy 10x (${formatNumber(costs.ten)} gold)
-                            </button>
-                            <button class="osrs-button ${player.gold >= costs.hundred ? 'can-afford' : ''}"
-                                onclick="buyChampionLevels('${champion.id}', 100)"
-                                ${player.gold >= costs.hundred ? '' : 'disabled'}>
-                                Buy 100x (${formatNumber(costs.hundred)} gold)
-                            </button>
-                            ${costs.max.levels > 0 ? `
-                                <button class="osrs-button can-afford"
-                                    onclick="buyChampionLevels('${champion.id}', ${costs.max.levels})">
-                                    Buy Max (${formatNumber(costs.max.levels)} lvls - ${formatNumber(costs.max.cost)} gold)
-                                </button>
-                            ` : ''}
-                        </div>
-                    ` : `
-                        <button class="osrs-button" 
-                            onclick="unlockChampion('${champion.id}')"
-                            ${canUnlock ? '' : 'disabled'}>
-                            ${canUnlock ? 'Unlock Champion' : 'Locked'}
+                    <div class="buy-buttons">
+                        <button class="osrs-button ${player.gold >= costs.single ? 'can-afford' : ''}"
+                            onclick="buyChampionLevels('${champion.id}', 1)"
+                            ${player.gold >= costs.single ? '' : 'disabled'}>
+                            Buy 1x (${formatNumber(costs.single)} gold)
                         </button>
-                    `}
-                </div>
+                        <button class="osrs-button ${player.gold >= costs.ten ? 'can-afford' : ''}"
+                            onclick="buyChampionLevels('${champion.id}', 10)"
+                            ${player.gold >= costs.ten ? '' : 'disabled'}>
+                            Buy 10x (${formatNumber(costs.ten)} gold)
+                        </button>
+                        <button class="osrs-button ${player.gold >= costs.hundred ? 'can-afford' : ''}"
+                            onclick="buyChampionLevels('${champion.id}', 100)"
+                            ${player.gold >= costs.hundred ? '' : 'disabled'}>
+                            Buy 100x (${formatNumber(costs.hundred)} gold)
+                        </button>
+                        ${costs.max.levels > 0 ? `
+                            <button class="osrs-button can-afford"
+                                onclick="buyChampionLevels('${champion.id}', ${costs.max.levels})">
+                                Buy Max (${formatNumber(costs.max.levels)} lvls - ${formatNumber(costs.max.cost)} gold)
+                            </button>
+                        ` : ''}
+                    </div>
+                ` : `
+                    <button class="osrs-button" 
+                        onclick="unlockChampion('${champion.id}')"
+                        ${canUnlock ? '' : 'disabled'}>
+                        ${canUnlock ? 'Unlock Champion' : 'Locked'}
+                    </button>
+                `}
             `;
+            championsContainer.appendChild(championCard);
         });
 
-        html += '</div>';
-        container.innerHTML = html;
+        fragment.appendChild(championsContainer);
+
+        // Update the container with the new content
+        container.innerHTML = '';
+        container.appendChild(fragment);
+
+        // Restore the scroll position
+        container.scrollTop = scrollPosition;
 
         // Add click handlers for buy amount buttons
         document.querySelectorAll('.buy-amount-btn').forEach(btn => {
@@ -1728,7 +1751,6 @@ function buyChampionLevels(championId, amount) {
 // Ensure the Champions Panel is always rendered
 document.addEventListener('DOMContentLoaded', () => {
     renderChampionsPanel();
-    setInterval(renderChampionsPanel, 1000); // Update every second
 });
 
 function formatRequirement(requirement, value) {
@@ -5760,122 +5782,73 @@ function showLoot(message, tier) {
     }
 }
 
-function initDOMCache() {
-    const selectors = [
-        '#loot-feed',
-        '#zone-name',
-        '#zone-level',
-        '#monster-name',
-        '#monster-sprite',
-        '#health-bar',
-        '#health-text',
-        '.progress-container',
-        '.progress-fill',
-        '.progress-label span:last-child',
-        '#stat-gold',
-        '#stat-damage',
-        '#stat-luck',
-        '#stat-prestige',
-        '#stat-monsters',
-        '#stat-bosses',
-        '#region-boss-btn',
-        '#boss-timer',
-        '#prestige-btn',
-        '.inventory-grid',
-        '.sell-buttons',
-        '.left-panel',
-        '.right-panel',
-        '.zone-tabs',
-        '#scene-background',
-        '#modal-container',
-        '#auto-progress',
-        '#version-btn',
-        '#hard-reset-btn',
-        '.level-select',
-        '#prev-levels',
-        '#next-levels',
-        '.shop-items-container',
-        '.collection-log',
-        '.collection-category-selector',
-        '.collection-subcategory-container',
-        '.zone-selector',
-        '.zone-content',
-        '.tooltip',
-        '.monster-container',
-        '.nav-btn',
-        '#attack-button'
-    ];
-
-    selectors.forEach(selector => DOMCache.get(selector));
-}
-
 function setupTabPanels() {
-  try {
-      // Set up left panel tabs
-      const leftPanel = document.querySelector('.left-panel');
-      if (leftPanel) {
-          const leftTabs = leftPanel.querySelectorAll('.osrs-interface-tab');
-          const leftPanels = leftPanel.querySelectorAll('.osrs-panel');
+    try {
+        // Set up left panel tabs
+        const leftPanel = document.querySelector('.left-panel');
+        if (leftPanel) {
+            const leftTabs = leftPanel.querySelectorAll('.osrs-interface-tab');
+            const leftPanels = leftPanel.querySelectorAll('.osrs-panel');
 
-          leftTabs.forEach(tab => {
-              tab.addEventListener('click', () => {
-                  // Remove active class from all tabs in LEFT panel only
-                  leftTabs.forEach(t => t.classList.remove('active'));
-                  tab.classList.add('active');
+            leftTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs in LEFT panel only
+                    leftTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
 
-                  // Hide all panels in LEFT panel only
-                  leftPanels.forEach(panel => panel.classList.remove('active'));
+                    // Hide all panels in LEFT panel only
+                    leftPanels.forEach(panel => panel.classList.remove('active'));
 
-                  // Show selected panel
-                  const panelId = tab.getAttribute('data-panel');
-                  const targetPanel = leftPanel.querySelector(`#${panelId}-panel`);
-                  if (targetPanel) {
-                      targetPanel.classList.add('active');
-                      // Handle special panel renders
-                      if (panelId === 'shop') {
-                        renderShop();
-                    } else if (panelId === 'inventory') {
-                        updateInventory();
-                    } else if (panelId === 'champions') { // <-- Fixed
-                        renderChampionsPanel();
+                    // Show selected panel
+                    const panelId = tab.getAttribute('data-panel');
+                    const targetPanel = leftPanel.querySelector(`#${panelId}-panel`);
+                    if (targetPanel) {
+                        targetPanel.classList.add('active');
+                        // Handle special panel renders
+                        if (panelId === 'shop') {
+                            renderShop();
+                        } else if (panelId === 'inventory') {
+                            updateInventory();
+                        } else if (panelId === 'champions') {
+                            renderChampionsPanel();
+                        }
                     }
-                  }
-              });
-          });
-      }
+                });
+            });
+        }
 
-      // Set up right panel tabs
-      const rightPanel = document.querySelector('.right-panel');
-      if (rightPanel) {
-          const rightTabs = rightPanel.querySelectorAll('.osrs-interface-tab');
-          const rightPanels = rightPanel.querySelectorAll('.osrs-panel');
+        // Set up right panel tabs
+        const rightPanel = document.querySelector('.right-panel');
+        if (rightPanel) {
+            const rightTabs = rightPanel.querySelectorAll('.osrs-interface-tab');
+            const rightPanels = rightPanel.querySelectorAll('.osrs-panel');
 
-          rightTabs.forEach(tab => {
-              tab.addEventListener('click', () => {
-                  // Remove active class from all tabs in RIGHT panel only
-                  rightTabs.forEach(t => t.classList.remove('active'));
-                  tab.classList.add('active');
+            rightTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs in RIGHT panel only
+                    rightTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
 
-                  // Hide all panels in RIGHT panel only
-                  rightPanels.forEach(panel => panel.classList.remove('active'));
+                    // Hide all panels in RIGHT panel only
+                    rightPanels.forEach(panel => panel.classList.remove('active'));
 
-                  // Show selected panel
-                  const panelId = tab.getAttribute('data-panel');
-                  const targetPanel = rightPanel.querySelector(`#${panelId}-panel`);
-                  if (targetPanel) {
-                      targetPanel.classList.add('active');
-                      // Handle special panel renders
-                      if (panelId === 'collection') {
-                          renderCollectionLog();
-                      }
-                  }
-              });
-          });
-      }
-  } catch (error) {
-      console.error('Error setting up tab panels:', error);
-      showLoot('Error initializing interface panels', 'error');
-  }
+                    // Show selected panel
+                    const panelId = tab.getAttribute('data-panel');
+                    const targetPanel = rightPanel.querySelector(`#${panelId}-panel`);
+                    if (targetPanel) {
+                        targetPanel.classList.add('active');
+                        // Handle special panel renders
+                        if (panelId === 'collection') {
+                            renderCollectionLog();
+                        }
+                    }
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error setting up tab panels:', error);
+        showLoot('Error initializing interface panels', 'error');
+    }
 }
 
 function updateUI() {
@@ -6129,88 +6102,85 @@ function setupMonsterClickHandler() {
 
 
 function initGame() {
-  try {
-      // Ensure current region and zone are set
-      currentRegion = currentRegion || "lumbridge";
-      currentZone = currentZone || "cowpen";
+    try {
+        // Ensure current region and zone are set
+        currentRegion = currentRegion || "lumbridge";
+        currentZone = currentZone || "cowpen";
 
-      // Initialize game systems
-      initializeCollectionLog();
-      preloadAssets();
+        // Initialize game systems
+        initializeCollectionLog();
+        preloadAssets();
 
-      // Load saved game or set initial state
-      loadGame();
+        // Load saved game or set initial state
+        loadGame();
 
-      // Initialize UI elements
-      setupMonsterClickHandler();
-      initializeSellButtons();
-      updateUI();
-      renderLevelSelect();
-      renderCollectionLog();
-      updateInventory();
-      renderShop();
-      renderRegionTabs();
-      renderZoneTabs();
+        // Initialize UI elements
+        setupMonsterClickHandler();
+        initializeSellButtons();
+        updateUI();
+        renderLevelSelect();
+        renderCollectionLog();
+        updateInventory();
+        renderShop();
+        renderRegionTabs();
+        renderZoneTabs();
 
-      // Set default active panels
-      const leftPanel = document.querySelector('.left-panel');
-      const rightPanel = document.querySelector('.right-panel');
+        // Set default active panels
+        const leftPanel = document.querySelector('.left-panel');
+        const rightPanel = document.querySelector('.right-panel');
 
-// Inside initGame function, replace the left panel initialization code with:
-if (leftPanel) {
-    const championsTab = leftPanel.querySelector('[data-panel="champions"]');
-    const championsPanel = leftPanel.querySelector('#champions-panel');
-    if (championsTab && championsPanel) {
-        // Remove active class from all tabs and panels
-        leftPanel.querySelectorAll('.osrs-interface-tab').forEach(tab => tab.classList.remove('active'));
-        leftPanel.querySelectorAll('.osrs-panel').forEach(panel => panel.classList.remove('active'));
-        // Set champions active
-        championsTab.classList.add('active');
-        championsPanel.classList.add('active');
-    }
-}
-
-      // Set collection log active in right panel
-      if (rightPanel) {
-          const collectionTab = rightPanel.querySelector('[data-panel="collection"]');
-          const collectionPanel = rightPanel.querySelector('#collection-panel');
-          if (collectionTab && collectionPanel) {
-              // Remove active class from all tabs and panels
-              rightPanel.querySelectorAll('.osrs-interface-tab').forEach(tab => tab.classList.remove('active'));
-              rightPanel.querySelectorAll('.osrs-panel').forEach(panel => panel.classList.remove('active'));
-              // Set collection log active
-              collectionTab.classList.add('active');
-              collectionPanel.classList.add('active');
-          }
-      }
-      
-
-      // Set up initial monster
-      const zone = gameData.regions[currentRegion].zones[currentZone];
-      spawnMonster(zone);
-      updateItemValues(zone.currentLevel);
-
-      // Setup event listeners
-      setupEventListeners();
-
-              // Initialize champions if needed
-              if (!player.champions) {
-                player.champions = {
-                    owned: {},
-                    totalDPS: 0
-                };
+        if (leftPanel) {
+            const championsTab = leftPanel.querySelector('[data-panel="champions"]');
+            const championsPanel = leftPanel.querySelector('#champions-panel');
+            if (championsTab && championsPanel) {
+                // Remove active class from all tabs and panels
+                leftPanel.querySelectorAll('.osrs-interface-tab').forEach(tab => tab.classList.remove('active'));
+                leftPanel.querySelectorAll('.osrs-panel').forEach(panel => panel.classList.remove('active'));
+                // Set champions active
+                championsTab.classList.add('active');
+                championsPanel.classList.add('active');
             }
-            initializeChampions();
-            renderChampionsPanel();
+        }
 
-                // Initialize mobile UI if on mobile device
-                if (/Mobi|Android/i.test(navigator.userAgent)) {
-                    initMobileUI();
-                }
+        if (rightPanel) {
+            const collectionTab = rightPanel.querySelector('[data-panel="collection"]');
+            const collectionPanel = rightPanel.querySelector('#collection-panel');
+            if (collectionTab && collectionPanel) {
+                // Remove active class from all tabs and panels
+                rightPanel.querySelectorAll('.osrs-interface-tab').forEach(tab => tab.classList.remove('active'));
+                rightPanel.querySelectorAll('.osrs-panel').forEach(panel => panel.classList.remove('active'));
+                // Set collection log active
+                collectionTab.classList.add('active');
+                collectionPanel.classList.add('active');
+            }
+        }
 
-      if (!player.collectionLog || !Array.isArray(player.collectionLog)) {
-          player.collectionLog = [];
-      }
+        // Set up initial monster
+        const zone = gameData.regions[currentRegion].zones[currentZone];
+        spawnMonster(zone);
+        updateItemValues(zone.currentLevel);
+
+        // Setup event listeners
+        setupEventListeners();
+
+        // Initialize champions if needed
+        if (!player.champions) {
+            player.champions = {
+                owned: {},
+                totalDPS: 0
+            };
+        }
+        initializeChampions();
+        renderChampionsPanel();
+
+        // Initialize mobile UI if on mobile device
+        if (/Mobi|Android/i.test(navigator.userAgent)) {
+            initMobileUI();
+        }
+
+        if (!player.collectionLog || !Array.isArray(player.collectionLog)) {
+            player.collectionLog = [];
+        }
 
         // Set up auto-save interval if enabled
         if (player.settings.autoSave) {
@@ -6218,7 +6188,7 @@ if (leftPanel) {
             if (window.autoSaveInterval) {
                 clearInterval(window.autoSaveInterval);
             }
-            
+
             // Set new interval
             window.autoSaveInterval = setInterval(() => {
                 if (player.settings.autoSave) {
@@ -6229,10 +6199,10 @@ if (leftPanel) {
                 }
             }, GAME_CONFIG.SAVE.AUTOSAVE_INTERVAL);
         }
-  } catch (error) {
-      console.error("Error initializing game:", error);
-      showLoot("Error initializing game", "error");
-  }
+    } catch (error) {
+        console.error("Error initializing game:", error);
+        showLoot("Error initializing game", "error");
+    }
 }
 
 function toggleAutoSave() {
@@ -6342,28 +6312,6 @@ class UIBatcher {
     }
 }
 
-const DOMCache = {
-    elements: new Map(),
-
-    get(selector) {
-        if (!this.elements.has(selector)) {
-            const element = document.querySelector(selector);
-            if (element) {
-                this.elements.set(selector, element);
-            }
-        }
-        return this.elements.get(selector);
-    },
-
-    invalidate(selector) {
-        this.elements.delete(selector);
-    },
-
-    clear() {
-        this.elements.clear();
-    }
-};
-
 function cleanupGameState() {
     // Clear unnecessary data
     player.inventory = player.inventory.filter(item => item !== null);
@@ -6429,51 +6377,113 @@ function cleanupGame() {
 }
 
 function showResetConfirmation() {
-  try {
-      const modalContainer = document.getElementById('modal-container');
-      if (!modalContainer) return;
+    try {
+        const modalContainer = document.getElementById('modal-container');
+        if (!modalContainer) return;
 
-      modalContainer.innerHTML = `
-          <div class="modal">
-              <div class="modal-content">
-                  <h2>⚠️ Warning: Hard Reset</h2>
-                  <p>This will completely reset your game progress.</p>
-                  <p>This action cannot be undone!</p>
-                  <div class="modal-buttons">
-                      <button class="osrs-button danger-button" id="confirm-reset-btn">Reset Game</button>
-                      <button class="osrs-button" id="cancel-reset-btn">Cancel</button>
-                  </div>
-              </div>
-          </div>
-      `;
+        modalContainer.innerHTML = `
+            <div class="modal">
+                <div class="modal-content">
+                    <h2>⚠️ Warning: Hard Reset</h2>
+                    <p>This will completely reset your game progress.</p>
+                    <p>This action cannot be undone!</p>
+                    <div class="modal-buttons">
+                        <button class="osrs-button danger-button" id="confirm-reset-btn">Reset Game</button>
+                        <button class="osrs-button" id="cancel-reset-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
 
-      modalContainer.style.display = 'flex';
+        modalContainer.style.display = 'flex';
 
-      const confirmBtn = document.getElementById('confirm-reset-btn');
-      if (confirmBtn) {
-          confirmBtn.addEventListener('click', () => {
-              localStorage.clear();
-              location.reload();
-          });
-      }
+        const confirmBtn = document.getElementById('confirm-reset-btn');
+        const cancelBtn = document.getElementById('cancel-reset-btn');
 
-      if (cancelBtn) {
-          cancelBtn.addEventListener('click', () => {
-              modalContainer.style.display = 'none';
-          });
-      }
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', () => {
+                resetGame();
+                modalContainer.style.display = 'none';
+            });
+        }
 
-      // Close modal when clicking outside
-      modalContainer.addEventListener('click', (e) => {
-          if (e.target === modalContainer) {
-              modalContainer.style.display = 'none';
-          }
-      });
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                modalContainer.style.display = 'none';
+            });
+        }
 
-  } catch (error) {
-      console.error('Error showing reset confirmation:', error);
-      showLoot('Error showing reset dialog', 'error');
-  }
+        // Close modal when clicking outside
+        modalContainer.addEventListener('click', (e) => {
+            if (e.target === modalContainer) {
+                modalContainer.style.display = 'none';
+            }
+        });
+
+    } catch (error) {
+        console.error('Error showing reset confirmation:', error);
+        showLoot('Error showing reset dialog', 'error');
+    }
+}
+
+function resetGame() {
+    try {
+        // Clear local storage
+        localStorage.clear();
+
+        // Reset player data
+        player = {
+            gold: 0,
+            damage: 1,
+            inventory: [],
+            prestigeLevel: 0,
+            luck: 1.0,
+            champions: {
+                owned: {},
+                totalDPS: 0
+            },
+            stats: {
+                monstersKilled: 0,
+                bossesKilled: 0,
+                totalGoldEarned: 0
+            },
+            settings: {
+                autoSave: true,
+                notifications: true
+            },
+            upgrades: [],
+            activeBuffs: {},
+            collectionLog: []
+        };
+
+        // Reset game state
+        currentRegion = "lumbridge";
+        currentZone = "cowpen";
+        isAutoProgressEnabled = false;
+
+        // Reset regions and zones
+        Object.values(gameData.regions).forEach(region => {
+            region.unlocked = region.name === "Lumbridge";
+            region.miniBossesDefeated = 0;
+            region.bossDefeated = false;
+            Object.values(region.zones).forEach(zone => {
+                zone.currentLevel = 1;
+                zone.highestLevel = 1;
+                zone.completedLevels = [];
+                zone.currentKills = 0;
+                zone.unlocked = zone.requiredForUnlock ? false : true;
+                zone.defeatedMiniBosses = [];
+            });
+        });
+
+        // Re-initialize game
+        initGame();
+
+        showLoot("Game has been reset!", "info");
+    } catch (error) {
+        console.error("Error resetting game:", error);
+        showLoot("Error resetting game", "error");
+    }
 }
 
 function closeModal() {
@@ -6731,7 +6741,7 @@ function switchZone(zoneId) {
 
 window.addEventListener('DOMContentLoaded', () => {
     try {
-        // Load saved game first
+        initDOMCache(); // Initialize DOMCache early
         loadGame();
         updateVersionButton();
         
@@ -6748,17 +6758,18 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-  try {
-      initDOMCache();
-      UIManager.init(); // Initialize UI element references
-      await preloadAssets();
-      initGame();
-      setupEventListeners();
-      setupLevelNavigation();
-  } catch (error) {
-      console.error("Error initializing game:", error);
-      showLoot("Error loading game assets", "error");
-  }
+    try {
+        initDOMCache();
+        UIManager.init(); // Initialize UI element references
+        await preloadAssets();
+        initGame();
+        setupEventListeners();
+        setupLevelNavigation();
+        setupTabPanels(); // Ensure this is called
+    } catch (error) {
+        console.error("Error initializing game:", error);
+        showLoot("Error loading game assets", "error");
+    }
 });
 
 function checkAllZonesCapped(region) {

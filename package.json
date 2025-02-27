@@ -14,8 +14,8 @@
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^28.2.0",
-    "electron-builder": "^24.8.0"
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3"
   },
   "build": {
     "appId": "com.yourname.idlegilenor",
