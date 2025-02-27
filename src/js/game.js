@@ -3531,13 +3531,13 @@ function renderLevelSelect() {
 
 function updateHealthDisplay() {
   try {
+      const healthBar = DOMCache.get('#health-bar');
+      const healthText = DOMCache.get('#health-text');
+      const monsterName = DOMCache.get('#monster-name');
       const zone = gameData.regions[currentRegion].zones[currentZone];
       const monster = player.currentBoss || zone.monster;
+      
       if (!monster) return;
-
-      const healthBar = document.getElementById('health-bar');
-      const healthText = document.getElementById('health-text');
-      const monsterName = document.getElementById('monster-name');
       
       // Update health bar width and color
       if (healthBar) {
@@ -3906,6 +3906,8 @@ function handleLevelUp(zone) {
     }
 }
 
+const AUTO_PROGRESS_DELAY = GAME_CONFIG.AUTO_PROGRESS.DELAY;
+
 function handleMonsterDeath(zone) {
     try {
         if (!zone || !zone.monster) {
@@ -3946,7 +3948,7 @@ function handleMonsterDeath(zone) {
                                 showLoot(`🎉 New highest level: ${nextLevel}!`, "S");
                             }
                             selectLevel(nextLevel);
-                        }, GAME_CONFIG.AUTO_PROGRESS.DELAY);
+                        }, AUTO_PROGRESS_DELAY);
                     } else {
                         // Reset kills and stay at current level if can't progress
                         zone.currentKills = 0;
@@ -4902,7 +4904,7 @@ function renderEquipmentShop() {
 
 function renderShop() {
   try {
-      const container = document.querySelector(".shop-items-container");
+      const container = DOMCache.get(".shop-items-container");
       if (!container) return;
 
       // Show different shop content based on region
@@ -5738,24 +5740,73 @@ function getStackedInventory() {
 }
 
 function showLoot(message, tier) {
-  const feed = document.getElementById("loot-feed");
-  const entry = document.createElement("div");
-  entry.className = `loot-entry ${tier}-tier`; // Instead of just 'error'
-  entry.textContent = message;
+    const feed = DOMCache.get("#loot-feed");
+    const entry = document.createElement("div");
+    entry.className = `loot-entry ${tier}-tier`; // Instead of just 'error'
+    entry.textContent = message;
 
-  // Actually add to DOM
-  feed.insertBefore(entry, feed.firstChild);
+    // Actually add to DOM
+    feed.insertBefore(entry, feed.firstChild);
 
-  // Limit to 5 messages
-  if (feed.children.length > 5) {
-    feed.removeChild(feed.lastChild);
-  }
+    // Limit to 5 messages
+    if (feed.children.length > 5) {
+        feed.removeChild(feed.lastChild);
+    }
 
-  // Add error styling
-  if (tier === "error") {
-    entry.style.color = "#ff4444";
-    entry.style.fontWeight = "bold";
-  }
+    // Add error styling
+    if (tier === "error") {
+        entry.style.color = "#ff4444";
+        entry.style.fontWeight = "bold";
+    }
+}
+
+function initDOMCache() {
+    const selectors = [
+        '#loot-feed',
+        '#zone-name',
+        '#zone-level',
+        '#monster-name',
+        '#monster-sprite',
+        '#health-bar',
+        '#health-text',
+        '.progress-container',
+        '.progress-fill',
+        '.progress-label span:last-child',
+        '#stat-gold',
+        '#stat-damage',
+        '#stat-luck',
+        '#stat-prestige',
+        '#stat-monsters',
+        '#stat-bosses',
+        '#region-boss-btn',
+        '#boss-timer',
+        '#prestige-btn',
+        '.inventory-grid',
+        '.sell-buttons',
+        '.left-panel',
+        '.right-panel',
+        '.zone-tabs',
+        '#scene-background',
+        '#modal-container',
+        '#auto-progress',
+        '#version-btn',
+        '#hard-reset-btn',
+        '.level-select',
+        '#prev-levels',
+        '#next-levels',
+        '.shop-items-container',
+        '.collection-log',
+        '.collection-category-selector',
+        '.collection-subcategory-container',
+        '.zone-selector',
+        '.zone-content',
+        '.tooltip',
+        '.monster-container',
+        '.nav-btn',
+        '#attack-button'
+    ];
+
+    selectors.forEach(selector => DOMCache.get(selector));
 }
 
 function setupTabPanels() {
@@ -5830,7 +5881,7 @@ function setupTabPanels() {
 function updateUI() {
   try {
     renderAchievements(); // Add this line
-    const goldDisplay = document.getElementById('stat-gold');
+    const goldDisplay = DOMCache.get('#stat-gold');
     if (goldDisplay) {
         goldDisplay.textContent = formatLargeNumber(player.gold);
     }
@@ -6439,42 +6490,29 @@ function formatZoneName(zoneName) {
 }
 
 function setupEventListeners() {
-  try {
-      setupTabPanels(); // Add this line
+    const resetBtn = DOMCache.get('#hard-reset-btn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', showResetConfirmation);
+    }
 
-      // Add batch sell button listeners
-      document.querySelectorAll('.sell-batch-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-              const amount = btn.dataset.amount === 'max' ? 'max' : parseInt(btn.dataset.amount);
-              toggleSellButton(amount);
-          });
-      });
+    const autoProgressBtn = DOMCache.get('#auto-progress');
+    if (autoProgressBtn) {
+        autoProgressBtn.addEventListener('click', toggleAutoProgress);
+    }
 
-      // Hard Reset Button
-      const resetBtn = document.getElementById('hard-reset-btn');
-      if (resetBtn) {
-          resetBtn.addEventListener('click', showResetConfirmation);
-      }
+    document.querySelectorAll('.sell-batch-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const amount = btn.dataset.amount === 'max' ? 'max' : parseInt(btn.dataset.amount);
+            toggleSellButton(amount);
+        });
+    });
 
-      // Set initial active state for sell buttons
-      document.querySelectorAll('.sell-batch-btn').forEach(btn => {
-          const amount = btn.dataset.amount === 'max' ? 'max' : parseInt(btn.dataset.amount);
-          btn.classList.toggle('active', amount === 1);
-      });
-
-      document.querySelectorAll('.osrs-interface-tab').forEach(tab => {
+    document.querySelectorAll('.osrs-interface-tab').forEach(tab => {
         tab.addEventListener('click', (e) => {
             const tabId = e.target.dataset.panel;
             handleTabSwitch(tabId);
         });
     });
-
-      // Remove duplicate event listeners
-      document.removeEventListener("DOMContentLoaded", setupEventListeners);
-  } catch (error) {
-      console.error('Error setting up event listeners:', error);
-      showLoot('Error initializing game controls', 'error');
-  }
 }
 
 function renderZoneTabs() {
@@ -6691,7 +6729,6 @@ function switchZone(zoneId) {
     }
 }
 
-// Add this to ensure the initial monster is loaded
 window.addEventListener('DOMContentLoaded', () => {
     try {
         // Load saved game first
@@ -6712,19 +6749,18 @@ window.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
+      initDOMCache();
       UIManager.init(); // Initialize UI element references
       await preloadAssets();
       initGame();
       setupEventListeners();
       setupLevelNavigation();
-    
   } catch (error) {
       console.error("Error initializing game:", error);
       showLoot("Error loading game assets", "error");
   }
 });
 
-// Add the new functions here
 function checkAllZonesCapped(region) {
     const regionCap = GAME_CONFIG.REGIONS[currentRegion].levelCap;
     return Object.values(region.zones).every(zone => zone.currentLevel >= regionCap);
@@ -6740,7 +6776,6 @@ function checkRegionBossAvailability() {
     return false;
 }
 
-// Update the handleZoneCompletion function to check for region boss
 function handleZoneCompletion(zone) {
     if (checkRegionBossAvailability()) {
         // Trigger region boss encounter
