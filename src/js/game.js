@@ -6724,64 +6724,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// Electron Integration
-document.addEventListener('DOMContentLoaded', () => {
-    // Check if running in Electron
-    if (window.electronAPI) {
-        // Register Electron event handlers
-        window.electronAPI.onExportSave(() => {
-            const saveData = localStorage.getItem("gameSave");
-            if (saveData) {
-                window.electronAPI.exportSave(saveData);
-            } else {
-                showLoot("No save data found to export!", "error");
-            }
-        });
-
-        window.electronAPI.onImportSave(() => {
-            window.electronAPI.importSave();
-        });
-
-        window.electronAPI.onSaveImported((event, saveData) => {
-            try {
-                // Validate save data
-                const parsedData = JSON.parse(saveData);
-                if (parsedData && parsedData.player && parsedData.gameState) {
-                    localStorage.setItem("gameSave", saveData);
-                    showLoot("Save imported successfully! Reloading game...", "S");
-                    setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    showLoot("Invalid save file format!", "error");
-                }
-            } catch (error) {
-                console.error("Error importing save:", error);
-                showLoot("Failed to import save file!", "error");
-            }
-        });
-
-        window.electronAPI.onSaveExported((event, path) => {
-            showLoot(`Save exported to: ${path}`, "S");
-        });
-
-        // Zoom controls
-        window.electronAPI.onZoomIn(() => {
-            document.body.style.zoom = (parseFloat(document.body.style.zoom || '1') + 0.1).toString();
-        });
-
-        window.electronAPI.onZoomOut(() => {
-            document.body.style.zoom = (parseFloat(document.body.style.zoom || '1') - 0.1).toString();
-        });
-
-        window.electronAPI.onZoomReset(() => {
-            document.body.style.zoom = '1';
-        });
-
-        window.electronAPI.onShowVersionInfo(() => {
-            showVersionInfo();
-        });
-    }
-});
-
 // Add the new functions here
 function checkAllZonesCapped(region) {
     const regionCap = GAME_CONFIG.REGIONS[currentRegion].levelCap;
