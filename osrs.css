@@ -1,0 +1,451 @@
+:root {
+    --osrs-brown: #3e3529;
+    --osrs-dark-brown: #2e261d;
+    --osrs-light-brown: #6e5b45;
+    --osrs-border: #5a4b3d;
+    --osrs-text: #ff981f;
+    --osrs-highlight: #ff981f;
+    --osrs-button: #382f22;
+    --osrs-button-hover: #4a3f2f;
+  }
+  
+  body {
+    font-family: 'RuneScape', Arial, sans-serif;
+    background-image: url('assets/backgrounds/cowpen.png');
+    transition: background-image 0.3s ease, opacity 0.3s ease;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    color: var(--osrs-text);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  /* Main game container - make it look like the classic OSRS window */
+  #game-container {
+    width: 100%;
+    height: 100%;
+    max-width: 1280px;
+    max-height: 720px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-areas: 
+      "header header header"
+      "left center right"
+      "chat chat chat";
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 214px 1fr 214px;
+    overflow: hidden;
+    position: relative;
+    background-color: transparent;
+    border: none;
+  }
+  
+  /* OSRS Header styling */
+  .osrs-header {
+    grid-area: header;
+    height: 35px;
+    background: url('assets/ui/header_bg.png') repeat-x;
+    padding: 5px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--osrs-border);
+  }
+  
+  /* Left sidebar - Stone texture with OSRS styling */
+  .left-panel {
+    grid-area: left;
+    background: url('assets/ui/panel_bg.png');
+    border-right: 2px solid var(--osrs-border);
+    width: 214px;
+    overflow: hidden;
+  }
+  
+  /* Center game area */
+  .center-panel {
+    grid-area: center;
+    background-color: transparent;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  /* Right sidebar - OSRS tab panels */
+  .right-panel {
+    grid-area: right;
+    width: 214px;
+    background: url('assets/ui/panel_bg.png');
+    border-left: 2px solid var(--osrs-border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Bottom chat area like OSRS */
+  .chat-area {
+    grid-area: chat;
+    height: 140px;
+    background: url('assets/ui/chat_bg.png');
+    border-top: 2px solid var(--osrs-border);
+    padding: 5px;
+    overflow-y: auto;
+  }
+  
+  /* OSRS style tabs */
+  .osrs-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 5px;
+    background: var(--osrs-dark-brown);
+  }
+  
+  .osrs-tab {
+    padding: 6px 10px;
+    background: url('assets/ui/tab_bg.png');
+    border: 1px solid var(--osrs-border);
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+    color: var(--osrs-text);
+    cursor: pointer;
+  }
+  
+  .osrs-tab.active {
+    background: url('assets/ui/tab_active_bg.png');
+    color: #ffffff;
+  }
+  
+  /* OSRS style buttons */
+  .osrs-button {
+    background: url('assets/ui/button_bg.png');
+    border: 2px solid var(--osrs-border);
+    color: var(--osrs-highlight);
+    padding: 5px 10px;
+    cursor: pointer;
+    text-shadow: 1px 1px 0 #000;
+  }
+  
+  .osrs-button:hover {
+    background: url('assets/ui/button_hover_bg.png');
+  }
+
+  /* Panel visibility rules */
+.panel-section {
+    display: none;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.panel-section.active {
+    display: block;
+}
+
+/* Mobile layout adjustments */
+@media (max-width: 767px) {
+    #game-container.mobile-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto auto;
+        grid-template-areas:
+            "header"
+            "center"
+            "right"
+            "chat";
+    }
+    
+    .mobile-layout .left-panel {
+        position: absolute;
+        left: -250px;
+        top: 0;
+        height: 100%;
+        z-index: 100;
+        transition: left 0.3s ease;
+    }
+    
+    .mobile-layout .left-panel.visible {
+        left: 0;
+    }
+    
+    .mobile-layout .menu-toggle {
+        display: block;
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 101;
+    }
+}
+
+/* Key visual elements */
+.osrs-tab {
+    position: relative;
+    cursor: pointer;
+}
+
+.osrs-tab.active:after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--osrs-highlight);
+}
+
+.chat-tab {
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 3px 3px 0 0;
+    background-color: var(--osrs-dark-brown);
+    border: 1px solid var(--osrs-border);
+    border-bottom: none;
+}
+
+.chat-tab.active {
+    background-color: var(--osrs-light-brown);
+    color: #ffffff;
+}
+
+/* Health and prayer orbs */
+.status-bars {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 10px;
+}
+
+.health-bar-container, .prayer-bar-container {
+    position: relative;
+    width: 70px;
+    height: 70px;
+}
+
+.osrs-bar {
+    position: relative;
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border: 2px solid var(--osrs-border);
+    background: #222;
+}
+
+.bar-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    transition: height 0.3s ease;
+}
+
+.health-fill {
+    background-color: #ff2222;
+}
+
+.bar-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    text-shadow: 1px 1px 1px #000;
+}
+
+.bar-label {
+    text-align: center;
+    margin-bottom: 3px;
+    font-size: 12px;
+    color: var(--osrs-text);
+}
+
+/* Add these rules */
+.panel-content {
+    height: calc(100% - 40px);
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* Stats panel styling */
+#stats-panel {
+    color: var(--osrs-text);
+}
+
+.stat-entry {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--osrs-border);
+}
+
+/* Monster display area */
+.monster-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    position: relative;
+}
+
+.scene-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    overflow: hidden;
+}
+
+.scene-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+}
+
+/* Level navigation */
+.level-navigation {
+    display: flex;
+    padding: 10px;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--osrs-dark-brown);
+    border-top: 1px solid var(--osrs-border);
+}
+
+.level-select {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    padding: 0 10px;
+    max-width: 80%;
+}
+
+.level-nav-btn {
+    background-color: var(--osrs-button);
+    border: 1px solid var(--osrs-border);
+    color: var(--osrs-text);
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Chat area fixes */
+.chat-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.chat-messages {
+    background-color: rgba(0, 0, 0, 0.5);
+    height: calc(100% - 30px);
+    overflow-y: auto;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+/* Ensure champions panel has proper scrolling */
+#champions-panel {
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* Add these styles at the bottom of your file */
+
+/* Monster display */
+.monster-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+}
+
+#zone-info {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+#zone-name {
+    color: var(--osrs-highlight);
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+#zone-level {
+    font-size: 16px;
+    color: #fff;
+}
+
+#monster-name {
+    font-size: 20px;
+    color: var(--osrs-highlight);
+    margin-bottom: 10px;
+}
+
+#monster-sprite {
+    width: 128px;
+    height: 128px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    margin-bottom: 15px;
+}
+
+#health-container {
+    width: 80%;
+    text-align: center;
+}
+
+#health-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #444;
+    border: 2px solid var(--osrs-border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+#health-fill {
+    height: 100%;
+    width: 100%;
+    background-color: #44FF44;
+    transition: width 0.3s ease, background-color 0.3s;
+}
+
+#health-text {
+    color: #fff;
+    font-size: 14px;
+}
+
+.attack-button {
+    margin-top: 20px;
+    padding: 10px 25px;
+    background: url('assets/ui/button_bg.png'), var(--osrs-button);
+    border: 2px solid var(--osrs-border);
+    color: var(--osrs-highlight);
+    font-size: 18px;
+    cursor: pointer;
+    text-shadow: 1px 1px 0 #000;
+}
+
+.attack-button:hover {
+    background: url('assets/ui/button_hover_bg.png'), var(--osrs-button-hover);
+}
+
+.attack-button:active {
+    transform: scale(0.98);
+}

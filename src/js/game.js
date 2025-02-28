@@ -82,19 +82,19 @@ function initDOMCache() {
 // Game Constants
 const GAME_CONFIG = {
     VERSION: {
-        NUMBER: "0.5.1",  // Updated from 0.5.0
-        NAME: "Champions UI Update",  // Updated name
+        NUMBER: "0.5.2",  // Updated from 0.5.1
+        NAME: "Champions Linear DPS Update",  // Updated name
         CHANGELOG: [
-            "Added upgrade indicators to champions panel",
-            "Made champion buy buttons always visible",
-            "Fixed issue with champion panel minimization",
-            "Added visual indicator for affordable upgrades",
-            "Enhanced UI feedback for champion interactions",
-            "Improved zone background handling",
-            "Fixed currentRegion undefined error in zone updates",
-            "Added Max Buy level count display",
-            "Enhanced visual feedback for available upgrades",
-            "Added proper validation for game data loading"
+            "Changed first 8 champions to use linear DPS scaling",
+            "Fixed champion panel visual glitches",
+            "Added champion level gain display for max buy",
+            "Improved champion DPS calculation efficiency",
+            "Fixed champion panel minimization issues",
+            "Added better visual feedback for champion upgrades",
+            "Fixed champion cost calculations",
+            "Added champion image support",
+            "Improved champion UI responsiveness",
+            "Fixed champion panel scrolling issues"
         ]
     },
     AUTO_PROGRESS: {
@@ -685,54 +685,34 @@ function calculateChampionCost(champion, level) {
 function calculateChampionDPS(champion, level) {
     try {
         if (!champion || level <= 0) return 0;
-        
-        // If champion isn't unlocked yet, return 0
         if (!player.champions.owned[champion.id]) return 0;
 
-        // Determine if the champion is among the first 8
+        // Determine if champion is among first 8
         const isFirstEightChampions = championsData.champions.indexOf(champion) < 8;
 
         // Start with base DPS
         let dps = champion.baseDPS;
 
         if (isFirstEightChampions) {
-            // Linear scaling for the first 10 levels
-            if (level <= 10) {
-                dps *= level;
-            } else {
-                // Exponential scaling after level 10
-                dps = champion.baseDPS * 10 * Math.pow(1.07, level - 10);
-            }
+            // Linear scaling for first 8 champions
+            // Formula: DPS(n) = DPS0 + (n-1) * DPS0
+            // where DPS0 is base DPS and n is champion level
+            dps = champion.baseDPS + (level - 1) * champion.baseDPS;
         } else {
-            // Exponential scaling for champions after the first 8
-            dps *= Math.pow(1.07, level - 1);
+            // Later champions use exponential scaling
+            dps *= Math.pow(CHAMPION_CONFIG.DPS_MULTIPLIER * 1.5, level - 1);
         }
 
-        // Don't apply special multipliers to Cid (worldguardian)
-        if (champion.id !== "worldguardian") {
-            // Level milestone multipliers
-            if (level >= 200) {
-                const bonusTiers = Math.floor((level - 200) / 25);
-                dps *= Math.pow(4, bonusTiers); // 4x multiplier every 25 levels after 200
-            }
-
-            // Major milestone multipliers
-            if (level >= 1000) {
-                const majorBonusTiers = Math.floor((Math.min(level, 8000) - 1000) / 1000);
-                dps *= Math.pow(10, majorBonusTiers); // 10x multiplier every 1000 levels until 8000
-            }
-
-            // Prestige bonus
-            if (player.prestigeLevel > 0) {
-                dps *= Math.pow(1.5, player.prestigeLevel);
-            }
-        }
+        // Apply special multipliers for high levels
+        dps *= calculateChampionBonusMultiplier(level);
 
         // Apply upgrade multipliers
         let upgradeMultiplier = 1;
+        const purchasedUpgrades = player.champions.owned[champion.id].upgrades || [];
+        
         champion.upgrades.forEach(upgrade => {
-            if (level >= upgrade.level && upgrade.purchased) {
-                const multiplier = parseInt(upgrade.effect.split('x')[1]);
+            if (purchasedUpgrades.includes(upgrade.name)) {
+                const multiplier = parseFloat(upgrade.effect.replace(/DPS x([0-9.]+)/, '$1'));
                 if (!isNaN(multiplier)) {
                     upgradeMultiplier *= multiplier;
                 }
@@ -740,21 +720,10 @@ function calculateChampionDPS(champion, level) {
         });
         dps *= upgradeMultiplier;
 
-        // Region difficulty bonus
+        // Apply region difficulty bonus
         const regionMultiplier = REGION_DIFFICULTY_MULTIPLIERS[currentRegion] || 1;
         dps *= regionMultiplier;
 
-        // Apply any active buffs or temporary bonuses
-        if (player.activeBuffs) {
-            if (player.activeBuffs.damageMultiplier) {
-                dps *= player.activeBuffs.damageMultiplier;
-            }
-            if (player.activeBuffs.championBonus) {
-                dps *= player.activeBuffs.championBonus;
-            }
-        }
-
-        // Floor the final DPS value
         return Math.floor(Math.max(0, dps));
 
     } catch (error) {
@@ -805,7 +774,7 @@ function buyChampion(championId) {
                 showLoot(`${champion.name} unlocked upgrade: ${newUpgrade.name}!`, "S");
             }
 
-            renderChampionsPanel();
+            EventSystem.emit('championsPanelUpdate'); // Emit event
             updateUI();
             saveGame();
         } else {
@@ -916,39 +885,74 @@ function checkChampionUnlock(championId) {
     return true;
 }
 
+const EventSystem = {
+    events: {},
+
+    on(event, listener) {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
+        this.events[event].push(listener);
+    },
+
+    off(event, listener) {
+        if (!this.events[event]) return;
+        this.events[event] = this.events[event].filter(l => l !== listener);
+    },
+
+    emit(event, data) {
+        if (!this.events[event]) return;
+        this.events[event].forEach(listener => listener(data));
+    }
+};
+
 function purchaseChampionUpgrade(championId, upgradeName) {
     try {
         const champion = championsData.champions.find(c => c.id === championId);
-        if (!champion) return;
+        if (!champion) {
+            console.error("Champion not found:", championId);
+            return;
+        }
 
         const upgrade = champion.upgrades.find(u => u.name === upgradeName);
-        if (!upgrade) return;
+        if (!upgrade) {
+            console.error("Upgrade not found:", upgradeName);
+            return;
+        }
 
-        const championLevel = player.champions.owned[championId].level;
+        const championData = player.champions.owned[championId];
+        const championLevel = championData.level;
 
         // Check requirements
         if (championLevel < upgrade.level) {
-            showLoot(`Requires ${champion.name} level ${upgrade.level}!`, "error");
+            showLoot(`Champion level too low! Need level ${upgrade.level}`, "error");
             return;
         }
-        if (upgrade.purchased) {
-            showLoot("Already purchased!", "error");
+        
+        // Initialize upgrades array if it doesn't exist
+        if (!championData.upgrades) {
+            championData.upgrades = [];
+        }
+        
+        // Check if already purchased
+        if (championData.upgrades.includes(upgradeName)) {
+            showLoot(`${upgrade.name} already purchased!`, "error");
             return;
         }
+        
         if (player.gold < upgrade.cost) {
-            showLoot(`Not enough gold! Need ${upgrade.cost - player.gold} more.`, "error");
+            showLoot(`Not enough gold! Need ${formatNumber(upgrade.cost)}`, "error");
             return;
         }
 
         // Purchase upgrade
         player.gold -= upgrade.cost;
-        upgrade.purchased = true;
-
+        championData.upgrades.push(upgradeName);
+        
         // Update champion DPS/bonus
         if (champion.id === "worldguardian") {
-            const bonus = calculateChampionBonus(champion, championLevel);
-            player.champions.owned[championId].clickDamageBonus = bonus;
-            player.damage = bonus;
+            const clickDamage = calculateChampionBonus(champion, championLevel);
+            player.champions.owned[championId].clickDamageBonus = clickDamage;
         } else {
             const dps = calculateChampionDPS(champion, championLevel);
             player.champions.owned[championId].currentDPS = dps;
@@ -956,7 +960,7 @@ function purchaseChampionUpgrade(championId, upgradeName) {
 
         updateTotalChampionDPS();
         showLoot(`Purchased ${upgrade.name} for ${champion.name}!`, "S");
-        renderChampionsPanel();
+        EventSystem.emit('championsPanelUpdate'); // Emit event
         updateUI();
         saveGame();
 
@@ -971,166 +975,230 @@ function renderChampionsPanel() {
         const container = document.getElementById('champions-panel');
         if (!container) return;
 
-        // Save the current scroll position
+        // Cache the scroll position
         const scrollPosition = container.scrollTop;
 
-        // Get selected buy amount from active button
-        const activeBuyAmount = document.querySelector('.buy-amount-btn.active')?.dataset.amount || '1';
-
-        // Create a document fragment to batch DOM updates
+        // Create a document fragment for better performance
         const fragment = document.createDocumentFragment();
 
-        // Create header
-        const header = document.createElement('div');
-        header.className = 'champions-header';
-        header.innerHTML = `
-            <h2>Champions</h2>
-            <div class="total-dps">Total DPS: ${formatNumber(player.champions.totalDPS)}</div>
-        `;
+        // Header section
+        const header = createChampionsPanelHeader();
         fragment.appendChild(header);
 
-        // Create buy controls
-        const buyControls = document.createElement('div');
-        buyControls.className = 'buy-controls';
-        buyControls.innerHTML = `
-            <button class="osrs-button buy-amount-btn ${activeBuyAmount === '1' ? 'active' : ''}" data-amount="1">Buy 1x</button>
-            <button class="osrs-button buy-amount-btn ${activeBuyAmount === '10' ? 'active' : ''}" data-amount="10">Buy 10x</button>
-            <button class="osrs-button buy-amount-btn ${activeBuyAmount === '100' ? 'active' : ''}" data-amount="100">Buy 100x</button>
-            <button class="osrs-button buy-amount-btn ${activeBuyAmount === 'max' ? 'active' : ''}" data-amount="max">Buy Max</button>
-        `;
+        // Buy controls section
+        const buyControls = createBuyControls();
         fragment.appendChild(buyControls);
 
-        // Create champions container
+        // Champions list container
         const championsContainer = document.createElement('div');
         championsContainer.className = 'champions-container';
 
-        // Find the highest unlocked champion index
-        let highestUnlockedIndex = -1;
+        // Determine highest unlocked index for progressive display
+        const highestUnlockedIndex = getHighestUnlockedChampionIndex();
+
+        // Render champions
         championsData.champions.forEach((champion, index) => {
-            if (player.champions.owned[champion.id]) {
-                highestUnlockedIndex = index;
+            // Only show unlocked champions and the next available one
+            if (index <= highestUnlockedIndex + 1) {
+                const championCard = createChampionCard(champion, index);
+                if (championCard) {
+                    championsContainer.appendChild(championCard);
+                }
             }
-        });
-
-        // Show only unlocked champions and the next one
-        championsData.champions.forEach((champion, index) => {
-            // Skip if beyond next available champion
-            if (index > highestUnlockedIndex + 1) return;
-
-            const owned = player.champions.owned[champion.id] || { level: 0, currentDPS: 0, clickDamageBonus: 0, minimized: false };
-            const isUnlocked = champion.unlocked || owned.level > 0;
-            const canUnlock = !isUnlocked && checkChampionUnlock(champion.id);
-
-            // Calculate costs for different amounts
-            const costs = {
-                '1': calculateBulkChampionCost(champion, owned.level, 1),
-                '10': calculateBulkChampionCost(champion, owned.level, 10),
-                '100': calculateBulkChampionCost(champion, owned.level, 100),
-                'max': calculateMaxAffordableLevels(champion, owned.level, player.gold)
-            };
-
-            // Check if any upgrades are available
-            const hasAvailableUpgrade = champion.upgrades.some(upgrade => 
-                owned.level >= upgrade.level && !upgrade.purchased && player.gold >= upgrade.cost
-            );
-
-            const championCard = document.createElement('div');
-            championCard.className = `champion-card ${isUnlocked ? 'unlocked' : ''} ${canUnlock ? 'can-unlock' : ''} ${hasAvailableUpgrade ? 'has-upgrade' : ''}`;
-            championCard.innerHTML = `
-                <div class="champion-header">
-                    <img src="assets/champions/${champion.image}" alt="${champion.name}">
-                    <div class="champion-info">
-                        <h3>${champion.name}</h3>
-                        ${isUnlocked ? `
-                            <p>Level ${owned.level}</p>
-                            <p>${champion.id === "worldguardian" ? 
-                                `Click Damage: ${formatNumber(owned.clickDamageBonus || 0)}` : 
-                                `DPS: ${formatNumber(owned.currentDPS || 0)}`}</p>
-                        ` : `
-                            <div class="requirements">
-                                <p>Requirements:</p>
-                                ${champion.id === "worldguardian" ? 
-                                    `<p>💰 ${formatNumber(champion.baseCost)} gold</p>` :
-                                    renderChampionRequirements(champion.id)
-                                }
-                            </div>
-                        `}
-                    </div>
-                    <button class="osrs-button minimize-btn" onclick="toggleChampionMinimize('${champion.id}')">
-                        ${owned.minimized ? '🔽' : '🔼'}
-                    </button>
-                </div>
-                ${hasAvailableUpgrade ? '<div class="upgrade-indicator">⚡</div>' : ''}
-                <div class="champion-description ${owned.minimized ? 'hidden' : ''}">${champion.description}</div>
-                ${isUnlocked ? `
-                    <div class="upgrades-section ${owned.minimized ? 'hidden' : ''}">
-                        <h4>Upgrades</h4>
-                        <div class="upgrade-list">
-                            ${champion.upgrades.map(upgrade => `
-                                <div class="upgrade-item ${upgrade.purchased ? 'purchased' : ''} 
-                                            ${owned.level >= upgrade.level ? 'available' : 'locked'} ${player.gold >= upgrade.cost ? 'can-afford' : ''}"
-                                     ${owned.level >= upgrade.level && !upgrade.purchased && player.gold >= upgrade.cost ? 
-                                       `onclick="purchaseChampionUpgrade('${champion.id}', '${upgrade.name}')" style="cursor: pointer;"` : ''}>
-                                    <div class="upgrade-header">
-                                        <span class="upgrade-name">${upgrade.name}</span>
-                                        <span class="upgrade-cost">${formatNumber(upgrade.cost)} gold</span>
-                                    </div>
-                                    <div class="upgrade-details">
-                                        <span class="upgrade-effect">${upgrade.effect}</span>
-                                        <span class="upgrade-level">Requires Level ${upgrade.level}</span>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    <div class="buy-button-container">
-                        ${activeBuyAmount === 'max' ?
-                            `<button class="osrs-button small-buy-btn ${costs.max.levels > 0 ? 'can-afford' : ''}"
-                                onclick="buyChampionLevels('${champion.id}', ${costs.max.levels})"
-                                ${costs.max.levels > 0 ? '' : 'disabled'}>
-                                Buy Max (${formatNumber(costs.max.cost)} gold, ${costs.max.levels} levels)
-                            </button>`
-                            :
-                            `<button class="osrs-button small-buy-btn ${player.gold >= costs[activeBuyAmount] ? 'can-afford' : ''}"
-                                onclick="buyChampionLevels('${champion.id}', ${activeBuyAmount})"
-                                ${player.gold >= costs[activeBuyAmount] ? '' : 'disabled'}>
-                                Buy ${activeBuyAmount}x (${formatNumber(costs[activeBuyAmount])} gold)
-                            </button>`
-                        }
-                    </div>
-                ` : `
-                    <button class="osrs-button" 
-                        onclick="unlockChampion('${champion.id}')"
-                        ${canUnlock ? '' : 'disabled'}>
-                        ${canUnlock ? 'Unlock Champion' : 'Locked'}
-                    </button>
-                `}
-            `;
-            championsContainer.appendChild(championCard);
         });
 
         fragment.appendChild(championsContainer);
 
-        // Update the container with the new content
+        // Update the container efficiently
         container.innerHTML = '';
         container.appendChild(fragment);
 
-        // Restore the scroll position
+        // Restore scroll position
         container.scrollTop = scrollPosition;
 
-        // Add click handlers for buy amount buttons
-        document.querySelectorAll('.buy-amount-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.buy-amount-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                renderChampionsPanel();
-            });
-        });
+        // Add buy button handlers
+        attachBuyButtonHandlers();
+
     } catch (error) {
         console.error("Error rendering champions panel:", error);
         showLoot("Error updating champions display", "error");
     }
 }
+
+function createChampionsPanelHeader() {
+    const header = document.createElement('div');
+    header.className = 'champions-header';
+    header.innerHTML = `
+        <h2>Champions</h2>
+        <div class="total-dps">Total DPS: ${formatNumber(player.champions.totalDPS)}</div>
+    `;
+    return header;
+}
+
+function createBuyControls() {
+    const activeBuyAmount = document.querySelector('.buy-amount-btn.active')?.dataset.amount || '1';
+    const buyControls = document.createElement('div');
+    buyControls.className = 'buy-controls';
+    buyControls.innerHTML = `
+        <button class="osrs-button buy-amount-btn ${activeBuyAmount === '1' ? 'active' : ''}" data-amount="1">Buy 1x</button>
+        <button class="osrs-button buy-amount-btn ${activeBuyAmount === '10' ? 'active' : ''}" data-amount="10">Buy 10x</button>
+        <button class="osrs-button buy-amount-btn ${activeBuyAmount === '100' ? 'active' : ''}" data-amount="100">Buy 100x</button>
+        <button class="osrs-button buy-amount-btn ${activeBuyAmount === 'max' ? 'active' : ''}" data-amount="max">Buy Max</button>
+    `;
+    return buyControls;
+}
+
+function getHighestUnlockedChampionIndex() {
+    return championsData.champions.reduce((highest, champion, index) => {
+        return player.champions.owned[champion.id] ? index : highest;
+    }, -1);
+}
+
+function createChampionCard(champion, index) {
+    const owned = player.champions.owned[champion.id] || { level: 0, currentDPS: 0, clickDamageBonus: 0, minimized: false };
+    const isUnlocked = champion.unlocked || owned.level > 0;
+    const canUnlock = !isUnlocked && checkChampionUnlock(champion.id);
+    const hasAvailableUpgrade = checkForAvailableUpgrades(champion, owned);
+
+    const card = document.createElement('div');
+    card.className = `champion-card ${isUnlocked ? 'unlocked' : ''} ${canUnlock ? 'can-unlock' : ''} ${hasAvailableUpgrade ? 'has-upgrade' : ''}`;
+    
+    card.innerHTML = generateChampionCardHTML(champion, owned, isUnlocked, canUnlock);
+    return card;
+}
+
+function checkForAvailableUpgrades(champion, owned) {
+    return champion.upgrades.some(upgrade => 
+        owned.level >= upgrade.level && 
+        !owned.upgrades?.includes(upgrade.name) && 
+        player.gold >= upgrade.cost
+    );
+}
+
+function attachBuyButtonHandlers() {
+    document.querySelectorAll('.buy-amount-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.buy-amount-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderChampionsPanel();
+        });
+    });
+}
+
+function generateChampionCardHTML(champion, owned, isUnlocked, canUnlock) {
+    try {
+        const buyAmount = document.querySelector('.buy-amount-btn.active')?.dataset.amount || '1';
+        
+        let nextLevelCost = 0;
+        let canAfford = false;
+        let maxAffordable = { levels: 0, cost: 0 };
+        let levelGainText = '';
+        
+        if (isUnlocked) {
+            nextLevelCost = calculateChampionCost(champion, owned.level + 1);
+            canAfford = player.gold >= nextLevelCost;
+            if (buyAmount === 'max') {
+                maxAffordable = calculateMaxAffordableLevels(champion, owned.level, player.gold);
+                // Add level gain text
+                const newLevel = owned.level + maxAffordable.levels;
+                levelGainText = `(Level ${owned.level} → ${newLevel})`;
+            }
+        }
+
+        return `
+            <div class="champion-header ${owned.minimized ? 'minimized' : ''}" 
+                 onclick="toggleChampionMinimize('${champion.id}')">
+                <div class="champion-image">
+                    <img src="assets/champions/${champion.id}.png" alt="${champion.name}">
+                </div>
+                <div class="champion-title">
+                    <span class="champion-name">${champion.name}</span>
+                    <span class="champion-level">Level ${owned.level || 0}</span>
+                </div>
+                <div class="minimize-icon">${owned.minimized ? '▼' : '▲'}</div>
+            </div>
+            <div class="champion-content ${owned.minimized ? 'hidden' : ''}">
+                <div class="champion-stats">
+                    ${isUnlocked ? `
+                        <div class="stat">
+                            ${champion.id === 'worldguardian' ? 
+                                `🗡️ Click Damage: ${owned.clickDamageBonus || 0}` :
+                                `⚔️ DPS: ${formatNumber(owned.currentDPS || 0)}`}
+                        </div>
+                    ` : ''}
+                </div>
+                ${!isUnlocked ? `
+                    <div class="unlock-requirements">
+                        <h4>Requirements:</h4>
+                        ${renderChampionRequirements(champion.id)}
+                    </div>
+                    <button class="osrs-button unlock-btn ${canUnlock ? '' : 'disabled'}"
+                            onclick="unlockChampion('${champion.id}')"
+                            ${canUnlock ? '' : 'disabled'}>
+                        Unlock Champion
+                    </button>
+                ` : `
+                    <div class="champion-upgrades">
+                        ${champion.upgrades.map(upgrade => {
+                            const purchased = owned.upgrades?.includes(upgrade.name);
+                            const available = owned.level >= upgrade.level && !purchased;
+                            const canAffordUpgrade = player.gold >= upgrade.cost;
+                            return `
+                                <div class="upgrade ${purchased ? 'purchased' : ''} ${available ? 'available' : ''} ${canAffordUpgrade ? 'can-afford' : ''}">
+                                    <div class="upgrade-info">
+                                        <span class="upgrade-name">${upgrade.name}</span>
+                                        <span class="upgrade-cost">💰 ${formatNumber(upgrade.cost)}</span>
+                                    </div>
+                                    <div class="upgrade-effect">${upgrade.effect}</div>
+                                    <button class="osrs-button upgrade-btn"
+                                            onclick="purchaseChampionUpgrade('${champion.id}', '${upgrade.name}')"
+                                            ${!available || !canAffordUpgrade ? 'disabled' : ''}>
+                                        ${purchased ? 'Purchased' : 'Purchase'}
+                                    </button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+            <div class="champion-buy">
+                ${buyAmount === 'max' ? `
+                    <div class="max-buy-info">
+                        Can afford ${maxAffordable.levels} levels for ${formatNumber(maxAffordable.cost)} gold
+                        <br>
+                        <span class="level-gain">${levelGainText}</span>
+                    </div>
+                ` : ''}
+<button class="osrs-button buy-btn ${canAfford ? '' : 'disabled'}"
+        onclick="buyChampionLevels('${champion.id}', ${buyAmount === 'max' ? '\'max\'' : buyAmount})"
+        ${canAfford ? '' : 'disabled'}>
+    Buy ${buyAmount === 'max' ? 'Max' : buyAmount + 'x'} (${formatNumber(nextLevelCost)})
+</button>
+            </div>
+                `}
+            </div>
+        `;
+    } catch (error) {
+        console.error("Error generating champion card HTML:", error);
+        return '<div class="error">Error loading champion card</div>';
+    }
+}
+
+function initializeChampionsPanel() {
+    renderChampionsPanel();
+    
+    // Update DPS display every second
+    setInterval(() => {
+        const header = document.querySelector('.champions-header .total-dps');
+        if (header) {
+            header.textContent = `Total DPS: ${formatNumber(player.champions.totalDPS)}`;
+        }
+    }, 1000);
+}
+
+// Update your DOMContentLoaded event
+document.addEventListener('DOMContentLoaded', () => {
+    initializeChampionsPanel();
+});
 
 function toggleChampionMinimize(championId) {
     const champion = player.champions.owned[championId];
@@ -3228,6 +3296,9 @@ function handleMonsterDeath(zone) {
         updateInventory();
         saveGame();
 
+        // Emit event to update champions panel
+        EventSystem.emit('championsPanelUpdate');
+
     } catch (error) {
         console.error("Error handling monster death:", error);
         showLoot("Error processing monster death", "error");
@@ -5262,10 +5333,16 @@ function cleanupGame() {
             clearInterval(window.autoSaveInterval);
             window.autoSaveInterval = null;
         }
-        
+
+        // Clear champions panel interval
+        if (championsPanelInterval) {
+            clearInterval(championsPanelInterval);
+            championsPanelInterval = null;
+        }
+
         // Save one last time
         saveGame();
-        
+
         // Other cleanup code...
     } catch (error) {
         console.error("Error cleaning up game:", error);
@@ -5601,6 +5678,28 @@ document.addEventListener("DOMContentLoaded", async () => {
         setupEventListeners();
         setupLevelNavigation();
         setupTabPanels(); // Ensure this is called
+
+        // Set champions panel as the default active panel
+        const leftPanel = document.querySelector('.left-panel');
+        if (leftPanel) {
+            const championsTab = leftPanel.querySelector('[data-panel="champions"]');
+            const championsPanel = leftPanel.querySelector('#champions-panel');
+            if (championsTab && championsPanel) {
+                // Remove active class from all tabs and panels
+                leftPanel.querySelectorAll('.osrs-interface-tab').forEach(tab => tab.classList.remove('active'));
+                leftPanel.querySelectorAll('.osrs-panel').forEach(panel => panel.classList.remove('active'));
+                // Set champions active
+                championsTab.classList.add('active');
+                championsPanel.classList.add('active');
+            }
+        }
+
+        // Ensure the champions panel is rendered and updated
+        renderChampionsPanel();
+
+        // Listen for champions panel update events
+        EventSystem.on('championsPanelUpdate', renderChampionsPanel);
+
     } catch (error) {
         console.error("Error initializing game:", error);
         showLoot("Error loading game assets", "error");
