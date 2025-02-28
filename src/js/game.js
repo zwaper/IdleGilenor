@@ -3,6 +3,10 @@ import { CHAMPION_CONFIG, championsData } from './champions.js';
 import { DROP_TABLES } from './dropTables.js';
 import { gameData } from './gameData.js';
 import { ZONE_VARIANTS } from './zoneVariants.js';
+import { getItemData } from './itemData.js';
+import { shopItems, itemPrices } from './shopData.js';
+import { updateZoneBackground, getMonsterVariantsForLevel, getZoneTitleForLevel } from './zoneUtils.js';
+import { calculateWeaponPrice } from './utils.js';
 
 const DOMCache = {
     elements: new Map(),
@@ -78,19 +82,19 @@ function initDOMCache() {
 // Game Constants
 const GAME_CONFIG = {
     VERSION: {
-        NUMBER: "0.4.0",
-        NAME: "Major Update",
+        NUMBER: "0.5.0",  // Updated from 0.4.0
+        NAME: "Code Refactor Update",  // Updated name
         CHANGELOG: [
-            "Added new region: Varrock",
-            "Implemented new champion system",
-            "Enhanced UI and tooltips",
-            "Improved inventory and collection log",
-            "Added new items and drop tables",
-            "Fixed various bugs and performance issues",
-            "Updated auto-save and game state management",
-            "Enhanced boss and mini-boss mechanics",
-            "Improved region and zone progression",
-            "Added new achievements and rewards"
+            "Moved itemData to its own file",
+            "Moved shopItems and itemPrices to shopData.js",
+            "Moved zone utility functions to zoneUtils.js",
+            "Added calculateWeaponPrice to utils.js",
+            "Improved code organization and maintainability",
+            "Fixed various bugs related to initialization",
+            "Added better error handling for zone backgrounds",
+            "Implemented proper module imports/exports",
+            "Enhanced game loading reliability",
+            "Fixed issue with undefined game regions"
         ]
     },
     AUTO_PROGRESS: {
@@ -458,10 +462,13 @@ function formatReward(reward) {
     return 'No reward';
 }
 
+let currentRegion = "lumbridge";
+let currentZone = "cowpen";
+
 // Call renderAchievements when the game initializes
 document.addEventListener('DOMContentLoaded', () => {
     initializeMapControls();
-    updateZoneBackground(currentZone);
+    updateZoneBackground(currentZone, currentRegion);
     renderAchievements();
     initializeCombatListeners();
     renderChampionsPanel();
@@ -475,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let tooltipTimeout = null;
-let isAutoProgressEnabled = false;
+let isAutoProgressEnabled = true;
 
 // Game State
 let player = {
@@ -602,7 +609,7 @@ function calculateChampionBonus(champion, level) {
     try {
         if (!champion || level < 0) return 0;
 
-        if (champion.id === "clickWarrior") {
+        if (champion.id === "worldguardian") {
             let clickBonus = 1; // Start with base damage of 1
             
             // Add 1 damage per level
@@ -701,8 +708,8 @@ function calculateChampionDPS(champion, level) {
             dps *= Math.pow(1.07, level - 1);
         }
 
-        // Don't apply special multipliers to Cid (clickWarrior)
-        if (champion.id !== "clickWarrior") {
+        // Don't apply special multipliers to Cid (worldguardian)
+        if (champion.id !== "worldguardian") {
             // Level milestone multipliers
             if (level >= 200) {
                 const bonusTiers = Math.floor((level - 200) / 25);
@@ -781,7 +788,7 @@ function buyChampion(championId) {
             player.champions.owned[championId].level = nextLevel;
 
             // Calculate and apply bonuses AFTER level increase
-            if (champion.id === "clickWarrior") {
+            if (champion.id === "worldguardian") {
                 const bonus = calculateChampionBonus(champion, nextLevel);
                 player.champions.owned[championId].clickDamageBonus = bonus;
                 player.damage = bonus; // Update player damage
@@ -876,7 +883,7 @@ function checkChampionUnlock(championId) {
     const champion = championsData.champions.find(c => c.id === championId);
     if (!champion) return false;
 
-    if (championId === "clickWarrior") {
+    if (championId === "worldguardian") {
         return player.gold >= champion.baseCost;
     }
 
@@ -938,7 +945,7 @@ function purchaseChampionUpgrade(championId, upgradeName) {
         upgrade.purchased = true;
 
         // Update champion DPS/bonus
-        if (champion.id === "clickWarrior") {
+        if (champion.id === "worldguardian") {
             const bonus = calculateChampionBonus(champion, championLevel);
             player.champions.owned[championId].clickDamageBonus = bonus;
             player.damage = bonus;
@@ -1010,16 +1017,16 @@ function renderChampionsPanel() {
             // Skip if beyond next available champion
             if (index > highestUnlockedIndex + 1) return;
 
-            const owned = player.champions.owned[champion.id] || { level: 0, currentDPS: 0, clickDamageBonus: 0 };
+            const owned = player.champions.owned[champion.id] || { level: 0, currentDPS: 0, clickDamageBonus: 0, minimized: false };
             const isUnlocked = champion.unlocked || owned.level > 0;
             const canUnlock = !isUnlocked && checkChampionUnlock(champion.id);
 
             // Calculate costs for different amounts
             const costs = {
-                single: calculateBulkChampionCost(champion, owned.level, 1),
-                ten: calculateBulkChampionCost(champion, owned.level, 10),
-                hundred: calculateBulkChampionCost(champion, owned.level, 100),
-                max: calculateMaxAffordableLevels(champion, owned.level, player.gold)
+                '1': calculateBulkChampionCost(champion, owned.level, 1),
+                '10': calculateBulkChampionCost(champion, owned.level, 10),
+                '100': calculateBulkChampionCost(champion, owned.level, 100),
+                'max': calculateMaxAffordableLevels(champion, owned.level, player.gold)
             };
 
             const championCard = document.createElement('div');
@@ -1031,28 +1038,33 @@ function renderChampionsPanel() {
                         <h3>${champion.name}</h3>
                         ${isUnlocked ? `
                             <p>Level ${owned.level}</p>
-                            <p>${champion.id === "clickWarrior" ? 
+                            <p>${champion.id === "worldguardian" ? 
                                 `Click Damage: ${formatNumber(owned.clickDamageBonus || 0)}` : 
                                 `DPS: ${formatNumber(owned.currentDPS || 0)}`}</p>
                         ` : `
                             <div class="requirements">
                                 <p>Requirements:</p>
-                                ${champion.id === "clickWarrior" ? 
+                                ${champion.id === "worldguardian" ? 
                                     `<p>💰 ${formatNumber(champion.baseCost)} gold</p>` :
                                     renderChampionRequirements(champion.id)
                                 }
                             </div>
                         `}
                     </div>
+                    <button class="osrs-button minimize-btn" onclick="toggleChampionMinimize('${champion.id}')">
+                        ${owned.minimized ? '🔽' : '🔼'}
+                    </button>
                 </div>
-                <div class="champion-description">${champion.description}</div>
+                <div class="champion-description ${owned.minimized ? 'hidden' : ''}">${champion.description}</div>
                 ${isUnlocked ? `
-                    <div class="upgrades-section">
+                    <div class="upgrades-section ${owned.minimized ? 'hidden' : ''}">
                         <h4>Upgrades</h4>
                         <div class="upgrade-list">
                             ${champion.upgrades.map(upgrade => `
                                 <div class="upgrade-item ${upgrade.purchased ? 'purchased' : ''} 
-                                            ${owned.level >= upgrade.level ? 'available' : 'locked'}">
+                                            ${owned.level >= upgrade.level ? 'available' : 'locked'} ${player.gold >= upgrade.cost ? 'can-afford' : ''}"
+                                     ${owned.level >= upgrade.level && !upgrade.purchased && player.gold >= upgrade.cost ? 
+                                       `onclick="purchaseChampionUpgrade('${champion.id}', '${upgrade.name}')" style="cursor: pointer;"` : ''}>
                                     <div class="upgrade-header">
                                         <span class="upgrade-name">${upgrade.name}</span>
                                         <span class="upgrade-cost">${formatNumber(upgrade.cost)} gold</span>
@@ -1061,40 +1073,24 @@ function renderChampionsPanel() {
                                         <span class="upgrade-effect">${upgrade.effect}</span>
                                         <span class="upgrade-level">Requires Level ${upgrade.level}</span>
                                     </div>
-                                    <button class="osrs-button upgrade-btn" 
-                                        onclick="purchaseChampionUpgrade('${champion.id}', '${upgrade.name}')"
-                                        ${upgrade.purchased || owned.level < upgrade.level || player.gold < upgrade.cost ? 
-                                        'disabled' : ''}>
-                                        ${upgrade.purchased ? 'Purchased' : 
-                                          owned.level < upgrade.level ? `Requires Level ${upgrade.level}` :
-                                          player.gold < upgrade.cost ? 'Not Enough Gold' : 'Purchase'}
-                                    </button>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
-                    <div class="buy-buttons">
-                        <button class="osrs-button ${player.gold >= costs.single ? 'can-afford' : ''}"
-                            onclick="buyChampionLevels('${champion.id}', 1)"
-                            ${player.gold >= costs.single ? '' : 'disabled'}>
-                            Buy 1x (${formatNumber(costs.single)} gold)
-                        </button>
-                        <button class="osrs-button ${player.gold >= costs.ten ? 'can-afford' : ''}"
-                            onclick="buyChampionLevels('${champion.id}', 10)"
-                            ${player.gold >= costs.ten ? '' : 'disabled'}>
-                            Buy 10x (${formatNumber(costs.ten)} gold)
-                        </button>
-                        <button class="osrs-button ${player.gold >= costs.hundred ? 'can-afford' : ''}"
-                            onclick="buyChampionLevels('${champion.id}', 100)"
-                            ${player.gold >= costs.hundred ? '' : 'disabled'}>
-                            Buy 100x (${formatNumber(costs.hundred)} gold)
-                        </button>
-                        ${costs.max.levels > 0 ? `
-                            <button class="osrs-button can-afford"
-                                onclick="buyChampionLevels('${champion.id}', ${costs.max.levels})">
-                                Buy Max (${formatNumber(costs.max.levels)} lvls - ${formatNumber(costs.max.cost)} gold)
-                            </button>
-                        ` : ''}
+                    <div class="minimized-buy-button ${owned.minimized ? '' : 'hidden'}">
+                        ${activeBuyAmount === 'max' ?
+                            `<button class="osrs-button small-buy-btn ${costs.max.levels > 0 ? 'can-afford' : ''}"
+                                onclick="buyChampionLevels('${champion.id}', ${costs.max.levels})"
+                                ${costs.max.levels > 0 ? '' : 'disabled'}>
+                                Buy Max (${formatNumber(costs.max.cost)} gold)
+                            </button>`
+                            :
+                            `<button class="osrs-button small-buy-btn ${player.gold >= costs[activeBuyAmount] ? 'can-afford' : ''}"
+                                onclick="buyChampionLevels('${champion.id}', ${activeBuyAmount})"
+                                ${player.gold >= costs[activeBuyAmount] ? '' : 'disabled'}>
+                                Buy ${activeBuyAmount}x (${formatNumber(costs[activeBuyAmount])} gold)
+                            </button>`
+                        }
                     </div>
                 ` : `
                     <button class="osrs-button" 
@@ -1127,6 +1123,14 @@ function renderChampionsPanel() {
     } catch (error) {
         console.error("Error rendering champions panel:", error);
         showLoot("Error updating champions display", "error");
+    }
+}
+
+function toggleChampionMinimize(championId) {
+    const champion = player.champions.owned[championId];
+    if (champion) {
+        champion.minimized = !champion.minimized;
+        renderChampionsPanel();
     }
 }
 
@@ -1202,9 +1206,19 @@ function buyChampionLevels(championId, amount) {
         if (!champion) return;
 
         const currentLevel = player.champions.owned[championId]?.level || 0;
-        const totalCost = calculateBulkChampionCost(champion, currentLevel, amount);
+        let totalCost;
+        let levelsToBuy;
 
-        if (player.gold >= totalCost) {
+        if (amount === 'max') {
+            const maxLevels = calculateMaxAffordableLevels(champion, currentLevel, player.gold);
+            totalCost = maxLevels.cost;
+            levelsToBuy = maxLevels.levels;
+        } else {
+            totalCost = calculateBulkChampionCost(champion, currentLevel, amount);
+            levelsToBuy = amount;
+        }
+
+        if (player.gold >= totalCost && levelsToBuy > 0) {
             player.gold -= totalCost;
             
             // Initialize champion if not owned
@@ -1217,10 +1231,10 @@ function buyChampionLevels(championId, amount) {
             }
 
             // Add levels
-            player.champions.owned[championId].level += amount;
+            player.champions.owned[championId].level += levelsToBuy;
 
             // Update champion stats
-            if (champion.id === "clickWarrior") {
+            if (champion.id === "worldguardian") {
                 const bonus = calculateChampionBonus(champion, player.champions.owned[championId].level);
                 player.champions.owned[championId].clickDamageBonus = bonus;
                 player.damage = bonus;
@@ -1234,8 +1248,8 @@ function buyChampionLevels(championId, amount) {
             updateUI();
             saveGame();
 
-            if (amount > 1) {
-                showLoot(`Purchased ${amount} levels for ${champion.name}!`, "S");
+            if (levelsToBuy > 1) {
+                showLoot(`Purchased ${levelsToBuy} levels for ${champion.name}!`, "S");
             }
         } else {
             showLoot("Not enough gold!", "error");
@@ -1247,7 +1261,6 @@ function buyChampionLevels(championId, amount) {
 }
 
 window.purchaseChampionUpgrade = purchaseChampionUpgrade;
-window.buyChampionLevels = buyChampionLevels;
 window.unlockChampion = unlockChampion;
 window.formatRequirement = formatRequirement;
 
@@ -1304,8 +1317,8 @@ function unlockChampion(championId) {
             };
         }
 
-        // Special handling for Cid (Click Warrior)
-        if (championId === "clickWarrior") {
+        // Special handling for (worldguardian)
+        if (championId === "worldguardian") {
             player.damage += 1; // Add initial +1 click damage
             player.champions.owned[championId] = {
                 level: 1,
@@ -1338,10 +1351,6 @@ function unlockChampion(championId) {
 }
 
 setInterval(applyChampionDPS, 1000); // Apply champion DPS every
-
-// Initialize Game
-let currentRegion = "lumbridge";
-let currentZone = "cowpen";
 
 function formatNumber(num) {
     try {
@@ -1846,256 +1855,6 @@ window.onclick = function(event) {
     }
 };
 
-// Add item data constant
-const getItemData = () => ({
-  // Common Items (C Tier)
-  "Cowhide": {
-    tier: "C",
-    value: 0,
-    description: "Raw hide from a cow",
-    image: "cowhide.png",
-    region: "lumbridge",
-    zone: "cowpen"
-},
-"Raw Beef": {
-    tier: "C",
-    value: 0,
-    description: "Raw beef",
-    image: "raw_beef.png",
-    region: "lumbridge", // Add region
-    zone: "cowpen" // Add zone
-},
-  "Bones": {
-    tier: "C", 
-    value: 0,
-    description: "Regular bones",
-    image: "bones.png",
-  },
-  "Rotting Hide": {
-    tier: "C",
-    value: 0,
-    description: "A decomposing cow hide",
-    image: "rotting_hide.png",
-  },
-
-  // Uncommon Items (B Tier)
-  "Shiny Hide": {
-    tier: "B",
-    value: 0,
-    description: "Glowing bovine hide",
-    image: "shiny_hide.png",
-  },
-"Golden Hide": {
-    tier: "B",
-    value: 0, // Should be dynamically calculated instead of hardcoded 100 in itemPrices
-    description: "Rare golden cowhide",
-    image: "golden_hide.png"
-},
-  "Rusty Sword": {
-    tier: "B",
-    value: 0,
-    description: "An old goblin's Sword",
-    image: "Rusty_Sword.png",
-  },
-  "Broken Chainmail": {
-    tier: "B",
-    value: 0,
-    description: "Damaged goblin armor",
-    image: "broken_chainmail.png",
-  },
-
-  "Cursed Bones": {
-    tier: "A",
-    value: 0,
-    description: "Bones pulsing with dark energy",
-    image: "cursed_bones.png",
-    region: "lumbridge",
-    zone: "cowpen"
-},
-"Bone Fragments": {
-    tier: "B",
-    value: 0,
-    description: "Fragments of ancient bones",
-    image: "bone_fragments.png",
-    region: "lumbridge",
-    zone: "cowpen"
-},
-"Ancient Bones": {
-    tier: "A", 
-    value: 0,
-    description: "Mystical bones from ages past",
-    image: "ancient_bones.png",
-    region: "lumbridge",
-    zone: "cowpen"
-},
-
-  // Rare Items (A Tier)
-"Moon Beef": {
-    tier: "A",
-    value: 0, // Remove hardcoded 200 value from itemPrices
-    description: "Meat infused with lunar energy",
-    image: "moon_beef.png",
-    region: "lumbridge",
-    zone: "cowpen"
-},
-  "Ornate Bracelet": {
-    tier: "A",
-    value: 0,
-    description: "A goblin chief's jewelry",
-    image: "ornate_bracelet.png",
-        region: "lumbridge",
-    zone: "cowpen"
-  },
-  "Brute Force Potion": {
-    tier: "A",
-    value: 250,
-    description: "A goblin's strength brew",
-    image: "brute_potion.png",
-  },
-  "Cow Mask": {
-    tier: "A",
-    value: 0,
-    description: "A fearsome cow mask",
-    image: "cow_mask.png",
-  },
-  "Goblin Mail": {
-    tier: "A",
-    value: 0,
-    description: "Goblin chainmail armor",
-    image: "goblin_mail.png",
-  },
-  "Warlord's Helm": {
-    tier: "A",
-    value: 0,
-    description: "Helmet of the Goblin Warlord",
-    image: "warlord_helm.png",
-  },
-
-  // Super Rare Items (S Tier)
-  "Cursed Hoof": {
-    tier: "S",
-    value: 0,
-    description: "A darkly pulsating hoof",
-    image: "cursed_hoof.png",
-  },
-  "Chief's Helm": {
-    tier: "S",
-    value: 0,
-    description: "Helmet of a goblin chief",
-    image: "chiefs_helm.png",
-  },
-  "Cow Crown": {
-    tier: "S",
-    value: 0,
-    description: "Crown of the Cow King",
-    image: "cow_crown.png",
-  },
-  "Giant's Ring": {
-    tier: "S",
-    value: 0,
-    description: "Ring of the Lumbridge Giant",
-    image: "giant_ring.png",
-  },
-  "Elite Hide": {
-    tier: "S",
-    value: 0,
-    description: "A legendary hide from an Elite Cow",
-    image: "elite_hide.png"
-},
-"Elite Horn": {
-    tier: "S",
-    value: 0,
-    description: "A powerful horn from an Elite Cow",
-    image: "elite_horn.png"
-},
-"Elite Crown": {
-    tier: "S",
-    value: 0,
-    description: "A crown worn by the Elite Cow",
-    image: "elite_crown.png"
-},
-"Supreme Hide": {
-    tier: "S",
-    value: 0,
-    description: "A mythical hide from a Supreme Elite Cow",
-    image: "supreme_hide.png"
-},
-"Supreme Horn": {
-    tier: "S",
-    value: 0,
-    description: "An incredibly powerful horn",
-    image: "supreme_horn.png"
-},
-"Supreme Crown": {
-    tier: "S",
-    value: 0,
-    description: "A crown of supreme power",
-    image: "supreme_crown.png"
-},
-"Stolen Valuables": {
-        tier: "C",
-        value: 0,
-        description: "A bunch of stolen valuables",
-        image: "stolen_valuables.png"
-    },
-    "Lockpick": {
-        tier: "C",
-        value: 0,
-        description: "A basic lockpicking tool",
-        image: "lockpick.png"
-    },
-    "Thief's Cape": {
-        tier: "A",
-        value: 0,
-        description: "Cape worn by master thieves",
-        image: "thief_cape.png"
-    },
-    "Captain's Badge": {
-        tier: "S",
-        value: 0,
-        description: "Badge of the Varrock Guard Captain",
-        image: "captain_badge.png"
-    },
-// Add to your getItemData function
-"Guard Badge": {
-    tier: "B",
-    value: 0,
-    description: "A badge worn by Varrock guards",
-    image: "guard_badge.png"
-},
-"Steel Sword": {
-    tier: "A",
-    value: 0,
-    description: "A well-crafted steel sword",
-    image: "steel_sword.png"
-},
-"Elite Badge": {
-    tier: "A",
-    value: 0,
-    description: "A badge of the elite guard",
-    image: "elite_badge.png"
-},
-"Assassin's Blade": {
-    tier: "S",
-    value: 0,
-    description: "A deadly assassin's weapon",
-    image: "assassin_blade.png"
-},
-"Shadow Cape": {
-    tier: "S",
-    value: 0,
-    description: "A cape that blends with shadows",
-    image: "shadow_cape.png"
-},
-"Master's Lockpick": {
-    tier: "S",
-    value: 0,
-    description: "An expert thief's tool",
-    image: "master_lockpick.png"
-}
-// ... Add other new items for the Slums zone
-});
-
 let itemData = getItemData();
 
 function updateItemValues(level) {
@@ -2327,39 +2086,6 @@ function initializeCollectionLog() {
       console.error('Error initializing collection log:', error);
       player.collectionLog = [];
   }
-}
-
-function getZoneTitleForLevel(zoneName, level) {
-    const tier = Math.floor((level - 1) / 20); // Changed from 10 to 20 to match zone variants
-    const zoneNames = {
-        cowpen: [
-            "Pasture",         // Levels 1-20
-            "Graveyard",       // Levels 21-40
-            "Celestial Plains", // Levels 41-80
-            "Convergence"      // Levels 81+
-        ],
-        lumbridgeswamp: [
-            "Goblin Camp",       // Levels 1-20
-            "Goblin Stronghold", // Levels 21-40
-            "War-Chief's Domain", // Levels 41-80
-            "Goblin City"        // Levels 81+
-        ],
-        marketplace: [
-            "Market District",    // Levels 1-20
-            "Trade Quarter",      // Levels 21-40
-            "Merchant's Row",     // Levels 41-80
-            "Grand Exchange"      // Levels 81+
-        ],
-        slums: [
-            "Lower Slums",        // Levels 1-20
-            "Dark Alley",         // Levels 21-40
-            "Shadow District",    // Levels 41-80
-            "Thieves' Den"        // Levels 81+
-        ]
-    };
-
-    const names = zoneNames[zoneName] || [zoneName];
-    return names[Math.min(tier, names.length - 1)];
 }
 
 function updateZoneDisplay(zone) {
@@ -2960,34 +2686,40 @@ function updateBossTimer() {
   }
 }
 
-function handleBossTimeout() {
-  try {
-      // Clear timer
-      clearInterval(player.bossTimer);
-      player.bossTimer = null;
-      
-      // Reset boss state
-      player.currentBoss = null;
-      player.bossTimeLeft = 0;
+function handleBossTimeout(zone) {
+    try {
+        // Clear timer
+        clearInterval(player.bossTimer);
+        player.bossTimer = null;
+        
+        // Reset boss state
+        player.currentBoss = null;
+        player.bossTimeLeft = 0;
 
-      // Hide timer display
-      const bossTimer = document.getElementById("boss-timer");
-      if (bossTimer) {
-          bossTimer.style.display = "none";
-      }
+        // Hide timer display
+        const bossTimer = document.getElementById("boss-timer");
+        if (bossTimer) {
+            bossTimer.style.display = "none";
+        }
 
-      // Show failure message
-      showLoot("Failed to defeat the boss in time!", "error");
-      
-      // Spawn regular monster
-      const zone = gameData.regions[currentRegion].zones[currentZone];
-      spawnMonster(zone);
-      
-      updateUI();
-  } catch (error) {
-      console.error("Error handling boss timeout:", error);
-      showLoot("Error processing boss timeout", "error");
-  }
+        // Show failure message
+        showLoot("Failed to defeat the boss in time!", "error");
+
+        // Set player to the previous level and pause auto-progress
+        if (zone.currentLevel > 1) {
+            zone.currentLevel -= 1;
+            isAutoProgressEnabled = false;
+            updateAutoProgressButton();
+        }
+
+        // Spawn regular monster
+        spawnMonster(zone);
+        
+        updateUI();
+    } catch (error) {
+        console.error("Error handling boss timeout:", error);
+        showLoot("Error processing boss timeout", "error");
+    }
 }
 
 function renderLevelSelect() {
@@ -3394,11 +3126,11 @@ function handleLevelUp(zone) {
             }
 
                     // Check if entering new sub-zone (every 20 levels)
-        if (zone.currentLevel % 20 === 1) {
-            updateZoneBackground(currentZone);
-            const zoneName = getZoneTitleForLevel(currentZone, zone.currentLevel);
-            showLoot(`🌟 Entering new area: ${zoneName}!`, "S");
-        }
+                    if (zone.currentLevel % 20 === 1) {
+                        updateZoneBackground(currentZone, currentRegion);  // FIXED: Added currentRegion parameter
+                        const zoneName = getZoneTitleForLevel(currentZone, zone.currentLevel);
+                        showLoot(`🌟 Entering new area: ${zoneName}!`, "S");
+                    }
 
             // Spawn appropriate monster or boss
             const isMiniBossLevel = zone.currentLevel % GAME_CONFIG.COMBAT.MINIBOSS_LEVEL_INTERVAL === 0;
@@ -3653,6 +3385,12 @@ function handleBossDefeat(zone) {
         const bossTimer = document.getElementById("boss-timer");
         if (bossTimer) {
             bossTimer.style.display = "none";
+        }
+
+        // Resume auto-progress if it was paused due to a failed boss fight
+        if (!isAutoProgressEnabled) {
+            isAutoProgressEnabled = true;
+            updateAutoProgressButton();
         }
 
         // Update UI and save
@@ -4034,15 +3772,6 @@ function startBossTimer(timeLimit) {
   }
 }
 
-// Add this pricing function
-function calculateWeaponPrice(level) {
-  if (level <= 15) {
-      return Math.floor((5 + level) * Math.pow(1.07, level - 1));
-  } else {
-      return Math.floor(20 * Math.pow(1.07, level - 1));
-  }
-}
-
 // Helper function to calculate damage for higher tiers
 function calculateWeaponDamage(tier) {
   return Math.floor(2 * Math.pow(1.2, tier - 1));
@@ -4067,245 +3796,6 @@ function generateMoreWeaponTiers(startingTier = 17, numberOfTiers = 10) {
       currentTier = currentTier.nextTier;
   }
 }
-
-// Shop System
-const shopItems = {
-  lumbridge: [
-    {
-      name: "Bronze Sword",
-      price: calculateWeaponPrice(1),
-      effect: { damage: 2 },
-      type: "weapon",
-      nextTier: {
-          name: "Iron Sword",
-          price: calculateWeaponPrice(2),
-          effect: { damage: 5 },
-          type: "weapon",
-          nextTier: {
-              name: "Steel Sword",
-              price: calculateWeaponPrice(3),
-              effect: { damage: 8 },
-              type: "weapon",
-              nextTier: {
-                  name: "Black Sword",
-                  price: calculateWeaponPrice(4),
-                  effect: { damage: 12 },
-                  type: "weapon",
-                  nextTier: {
-                      name: "Mithril Sword",
-                      price: calculateWeaponPrice(5),
-                      effect: { damage: 16 },
-                      type: "weapon",
-                      nextTier: {
-                          name: "Adamant Sword",
-                          price: calculateWeaponPrice(6),
-                          effect: { damage: 21 },
-                          type: "weapon",
-                          nextTier: {
-                              name: "Rune Sword",
-                              price: calculateWeaponPrice(7),
-                              effect: { damage: 27 },
-                              type: "weapon",
-                              nextTier: {
-                                  name: "Dragon Sword",
-                                  price: calculateWeaponPrice(8),
-                                  effect: { damage: 34 },
-                                  type: "weapon",
-                                  nextTier: {
-                                      name: "Barrows Sword",
-                                      price: calculateWeaponPrice(9),
-                                      effect: { damage: 42 },
-                                      type: "weapon",
-                                      nextTier: {
-                                          name: "Godsword",
-                                          price: calculateWeaponPrice(10),
-                                          effect: { damage: 51 },
-                                          type: "weapon",
-                                          nextTier: {
-                                              name: "Crystal Sword",
-                                              price: calculateWeaponPrice(11),
-                                              effect: { damage: 61 },
-                                              type: "weapon",
-                                              nextTier: {
-                                                  name: "Elder Sword",
-                                                  price: calculateWeaponPrice(12),
-                                                  effect: { damage: 72 },
-                                                  type: "weapon",
-                                                  nextTier: {
-                                                      name: "Infernal Sword",
-                                                      price: calculateWeaponPrice(13),
-                                                      effect: { damage: 85 },
-                                                      type: "weapon",
-                                                      nextTier: {
-                                                          name: "Divine Sword",
-                                                          price: calculateWeaponPrice(14),
-                                                          effect: { damage: 99 },
-                                                          type: "weapon",
-                                                          nextTier: {
-                                                              name: "Celestial Sword",
-                                                              price: calculateWeaponPrice(15),
-                                                              effect: { damage: 115 },
-                                                              type: "weapon",
-                                                              nextTier: {
-                                                                  name: "Ethereal Sword",
-                                                                  price: calculateWeaponPrice(16),
-                                                                  effect: { damage: 133 },
-                                                                  type: "weapon",
-                                                                  // Add more tiers here with the new pricing formula
-                                                              }
-                                                          }
-                                                      }
-                                                  }
-                                              }
-                                          }
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-      }
-    },
-    {
-        name: "Basic Auto-Clicker",
-        price: 500,
-        effect: {
-            interval: 2000, // 2 seconds
-            damage: 1,
-        },
-        type: "auto",
-        nextTier: {
-            name: "Copper Auto-Clicker",
-            price: 1500,
-            effect: {
-                interval: 1800, // 1.8 seconds
-                damage: 2,
-            },
-            type: "auto",
-            nextTier: {
-                name: "Iron Auto-Clicker",
-                price: 3000,
-                effect: {
-                    interval: 1600, // 1.6 seconds
-                    damage: 4,
-                },
-                type: "auto",
-                nextTier: {
-                    name: "Steel Auto-Clicker",
-                    price: 6000,
-                    effect: {
-                        interval: 1400, // 1.4 seconds
-                        damage: 8,
-                    },
-                    type: "auto",
-                    nextTier: {
-                        name: "Mithril Auto-Clicker",
-                        price: 12000,
-                        effect: {
-                            interval: 1200, // 1.2 seconds
-                            damage: 16,
-                        },
-                        type: "auto",
-                        nextTier: {
-                            name: "Adamant Auto-Clicker",
-                            price: 25000,
-                            effect: {
-                                interval: 1000, // 1 second
-                                damage: 32,
-                            },
-                            type: "auto",
-                            nextTier: {
-                                name: "Rune Auto-Clicker",
-                                price: 50000,
-                                effect: {
-                                    interval: 800, // 0.8 seconds
-                                    damage: 64,
-                                },
-                                type: "auto",
-                                nextTier: {
-                                    name: "Dragon Auto-Clicker",
-                                    price: 100000,
-                                    effect: {
-                                        interval: 600, // 0.6 seconds
-                                        damage: 128,
-                                    },
-                                    type: "auto",
-                                    nextTier: {
-                                        name: "Crystal Auto-Clicker",
-                                        price: 250000,
-                                        effect: {
-                                            interval: 400, // 0.4 seconds
-                                            damage: 256,
-                                        },
-                                        type: "auto",
-                                        nextTier: {
-                                            name: "Divine Auto-Clicker",
-                                            price: 500000,
-                                            effect: {
-                                                interval: 200, // 0.2 seconds
-                                                damage: 512,
-                                            },
-                                            type: "auto"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    },
-    {
-      name: "Lucky Charm",
-      price: 300,
-      effect: { luck: 0.2 },
-      type: "luck",
-      nextTier: {
-        name: "Fortune Ring",
-        price: 800,
-        effect: { luck: 0.5 },
-        type: "luck",
-        nextTier: {
-          name: "Blessed Amulet",
-          price: 2000,
-          effect: { luck: 1.0 },
-          type: "luck",
-        },
-      },
-    },
-  ],
-};
-
-const itemPrices = {
-  // Common (C) tier items
-  Cowhide: 20,
-  Beef: 15,
-  Bones: 10,
-  "Rotting Hide": 15,
-  "Shiny Hide": 75,
-  "Moon Beef": 200,
-  "Cursed Hoof": 1500,
-  "Rusty Sword": 50,
-  "Ornate Bracelet": 300,
-  "Chief's Helm": 1200,
-  "Broken Chainmail": 85,
-  "Brute Force Potion": 250,
-
-  // Uncommon (B) tier items
-  "Golden Hide": 100,
-
-  // Rare (A) tier items
-  "Cow Mask": 250,
-  "Goblin Mail": 200,
-  "Warlord's Helm": 500,
-
-  // Super Rare (S) tier items
-  "Cow Crown": 1000,
-  "Giant's Ring": 2000,
-};
 
 function findCurrentTier(itemType) {
   // Get base item of this type
@@ -4701,7 +4191,7 @@ function loadGame() {
         updateUI();
         renderChampionsPanel();
         renderLevelSelect();
-        updateZoneBackground(currentZone);
+        updateZoneBackground(currentZone, currentRegion);  // FIXED: Added currentRegion parameter
         
         // Initialize current monster
         const zone = gameData.regions[currentRegion].zones[currentZone];
@@ -5317,58 +4807,6 @@ function updateUI() {
   
 }
 
-function getMonsterVariantsForLevel(zone, level) {
-  const variants = zone.variants;
-  let availableVariants = [];
-
-    // Add proper variant logic for each zone
-    switch (zone.name) {
-        case "Cow Pen":
-            if (level < 10) {
-                availableVariants = variants.filter(v => v.name === "Cow");
-            } else if (level < 20) {
-                availableVariants = variants.filter(v => ["Cow", "Zanaris Cow"].includes(v.name));
-            } else {
-                availableVariants = variants.filter(v => !v.level); // All non-boss variants
-            }
-            break;
-
-        case "Goblin Village":
-            if (level < 10) {
-                availableVariants = variants.filter(v => v.name === "Goblin");
-            } else if (level < 20) {
-                availableVariants = variants.filter(v => ["Goblin", "Goblin Chief"].includes(v.name));
-            } else {
-                availableVariants = variants.filter(v => !v.level);
-            }
-            break;
-
-        case "Marketplace":
-            if (level < 10) {
-                availableVariants = variants.filter(v => v.name === "Thief");
-            } else if (level < 20) {
-                availableVariants = variants.filter(v => ["Thief", "Guard"].includes(v.name));
-            } else if (level < 50) {
-                availableVariants = variants.filter(v => !v.name.includes("Master"));
-            } else {
-                availableVariants = variants.filter(v => !v.level);
-            }
-            break;
-
-        case "Slums":
-            if (level < 10) {
-                availableVariants = variants.filter(v => v.name === "Street Rat");
-            } else if (level < 20) {
-                availableVariants = variants.filter(v => ["Street Rat", "Gang Member"].includes(v.name));
-            } else {
-                availableVariants = variants.filter(v => !v.level);
-            }
-            break;
-    }
-
-    return availableVariants.length > 0 ? availableVariants : variants;
-}
-
 function getTierForVariant(variantName) {
   // Get actual variant data
   const zone = gameData.regions[player.region].zones[player.currentZone];
@@ -5854,8 +5292,8 @@ function showResetConfirmation() {
 
         if (confirmBtn) {
             confirmBtn.addEventListener('click', () => {
-                localStorage.clear();
-                location.reload();
+                hardResetGame();
+                modalContainer.style.display = 'none';
             });
         }
 
@@ -5875,6 +5313,76 @@ function showResetConfirmation() {
     } catch (error) {
         console.error('Error showing reset confirmation:', error);
         showLoot('Error showing reset dialog', 'error');
+    }
+}
+
+function hardResetGame() {
+    try {
+        // Clear local storage
+        localStorage.clear();
+
+        // Reset player data
+        player = {
+            gold: 0,
+            damage: 1,
+            inventory: [],
+            prestigeLevel: 0,
+            luck: 1.0,
+            champions: {
+                owned: {},
+                totalDPS: 0
+            },
+            stats: {
+                monstersKilled: 0,
+                bossesKilled: 0,
+                totalGoldEarned: 0
+            },
+            settings: {
+                autoSave: true,
+                notifications: true
+            }
+        };
+
+        // Reset game state
+        currentRegion = "lumbridge";
+        currentZone = "cowpen";
+        isAutoProgressEnabled = false;
+
+        // Reset game data
+        Object.values(gameData.regions).forEach(region => {
+            region.unlocked = region.name === "Lumbridge";
+            region.miniBossesDefeated = 0;
+            region.bossDefeated = false;
+
+            Object.values(region.zones).forEach(zone => {
+                zone.unlocked = zone.name === "Cow Pen";
+                zone.currentLevel = 1;
+                zone.highestLevel = 1;
+                zone.completedLevels = [];
+                zone.currentKills = 0;
+                zone.defeatedMiniBosses = [];
+                zone.monstersPerLevel = 10;
+            });
+        });
+
+        // Reset UI and game state
+        updateUI();
+        renderChampionsPanel();
+        renderLevelSelect();
+        renderCollectionLog();
+        updateInventory();
+        renderShop();
+        renderRegionTabs();
+        renderZoneTabs();
+        updateZoneBackground(currentZone);
+
+        // Save the reset state
+        saveGame();
+
+        showLoot("Game has been reset!", "info");
+    } catch (error) {
+        console.error("Error resetting game:", error);
+        showLoot("Error resetting game", "error");
     }
 }
 
@@ -6005,77 +5513,6 @@ function switchRegion(region) {
   }
 }
 
-function updateZoneBackground(zoneId) {
-    try {
-        const sceneBackground = document.getElementById('scene-background');
-        if (!sceneBackground) {
-            console.error('Scene background element not found');
-            return;
-        }
-
-        const zone = gameData.regions[currentRegion].zones[zoneId];
-        if (!zone) {
-            console.error('Zone not found:', zoneId);
-            return;
-        }
-
-        const level = zone.currentLevel;
-        let newBackground;
-
-        // Determine background based on zone and level range
-        switch(zoneId) {
-            case 'cowpen':
-                if (level <= 20) {
-                    newBackground = 'url("assets/backgrounds/")';
-                } else if (level <= 40) {
-                    newBackground = 'url("assets/backgrounds/")';
-                } else if (level <= 80) {
-                    newBackground = 'url("assets/backgrounds/cowpen_celestial.png")';
-                } else {
-                    newBackground = 'url("assets/backgrounds/cowpen_convergence.png")';
-                }
-                break;
-
-            case 'lumbridgeswamp':
-                if (level <= 20) {
-                    newBackground = 'url("assets/backgrounds/goblin_camp.png")';
-                } else if (level <= 40) {
-                    newBackground = 'url("assets/backgrounds/goblin_stronghold.png")';
-                } else if (level <= 80) {
-                    newBackground = 'url("assets/backgrounds/goblin_warchief.png")';
-                } else {
-                    newBackground = 'url("assets/backgrounds/goblin_city.png")';
-                }
-                break;
-
-            case 'marketplace':
-                if (level <= 20) {
-                    newBackground = 'url("assets/backgrounds/market_district.png")';
-                } else if (level <= 40) {
-                    newBackground = 'url("assets/backgrounds/trade_quarter.png")';
-                } else if (level <= 80) {
-                    newBackground = 'url("assets/backgrounds/merchant_row.png")';
-                } else {
-                    newBackground = 'url("assets/backgrounds/grand_exchange.png")';
-                }
-                break;
-
-                default:
-                    console.warn('Unknown zone ID:', zoneId);
-                    newBackground = 'url("assets/backgrounds/cowpen_pasture.png")';
-            }
-    
-            // Set the background immediately
-            sceneBackground.style.backgroundImage = newBackground;
-            
-            // Log to check if the background is being set
-            console.log('Setting background:', newBackground);
-    
-        } catch (error) {
-            console.error('Error updating zone background:', error);
-        }
-    }
-
 function switchZone(zoneId) {
     try {
         const zone = gameData.regions[currentRegion].zones[zoneId];
@@ -6111,7 +5548,7 @@ function switchZone(zoneId) {
         });
 
         // Update background
-        updateZoneBackground(zoneId);
+        updateZoneBackground(zoneId, currentRegion);  // FIXED: Added currentRegion parameter
 
         // Reset monster and update UI
         if (zone) {
@@ -6242,6 +5679,7 @@ window.calculateBulkChampionCost = calculateBulkChampionCost;
 window.calculateMaxAffordableLevels = calculateMaxAffordableLevels;
 window.buyChampionLevels = buyChampionLevels;
 window.unlockChampion = unlockChampion;
+window.toggleChampionMinimize = toggleChampionMinimize;
 window.formatRequirement = formatRequirement;
 window.updateVersionButton = updateVersionButton;
 window.calculateBaseGold = calculateBaseGold;
@@ -6257,6 +5695,7 @@ window.updateMapZones = updateMapZones;
 window.closeMapModal = closeMapModal;
 window.handleMapNavigation = handleMapNavigation;
 window.loadImage = loadImage;
+window.getZoneTitleForLevel = getZoneTitleForLevel;
 window.handleBossDefeat = handleBossDefeat;
 window.handleRegionBossDefeat = handleRegionBossDefeat;
 window.unlockVarrock = unlockVarrock;
@@ -6331,3 +5770,4 @@ window.checkAllZonesCapped = checkAllZonesCapped;
 window.checkRegionBossAvailability = checkRegionBossAvailability;
 window.handleZoneCompletion = handleZoneCompletion;
 window.triggerRegionBossEncounter = triggerRegionBossEncounter;
+window.hardResetGame = hardResetGame;

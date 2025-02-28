@@ -10,7 +10,7 @@ export const CHAMPION_CONFIG = {
             cost: 50,
             requires: {
                 gold: 50,
-                championLevels: { clickWarrior: 1}
+                championLevels: { worldguardian: 1}
             }
         },
         archer: { 
@@ -48,13 +48,14 @@ export const CHAMPION_CONFIG = {
 export const championsData = {
     champions: [
         { //1st champion
-            id: "clickWarrior",
-            name: "Cid the Clicker",
+            id: "worldguardian",
+            name: "World Guardian",
             baseCost: 5,
             baseDamage: 1,
             description: "A warrior who enhances your clicking power",
             image: "cid.png",
             unlocked: false,
+            minimizable: false,
             upgrades: [
                 { 
                     level: 10, 
@@ -84,6 +85,7 @@ export const championsData = {
             description: "A basic melee fighter",
             image: "warrior.png",
             unlocked: false,
+            minimizable: false,
             upgrades: [
                 { level: 10, name: "Sharp Blade", effect: "DPS x2", cost: 500 },
                 { level: 25, name: "Combat Training", effect: "DPS x2", cost: 1250 },
@@ -98,6 +100,7 @@ export const championsData = {
             description: "Attacks from range with a bow",
             image: "ranger.png",
             unlocked: false,
+            minimizable: false,
             upgrades: [
                 { level: 10, name: "Precise Shot", effect: "DPS x2", cost: 10000 },
                 { level: 25, name: "Rapid Fire", effect: "DPS x3", cost: 40000 },
@@ -112,6 +115,7 @@ export const championsData = {
             description: "Casts powerful spells",
             image: "mage.png",
             unlocked: false,
+            minimizable: false,
             upgrades: [
                 { level: 10, name: "Arcane Focus", effect: "DPS x2", cost: 50000 },
                 { level: 25, name: "Elemental Mastery", effect: "DPS x3", cost: 200000 },
@@ -140,6 +144,7 @@ export const championsData = {
             description: "Your life… is mine!",
             image: "new_champion.png",
             unlocked: false,
+            minimizable: false,
             upgrades: [
                 { level: 10, name: "Upgrade 1", effect: "DPS x2", cost: 50000 },
                 { level: 25, name: "Upgrade 2", effect: "DPS x3", cost: 200000 },

@@ -1,4 +1,3 @@
-// filepath: i:\Github\IdleGilenor\src\js\gameData.js
 import { DROP_TABLES } from './dropTables.js';
 
 export const gameData = {

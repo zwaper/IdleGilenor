@@ -1250,8 +1250,22 @@ hit-effect {
   overflow-y: auto;
 }
 
+.hidden {
+  display: none;
+}
+
 .champions-panel.active {
   display: flex;
+}
+
+.upgrade-item.available:not(.purchased).can-afford {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upgrade-item.available:not(.purchased).can-afford:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .champions-header {
