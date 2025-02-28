@@ -82,19 +82,19 @@ function initDOMCache() {
 // Game Constants
 const GAME_CONFIG = {
     VERSION: {
-        NUMBER: "0.5.0",  // Updated from 0.4.0
-        NAME: "Code Refactor Update",  // Updated name
+        NUMBER: "0.5.1",  // Updated from 0.5.0
+        NAME: "Champions UI Update",  // Updated name
         CHANGELOG: [
-            "Moved itemData to its own file",
-            "Moved shopItems and itemPrices to shopData.js",
-            "Moved zone utility functions to zoneUtils.js",
-            "Added calculateWeaponPrice to utils.js",
-            "Improved code organization and maintainability",
-            "Fixed various bugs related to initialization",
-            "Added better error handling for zone backgrounds",
-            "Implemented proper module imports/exports",
-            "Enhanced game loading reliability",
-            "Fixed issue with undefined game regions"
+            "Added upgrade indicators to champions panel",
+            "Made champion buy buttons always visible",
+            "Fixed issue with champion panel minimization",
+            "Added visual indicator for affordable upgrades",
+            "Enhanced UI feedback for champion interactions",
+            "Improved zone background handling",
+            "Fixed currentRegion undefined error in zone updates",
+            "Added Max Buy level count display",
+            "Enhanced visual feedback for available upgrades",
+            "Added proper validation for game data loading"
         ]
     },
     AUTO_PROGRESS: {
@@ -1029,8 +1029,13 @@ function renderChampionsPanel() {
                 'max': calculateMaxAffordableLevels(champion, owned.level, player.gold)
             };
 
+            // Check if any upgrades are available
+            const hasAvailableUpgrade = champion.upgrades.some(upgrade => 
+                owned.level >= upgrade.level && !upgrade.purchased && player.gold >= upgrade.cost
+            );
+
             const championCard = document.createElement('div');
-            championCard.className = `champion-card ${isUnlocked ? 'unlocked' : ''} ${canUnlock ? 'can-unlock' : ''}`;
+            championCard.className = `champion-card ${isUnlocked ? 'unlocked' : ''} ${canUnlock ? 'can-unlock' : ''} ${hasAvailableUpgrade ? 'has-upgrade' : ''}`;
             championCard.innerHTML = `
                 <div class="champion-header">
                     <img src="assets/champions/${champion.image}" alt="${champion.name}">
@@ -1055,6 +1060,7 @@ function renderChampionsPanel() {
                         ${owned.minimized ? '🔽' : '🔼'}
                     </button>
                 </div>
+                ${hasAvailableUpgrade ? '<div class="upgrade-indicator">⚡</div>' : ''}
                 <div class="champion-description ${owned.minimized ? 'hidden' : ''}">${champion.description}</div>
                 ${isUnlocked ? `
                     <div class="upgrades-section ${owned.minimized ? 'hidden' : ''}">
@@ -1077,12 +1083,12 @@ function renderChampionsPanel() {
                             `).join('')}
                         </div>
                     </div>
-                    <div class="minimized-buy-button ${owned.minimized ? '' : 'hidden'}">
+                    <div class="buy-button-container">
                         ${activeBuyAmount === 'max' ?
                             `<button class="osrs-button small-buy-btn ${costs.max.levels > 0 ? 'can-afford' : ''}"
                                 onclick="buyChampionLevels('${champion.id}', ${costs.max.levels})"
                                 ${costs.max.levels > 0 ? '' : 'disabled'}>
-                                Buy Max (${formatNumber(costs.max.cost)} gold)
+                                Buy Max (${formatNumber(costs.max.cost)} gold, ${costs.max.levels} levels)
                             </button>`
                             :
                             `<button class="osrs-button small-buy-btn ${player.gold >= costs[activeBuyAmount] ? 'can-afford' : ''}"

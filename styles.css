@@ -1250,6 +1250,20 @@ hit-effect {
   overflow-y: auto;
 }
 
+.upgrade-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #FFD700; /* Gold color */
+  color: #000;
+  border-radius: 50%;
+  padding: 5px 8px;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+  z-index: 10; /* Ensure it's above other elements */
+}
+
 .hidden {
   display: none;
 }
@@ -1266,6 +1280,11 @@ hit-effect {
 .upgrade-item.available:not(.purchased).can-afford:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.upgrade-item.can-afford {
+  border: 2px solid #4CAF50; /* Green border for affordable upgrades */
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); /* Optional: Add a glow effect */
 }
 
 .champions-header {
@@ -1291,10 +1310,16 @@ hit-effect {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  position: relative;
 }
 
 .champion-card.can-afford {
   border-color: #4CAF50;
+}
+
+.champion-card.has-upgrade {
+  border: 2px solid #FFD700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
 .champion-header {
