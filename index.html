@@ -4,6 +4,7 @@
 <head>
   <title>OSRS Incremental</title>
   <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -19,116 +20,127 @@
       <div class="header-border"></div>
     </div>
 
-    <div class="game-tabs">
-      <!-- Add this where you want the map button to appear -->
-      <button id="map-button" class="osrs-button" onclick="openMapModal()">
-        🗺️ World Map
-      </button>
-      <!--<div class="region-tabs"></div>
-      <div class="special-tabs">
-    </div>
-      <div class="zone-tabs" id="zone-tabs"></div>-->
-    </div>
-
     <!-- Main Content Area -->
     <div class="main-content">
       <!-- Left Panel (Tabs + Inventory/Shop/Stats) -->
-      <div class="left-panel">
-        <div class="osrs-interface-tabs">
-          <!--<button class="osrs-interface-tab active" data-panel="inventory">🎒 Inventory</button>-->
-          <button class="osrs-interface-tab" data-panel="champions">⚔️ Champions</button>
-          <button class="osrs-interface-tab" data-panel="stats">📊 Stats</button>
-        </div>
-        <div class="osrs-panels">
-          <!-- Inventory -->
-          <!--<div class="osrs-panel inventory-panel" id="inventory-panel">
-            <div class="inventory-controls">
-              <button class="osrs-button sell-batch-btn" data-amount="1">Sell 1x</button>
-              <button class="osrs-button sell-batch-btn" data-amount="10">Sell 10x</button>
-              <button class="osrs-button sell-batch-btn" data-amount="100">Sell 100x</button>
-              <button class="osrs-button sell-batch-btn" data-amount="max">Sell Max</button>
-            </div>
-            <div class="inventory-grid"></div>
-            <div class="gold-display">
-              <span class="gold-icon">
-                <img src="assets/items/coins-low.png" alt="Gold coins">
-              </span>
-              <span id="stat-gold">0</span> gp
-            </div>
-          </div>-->
+<!-- Left Panel -->
+<div class="left-panel">
+  <!-- Add gold display -->
+  <div class="gold-display">
+    <span class="gold-icon">💰</span>
+    <span class="gold-amount" id="gold-display">${formatNumber(player.gold)}</span>
+</div>
+  <!-- Top Tabs -->
+  <div class="osrs-interface-tabs top-tabs">
+      <button class="osrs-interface-tab" data-panel="champions">⚔️ Champions</button>
+      <button class="osrs-interface-tab" data-panel="stats">📊 Stats</button>
+  </div>
 
-          <!-- Stats -->
-          <div class="osrs-panel stats-panel" id="stats-panel">
-            <div class="stat-entry">
-              <span class="stat-label">Damage:</span>
-              <span class="stat-value" id="stat-damage">1</span>
-            </div>
-            <div class="stat-entry">
-              <span class="stat-label">Luck:</span>
-              <span class="stat-value" id="stat-luck">1.0x</span>
-            </div>
-            <div class="stat-entry">
-              <span class="stat-label">Prestige:</span>
-              <span class="stat-value" id="stat-prestige">0</span>
-            </div>
-            <div class="stat-entry">
-              <span class="stat-label">Monsters Killed:</span>
-              <span class="stat-value" id="stat-monsters">0</span>
-            </div>
-            <div class="stat-entry">
-              <span class="stat-label">Bosses Killed:</span>
-              <span class="stat-value" id="stat-bosses">0</span>
-            </div>
-            <div class="settings-section">
-              <button id="hard-reset-btn" class="osrs-button danger-button">
-                🔄 Hard Reset Game
-              </button>
-            </div>
-          </div>
-          <div class="osrs-panel champions-panel" id="champions-panel">
-            <div class="champions-header">
-                <h2>Champions</h2>
-                <div class="total-dps">Total DPS: <span id="total-champion-dps">0</span></div>
-            </div>
-            <div class="buy-controls">
-                <button class="osrs-button buy-amount-btn" data-amount="1">Buy 1x</button>
-                <button class="osrs-button buy-amount-btn" data-amount="10">Buy 10x</button>
-                <button class="osrs-button buy-amount-btn" data-amount="100">Buy 100x</button>
-                <button class="osrs-button buy-amount-btn" data-amount="max">Buy Max</button>
-            </div>
-            <div class="champions-container">
-                <!-- Champions will be dynamically added here by renderChampionsPanel() -->
-            </div>
-        </div>
-          <div class="gold-display">
-            <span class="gold-icon">
-              <img src="assets/items/coins-low.png" alt="Gold coins">
-            </span>
-            <span id="stat-gold">0</span> gp
-          </div>
-        </div>
+  <!-- Panel Content -->
+  <div class="osrs-panels">
+      <!-- Champions Panel -->
+      <div class="osrs-panel champions-panel" id="champions-panel">
+          <!-- Champions content -->
       </div>
+
+      <!-- Stats Panel -->
+      <div class="osrs-panel stats-panel" id="stats-panel">
+        <div class="stats-container">
+            <h3>Combat Stats</h3>
+            <div class="stats-section">
+                <div class="stat-row">
+                    <span class="stat-label">🗡️ Base Damage:</span>
+                    <span class="stat-value" id="damage-stat">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">⚔️ Champion DPS:</span>
+                    <span class="stat-value" id="champion-dps-stat">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">🍀 Luck Multiplier:</span>
+                    <span class="stat-value" id="luck-stat">1.0x</span>
+                </div>
+            </div>
+    
+            <h3>Progress Stats</h3>
+            <div class="stats-section">
+                <div class="stat-row">
+                    <span class="stat-label">👹 Monsters Killed:</span>
+                    <span class="stat-value" id="monsters-killed-stat">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">💀 Bosses Defeated:</span>
+                    <span class="stat-value" id="bosses-killed-stat">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">💰 Total Gold Earned:</span>
+                    <span class="stat-value" id="total-gold-stat">0</span>
+                </div>
+            </div>
+    
+            <h3>Game Stats</h3>
+            <div class="stats-section">
+                <div class="stat-row">
+                    <span class="stat-label">🌟 Prestige Level:</span>
+                    <span class="stat-value" id="prestige-stat">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">📚 Collection Log:</span>
+                    <span class="stat-value" id="collection-stat">0/0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+      <!-- Collection Log Panel -->
+      <div id="collection-panel" class="osrs-panel collection-panel">
+          <div id="collection-log"></div>
+      </div>
+
+      <!-- Loot Feed Panel -->
+      <div class="osrs-panel loot-panel" id="loot-panel">
+          <div class="osrs-loot-feed" id="loot-feed"></div>
+      </div>
+
+      <!-- Achievements Panel -->
+      <div class="osrs-panel achievements-panel" id="achievements-panel">
+          <div id="achievements-container" class="achievements-grid"></div>
+      </div>
+  </div>
+
+  <!-- Bottom Tabs -->
+  <div class="osrs-interface-tabs bottom-tabs">
+      <button class="osrs-interface-tab" data-panel="collection">📚 Collection Log</button>
+      <button class="osrs-interface-tab" data-panel="loot">💎 Loot Feed</button>
+      <button class="osrs-interface-tab" data-panel="achievements">🏆 Achievements</button>
+  </div>
+</div>
 
       <!-- Center Panel (Combat) -->
       <div class="center-panel">
         <!-- Level Select -->
         <div class="level-select-container">
-          <button class="level-nav-btn" id="prev-levels">←</button>
-          <div class="level-select" id="level-select"></div>
-          <button class="level-nav-btn" id="next-levels">→</button>
-        </div>
+          <button id="map-button" class="osrs-button" onclick="openMapModal()">
+              🗺️ Map
+          </button>
+          <div class="level-navigation-wrapper">
+              <div class="level-navigation">
+                  <button class="level-nav-btn" id="prev-levels">←</button>
+                  <div class="level-select" id="level-select"></div>
+                  <button class="level-nav-btn" id="next-levels">→</button>
+              </div>
+          </div>
+          <button id="auto-progress" class="auto-progress-btn">
+              <span class="auto-icon">▶️</span>
+              <span class="status-text">Auto</span>
+          </button>
+      </div>
 
         <!-- Combat Panel -->
         <div class="combat-panel">
           <div class="panel-header">
             <h2>
               <span id="zone-name">Cow Pen</span>
-              <div class="combat-controls">
-                <button id="auto-progress" class="osrs-button auto-progress-btn">
-                  <span class="auto-icon">▶️</span>
-                  <span class="status-text">Auto-Progress</span>
-                </button>
-              </div>
             </h2>
           </div>
 
@@ -171,32 +183,6 @@
             <button class="osrs-button version-btn" id="version-btn" onclick="showVersionInfo()">
               Loading...
             </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Replace the Right Panel section with this: -->
-      <div class="right-panel">
-        <div class="osrs-interface-tabs">
-          <button class="osrs-interface-tab active" data-panel="collection">📚 Collection Log</button>
-          <button class="osrs-interface-tab" data-panel="loot">💎 Loot Feed</button>
-          <button class="osrs-interface-tab" data-panel="achievements">🏆 Achievements</button>
-        </div>
-        <div class="osrs-panels">
-          <!-- Collection Log Panel -->
-          <div id="collection-panel" class="osrs-panel collection-panel">
-            <div id="collection-log"></div>
-          </div>
-
-          <!-- Loot Feed Panel -->
-          <div class="osrs-panel loot-panel" id="loot-panel">
-            <div class="osrs-loot-feed" id="loot-feed"></div>
-          </div>
-          <!-- Achievements Panel -->
-          <div class="osrs-panel achievements-panel" id="achievements-panel">
-            <div id="achievements-container" class="achievements-grid">
-              <!-- Achievements will be dynamically added here -->
-            </div>
           </div>
         </div>
       </div>

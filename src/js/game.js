@@ -82,19 +82,19 @@ function initDOMCache() {
 // Game Constants
 const GAME_CONFIG = {
     VERSION: {
-        NUMBER: "0.5.2",  // Updated from 0.5.1
-        NAME: "Champions Linear DPS Update",  // Updated name
+        NUMBER: "0.6.0",
+        NAME: "World Map Update",
         CHANGELOG: [
-            "Changed first 8 champions to use linear DPS scaling",
-            "Fixed champion panel visual glitches",
-            "Added champion level gain display for max buy",
-            "Improved champion DPS calculation efficiency",
-            "Fixed champion panel minimization issues",
-            "Added better visual feedback for champion upgrades",
-            "Fixed champion cost calculations",
-            "Added champion image support",
-            "Improved champion UI responsiveness",
-            "Fixed champion panel scrolling issues"
+            "Added interactive World Map system",
+            "Implemented region navigation and unlocking",
+            "Added zone progression system",
+            "Improved UI layout with centered level select",
+            "Added map and auto-progress button positioning",
+            "Enhanced champion panel visuals",
+            "Optimized performance for region transitions",
+            "Added region-specific difficulty multipliers",
+            "Improved navigation system between zones",
+            "Added region boss mechanics"
         ]
     },
     AUTO_PROGRESS: {
@@ -2150,6 +2150,48 @@ const UIManager = {
       }
   }
 };
+
+function updateStatsDisplay() {
+    try {
+        // Update combat stats
+        if (document.getElementById('damage-stat')) {
+            document.getElementById('damage-stat').textContent = formatNumber(player.damage || 0);
+        }
+        if (document.getElementById('champion-dps-stat')) {
+            document.getElementById('champion-dps-stat').textContent = formatNumber(player.champions?.totalDPS || 0);
+        }
+        if (document.getElementById('luck-stat')) {
+            document.getElementById('luck-stat').textContent = (player.luck || 1).toFixed(2) + 'x';
+        }
+
+        // Update progress stats
+        if (document.getElementById('monsters-killed-stat')) {
+            document.getElementById('monsters-killed-stat').textContent = formatNumber(player.stats?.monstersKilled || 0);
+        }
+        if (document.getElementById('bosses-killed-stat')) {
+            document.getElementById('bosses-killed-stat').textContent = formatNumber(player.stats?.bossesKilled || 0);
+        }
+        if (document.getElementById('total-gold-stat')) {
+            document.getElementById('total-gold-stat').textContent = formatNumber(player.stats?.totalGoldEarned || 0);
+        }
+
+        // Update game stats
+        if (document.getElementById('prestige-stat')) {
+            document.getElementById('prestige-stat').textContent = formatNumber(player.prestigeLevel || 0);
+        }
+        
+        // Calculate collection log completion with safety checks
+        if (document.getElementById('collection-stat') && window.itemData) {
+            const totalItems = Object.keys(window.itemData).length;
+            const collectedItems = player.collectionLog?.length || 0;
+            document.getElementById('collection-stat').textContent = 
+                `${formatNumber(collectedItems)}/${formatNumber(totalItems)}`;
+        }
+
+    } catch (error) {
+        console.error("Error updating stats display:", error);
+    }
+}
 
 function initializeCollectionLog() {
   try {
@@ -4872,10 +4914,14 @@ function setupTabPanels() {
 
 function updateUI() {
   try {
+    updateHealthDisplay();
+    updateInventory();
+    updateProgressBar();
+    updateStatsDisplay(); // Add this line
     renderAchievements(); // Add this line
-    const goldDisplay = DOMCache.get('#stat-gold');
+    const goldDisplay = document.getElementById('gold-display');
     if (goldDisplay) {
-        goldDisplay.textContent = formatLargeNumber(player.gold);
+        goldDisplay.textContent = formatNumber(player.gold);
     }
       UIManager.queueUpdate('all');
   } catch (error) {
