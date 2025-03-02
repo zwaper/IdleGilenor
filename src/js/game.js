@@ -82,19 +82,19 @@ function initDOMCache() {
 // Game Constants
 const GAME_CONFIG = {
     VERSION: {
-        NUMBER: "0.6.0",
-        NAME: "World Map Update",
+        NUMBER: "0.6.1",
+        NAME: "UI Enhancement Update",
         CHANGELOG: [
-            "Added interactive World Map system",
-            "Implemented region navigation and unlocking",
-            "Added zone progression system",
-            "Improved UI layout with centered level select",
-            "Added map and auto-progress button positioning",
-            "Enhanced champion panel visuals",
-            "Optimized performance for region transitions",
-            "Added region-specific difficulty multipliers",
-            "Improved navigation system between zones",
-            "Added region boss mechanics"
+            "Enhanced level selection container layout and sizing",
+            "Improved panel content fitting and organization",
+            "Enhanced combat panel visual layout",
+            "Optimized champions panel display",
+            "Improved left panel content organization",
+            "Added better visual feedback for buttons",
+            "Fixed content overflow issues",
+            "Enhanced map and auto-progress button styling",
+            "Improved overall UI scaling and spacing",
+            "Optimized panel header sizes"
         ]
     },
     AUTO_PROGRESS: {
@@ -1040,10 +1040,18 @@ function createBuyControls() {
     const buyControls = document.createElement('div');
     buyControls.className = 'buy-controls';
     buyControls.innerHTML = `
-        <button class="osrs-button buy-amount-btn ${activeBuyAmount === '1' ? 'active' : ''}" data-amount="1">Buy 1x</button>
-        <button class="osrs-button buy-amount-btn ${activeBuyAmount === '10' ? 'active' : ''}" data-amount="10">Buy 10x</button>
-        <button class="osrs-button buy-amount-btn ${activeBuyAmount === '100' ? 'active' : ''}" data-amount="100">Buy 100x</button>
-        <button class="osrs-button buy-amount-btn ${activeBuyAmount === 'max' ? 'active' : ''}" data-amount="max">Buy Max</button>
+        <button class="buy-amount-btn ${activeBuyAmount === '1' ? 'active' : ''}" 
+                data-amount="1" 
+                data-tooltip="Buy a single level">Buy 1x</button>
+        <button class="buy-amount-btn ${activeBuyAmount === '10' ? 'active' : ''}" 
+                data-amount="10"
+                data-tooltip="Buy 10 levels at once">Buy 10x</button>
+        <button class="buy-amount-btn ${activeBuyAmount === '100' ? 'active' : ''}" 
+                data-amount="100"
+                data-tooltip="Buy 100 levels at once">Buy 100x</button>
+        <button class="buy-amount-btn ${activeBuyAmount === 'max' ? 'active' : ''}" 
+                data-amount="max"
+                data-tooltip="Buy maximum affordable levels">Buy Max</button>
     `;
     return buyControls;
 }
@@ -1089,21 +1097,27 @@ function attachBuyButtonHandlers() {
 function generateChampionCardHTML(champion, owned, isUnlocked, canUnlock) {
     try {
         const buyAmount = document.querySelector('.buy-amount-btn.active')?.dataset.amount || '1';
-        
+        let purchaseInfo = { levels: 0, cost: 0 };
         let nextLevelCost = 0;
         let canAfford = false;
-        let maxAffordable = { levels: 0, cost: 0 };
-        let levelGainText = '';
-        
+
         if (isUnlocked) {
             nextLevelCost = calculateChampionCost(champion, owned.level + 1);
             canAfford = player.gold >= nextLevelCost;
+
             if (buyAmount === 'max') {
-                maxAffordable = calculateMaxAffordableLevels(champion, owned.level, player.gold);
-                // Add level gain text
-                const newLevel = owned.level + maxAffordable.levels;
-                levelGainText = `(Level ${owned.level} → ${newLevel})`;
+                purchaseInfo = calculateMaxAffordableLevels(champion, owned.level, player.gold);
+            } else {
+                const numericAmount = parseInt(buyAmount);
+                purchaseInfo.cost = calculateBulkChampionCost(champion, owned.level, numericAmount);
+                purchaseInfo.levels = numericAmount;
+                canAfford = player.gold >= purchaseInfo.cost;
             }
+
+            // Calculate DPS preview for the potential purchase
+            const currentDPS = owned.currentDPS || 0;
+            const futureDPS = calculateChampionDPS(champion, owned.level + purchaseInfo.levels);
+            const dpsIncrease = futureDPS - currentDPS;
         }
 
         return `
@@ -1160,20 +1174,30 @@ function generateChampionCardHTML(champion, owned, isUnlocked, canUnlock) {
                             `;
                         }).join('')}
                     </div>
-            <div class="champion-buy">
-                ${buyAmount === 'max' ? `
-                    <div class="max-buy-info">
-                        Can afford ${maxAffordable.levels} levels for ${formatNumber(maxAffordable.cost)} gold
-                        <br>
-                        <span class="level-gain">${levelGainText}</span>
+                    <div class="champion-buy">
+                        ${purchaseInfo.levels > 0 ? `
+                            <div class="buy-info">
+                                <div class="buy-details">
+                                    <span class="levels-gain">
+                                        <span class="level-icon">📈</span>
+                                        Level ${owned.level} → ${owned.level + purchaseInfo.levels}
+                                        <span class="level-delta">(+${purchaseInfo.levels})</span>
+                                    </span>
+                                    <div class="dps-preview">
+                                        ${champion.id === 'worldguardian' ? 
+                                            `🗡️ Click Damage: ${owned.clickDamageBonus} → ${calculateChampionBonus(champion, owned.level + purchaseInfo.levels)}` :
+                                            `⚔️ DPS: ${formatNumber(owned.currentDPS)} → ${formatNumber(calculateChampionDPS(champion, owned.level + purchaseInfo.levels))}`
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        <button class="osrs-button buy-btn ${canAfford ? '' : 'disabled'}"
+                                onclick="buyChampionLevels('${champion.id}', ${buyAmount === 'max' ? '\'max\'' : buyAmount})"
+                                ${canAfford ? '' : 'disabled'}>
+                            Buy ${buyAmount === 'max' ? 'Max' : buyAmount + 'x'} (${formatNumber(purchaseInfo.cost)})
+                        </button>
                     </div>
-                ` : ''}
-<button class="osrs-button buy-btn ${canAfford ? '' : 'disabled'}"
-        onclick="buyChampionLevels('${champion.id}', ${buyAmount === 'max' ? '\'max\'' : buyAmount})"
-        ${canAfford ? '' : 'disabled'}>
-    Buy ${buyAmount === 'max' ? 'Max' : buyAmount + 'x'} (${formatNumber(nextLevelCost)})
-</button>
-            </div>
                 `}
             </div>
         `;
@@ -2326,59 +2350,23 @@ function initializeCombatListeners() {
 function attackHandler(event) {
     try {
         // Prevent handling click events from hit effects
-        if (!event || event.target.classList.contains('hit-effect')) {
-            return;
-        }
+        if (!event || event.target.classList.contains('hit-effect')) return;
         
+        player.lastClickEvent = event;
+
         const zone = gameData.regions[currentRegion].zones[currentZone];
         const monster = player.currentBoss || zone.monster;
+        if (!monster) return;
+
+        // Calculate damage with critical hits and combo system
+        const damage = calculateAttackDamage();
         
-        if (!monster) {
-            console.error('No monster found');
-            return;
-        }
-
-        // Calculate click damage
-        const clickDamage = Math.floor(player.damage);
-
-        // Add attack animation
-        const monsterSprite = document.getElementById('monster-sprite');
-        if (monsterSprite) {
-            // Add quick scale animation
-            monsterSprite.style.transform = 'scale(0.75)';
-            setTimeout(() => {
-                monsterSprite.style.transform = 'scale(0.8)';
-            }, 100);
-
-            // Add hit effect (white flash)
-            const hitEffect = document.createElement('div');
-            hitEffect.className = 'hit-effect';
-            monsterSprite.parentElement.appendChild(hitEffect);
-            setTimeout(() => hitEffect.remove(), 200);
-        }
-
-        // Show damage number with formatting
-        const damageNumber = document.createElement('div');
-        damageNumber.className = 'damage-number';
-        damageNumber.textContent = formatNumber(clickDamage);
-        const container = document.querySelector('.monster-container');
-        if (container && event) {
-            damageNumber.style.left = `${event.offsetX}px`;
-            damageNumber.style.top = `${event.offsetY}px`;
-            container.appendChild(damageNumber);
-            
-            // Animate and remove damage number
-            setTimeout(() => {
-                damageNumber.style.opacity = '0';
-                damageNumber.style.transform = 'translateY(-30px)';
-                setTimeout(() => damageNumber.remove(), 500);
-            }, 50);
-        }
+        // Apply damage and visual effects
+        applyDamageEffects(event, monster, damage);
 
         // Apply damage to monster
         if (player.currentBoss) {
-            // Handle boss damage
-            player.currentBoss.hp -= clickDamage;
+            player.currentBoss.hp -= damage;
             if (player.currentBoss.hp <= 0) {
                 if (player.currentBoss.isRegionBoss) {
                     handleRegionBossDefeat(gameData.regions[currentRegion]);
@@ -2387,24 +2375,166 @@ function attackHandler(event) {
                 }
             }
         } else {
-            // Handle regular monster damage
-            monster.hp -= clickDamage;
+            monster.hp -= damage;
             if (monster.hp <= 0) {
                 handleMonsterDeath(zone);
             }
-        }
-
-        // Add hit shake effect to scene
-        const sceneContainer = document.querySelector('.scene-container');
-        if (sceneContainer) {
-            sceneContainer.classList.add('hit-shake');
-            setTimeout(() => sceneContainer.classList.remove('hit-shake'), 200);
         }
 
         updateUI();
     } catch (error) {
         console.error('Error handling attack:', error);
         showLoot('Error processing attack', 'error');
+    }
+}
+
+function calculateAttackDamage() {
+    try {
+        let damage = player.damage;
+        
+        // Critical hit system
+        const critChance = 0.1 + (player.luck - 1) * 0.05; // Base 10% + bonus from luck
+        const isCrit = Math.random() < critChance;
+        if (isCrit) {
+            damage *= 2;
+            showCriticalHit();
+        }
+
+        // Combo system
+        if (!player.combo) player.combo = { count: 0, timer: null };
+        player.combo.count++;
+        
+        if (player.combo.count > 5) {
+            damage *= 1 + (player.combo.count - 5) * 0.1; // 10% more damage per combo after 5
+        }
+
+        // Reset combo after 2 seconds of no clicks
+        clearTimeout(player.combo.timer);
+        player.combo.timer = setTimeout(() => {
+            player.combo.count = 0;
+            updateComboDisplay();
+        }, 2000);
+
+        updateComboDisplay();
+        return Math.floor(damage);
+    } catch (error) {
+        console.error('Error calculating attack damage:', error);
+        return player.damage;
+    }
+}
+
+function applyDamageEffects(event, monster, damage) {
+    try {
+        // Create damage number with formatting
+        const damageNumber = document.createElement('div');
+        damageNumber.className = 'damage-number';
+        damageNumber.textContent = formatNumber(damage);
+
+        // Position damage number relative to scene container
+        const container = document.querySelector('.scene-container');
+        if (container && event) {
+            const rect = container.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            damageNumber.style.left = `${x}px`;
+            damageNumber.style.top = `${y}px`;
+            container.appendChild(damageNumber);
+
+            // Add random spread to damage numbers
+            const spread = 30;
+            const randomX = Math.random() * spread - spread/2;
+            damageNumber.style.transform = `translate(${randomX}px, -30px)`;
+            
+            setTimeout(() => damageNumber.remove(), 1000);
+        }
+
+        // Add visual effects
+        addHitEffects();
+        
+    } catch (error) {
+        console.error('Error applying damage effects:', error);
+    }
+}
+
+function addHitEffects() {
+    try {
+        const monsterSprite = document.getElementById('monster-sprite');
+        if (!monsterSprite) return;
+
+        // Hit shake effect
+        monsterSprite.classList.add('hit');
+        setTimeout(() => monsterSprite.classList.remove('hit'), 100);
+
+        // Hit flash
+        const hitFlash = document.createElement('div');
+        hitFlash.className = 'hit-flash';
+        monsterSprite.parentElement.appendChild(hitFlash);
+        setTimeout(() => hitFlash.remove(), 200);
+
+    } catch (error) {
+        console.error('Error adding hit effects:', error);
+    }
+}
+
+function showCriticalHit(event) {
+    try {
+        const container = document.querySelector('.scene-container');
+        if (!container || !event) return;
+
+        const rect = container.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        const critText = document.createElement('div');
+        critText.className = 'critical-hit';
+        critText.textContent = 'CRITICAL!';
+        critText.style.left = `${x}px`;
+        critText.style.top = `${y}px`;
+
+        container.appendChild(critText);
+        setTimeout(() => critText.remove(), 1000);
+    } catch (error) {
+        console.error('Error showing critical hit:', error);
+    }
+}
+
+function updateComboDisplay() {
+    try {
+        if (!player.combo?.count || player.combo.count <= 5) return;
+
+        const container = document.querySelector('.scene-container');
+        if (!container || !player.lastClickEvent) return;
+
+        const rect = container.getBoundingClientRect();
+        const x = player.lastClickEvent.clientX - rect.left;
+        const y = player.lastClickEvent.clientY - rect.top;
+
+        let comboDisplay = document.querySelector('.combo-display');
+        if (!comboDisplay) {
+            comboDisplay = document.createElement('div');
+            comboDisplay.className = 'combo-display';
+            container.appendChild(comboDisplay);
+        }
+
+        comboDisplay.textContent = `${player.combo.count}x Combo!`;
+        comboDisplay.style.left = `${x}px`;
+        comboDisplay.style.top = `${y - 30}px`; // Offset slightly above damage number
+        comboDisplay.style.display = 'block';
+        comboDisplay.style.transform = `scale(${1 + (player.combo.count - 5) * 0.05})`;
+
+        // Remove previous timeout if it exists
+        if (comboDisplay.timeout) {
+            clearTimeout(comboDisplay.timeout);
+        }
+        
+        // Set new timeout to remove the display
+        comboDisplay.timeout = setTimeout(() => {
+            comboDisplay.remove();
+        }, 1000);
+
+    } catch (error) {
+        console.error('Error updating combo display:', error);
     }
 }
 

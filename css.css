@@ -6,11 +6,14 @@
 }
 
 .left-panel {
+    background-color: rgba(25, 19, 15, 0.85);
+    height: 100%;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    background: var(--panel-bg);
-    border: 2px solid var(--border-color);
+    border: 2px solid #3d3228;
+    border-radius: 8px;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .osrs-interface-tabs {
@@ -28,16 +31,20 @@
 
 .osrs-panels {
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
+    position: relative;
 }
 
 .center-panel {
     flex: 1;
     background: var(--panel-bg);
     border: 2px solid var(--border-color);
-    box-sizing: border-box; /* Add this */
-    overflow: hidden; /* Prevent content from overflowing */
+    box-sizing: border-box;
+    overflow: hidden;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
 }
 
 .center-panel.expanded {
@@ -115,25 +122,28 @@
 .level-select-container {
     display: flex;
     align-items: center;
-    padding: 12px 60px;
-    background: var(--panel-bg);
-    border-bottom: 2px solid var(--border-color);
-    width: calc(100% - 120px); /* Account for padding */
-    gap: 10px;
+    padding: 12px 60px; /* Increased horizontal padding for map/auto buttons */
+    background: linear-gradient(to bottom, #2b2622 0%, #1f1a17 100%);
+    border: 2px solid #3d3228;
+    border-radius: 6px;
+    width: calc(100% - 24px); /* Account for margin */
+    margin: 12px;
     position: relative;
-    min-height: 48px;
-    box-sizing: border-box; /* Add this to include padding in width calculation */
+    box-sizing: border-box;
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.05),
+                0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .level-navigation {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 6px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px;
     border-radius: 4px;
-    border: 1px solid var(--border-color);
-    max-width: calc(100% - 24px); /* Account for padding and borders */
+    border: 1px solid #483828;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+    max-width: calc(100% - 16px); /* Account for padding */
 }
 
 .level-navigation-wrapper {
@@ -142,17 +152,24 @@
     gap: 10px;
     flex: 1;
     justify-content: center;
-    margin: 0;
-    max-width: 100%; /* Ensure it doesn't overflow */
+    max-width: 100%;
+    overflow: hidden; /* Prevent overflow */
 }
 
 .level-select {
     display: flex;
     gap: 6px;
+    padding: 0 4px;
     max-width: calc(100% - 80px); /* Account for navigation buttons */
     overflow-x: auto;
     scrollbar-width: none;
-    padding: 0 4px;
+    mask-image: linear-gradient(
+        to right,
+        transparent,
+        black 10%,
+        black 90%,
+        transparent
+    );
 }
 
 .level-select::-webkit-scrollbar {
@@ -160,44 +177,60 @@
 }
 
 .level-nav-btn {
-    padding: 6px 10px;
+    padding: 8px;
     background: linear-gradient(to bottom, #3c2d21, #2b2622);
     border: 1px solid #5a4634;
     color: #ffd700;
-    cursor: pointer;
-    font-size: 14px;
-    min-width: 32px;
+    font-size: 16px;
+    width: 32px;
+    height: 32px;
     border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .level-nav-btn:hover {
     background: linear-gradient(to bottom, #4d3a2a, #362f2a);
     border-color: #6a563e;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+.level-nav-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .level-btn {
-    padding: 6px 12px;
+    padding: 8px 12px;
     background: linear-gradient(to bottom, #2b2622, #1f1a17);
     border: 1px solid #483828;
-    color: #fff;
-    cursor: pointer;
-    font-size: 12px;
-    min-width: 40px;
+    color: #c0c0c0;
+    font-size: 13px;
+    min-width: 45px;
     border-radius: 4px;
     transition: all 0.2s ease;
+    position: relative;
+    text-align: center;
 }
 
 .level-btn:hover {
     background: linear-gradient(to bottom, #3c2d21, #2b2622);
     border-color: #5a4634;
+    color: #ffd700;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .level-btn.active {
     background: linear-gradient(to bottom, #5a4634, #483828);
     border-color: #ffd700;
     color: #ffd700;
-    box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.3),
+                inset 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .auto-progress-btn {
@@ -238,23 +271,273 @@
 #map-button {
     position: absolute;
     left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
     padding: 8px 12px;
     background: linear-gradient(to bottom, #3c2d21, #2b2622);
     border: 1px solid #5a4634;
     color: #ffd700;
-    cursor: pointer;
     font-size: 14px;
     border-radius: 4px;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-    z-index: 1; /* Ensure button stays above other elements */
+    transition: all 0.3s ease;
 }
 
 #map-button:hover {
     background: linear-gradient(to bottom, #4d3a2a, #362f2a);
     border-color: #6a563e;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
 }
 
 .auto-progress-btn {
-    order: 3; /* Keep auto-progress on right */
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    padding: 8px 12px;
+    background: linear-gradient(to bottom, #3c2d21, #2b2622);
+    border: 1px solid #5a4634;
+    color: #ffd700;
+    font-size: 14px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.auto-progress-btn:hover {
+    background: linear-gradient(to bottom, #4d3a2a, #362f2a);
+    border-color: #6a563e;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.auto-progress-btn.active {
+    background: linear-gradient(to bottom, #5a4634, #483828);
+    border-color: #ffd700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+/* Add to your css.css file */
+.buy-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.buy-amount-btn {
+    padding: 6px 12px;
+    background: linear-gradient(to bottom, #2b2622, #1f1a17);
+    border: 1px solid #483828;
+    color: #c0c0c0;
+    cursor: pointer;
+    font-size: 12px;
+    min-width: 70px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.buy-amount-btn:hover {
+    background: linear-gradient(to bottom, #3c2d21, #2b2622);
+    border-color: #5a4634;
+    color: #ffd700;
+}
+
+.buy-amount-btn.active {
+    background: linear-gradient(to bottom, #5a4634, #483828);
+    border-color: #ffd700;
+    color: #ffd700;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+}
+
+.buy-amount-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.buy-amount-btn:hover::after {
+    opacity: 1;
+}
+
+.buy-amount-btn:active {
+    transform: translateY(1px);
+}
+
+/* Add tooltip on hover */
+.buy-amount-btn[data-amount="max"] {
+    position: relative;
+}
+
+.buy-amount-btn[data-amount="max"]::before {
+    content: "Buy maximum affordable levels";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #5a4634;
+    border-radius: 4px;
+    color: #ffd700;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+    pointer-events: none;
+    margin-bottom: 5px;
+}
+
+.buy-amount-btn[data-amount="max"]:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+.max-buy-info {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 8px;
+    margin-bottom: 8px;
+}
+
+.max-buy-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.levels-gain {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.level-delta {
+    color: #98FB98;
+    font-size: 0.9em;
+    margin-left: 4px;
+}
+
+.cost-info {
+    color: #ffd700;
+}
+
+.dps-preview {
+    font-size: 0.9em;
+    color: #4CAF50;
+    text-align: center;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.level-icon, .gold-icon {
+    margin-right: 4px;
+}
+
+.damage-number {
+    position: absolute;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 16px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    animation: damageFloat 1s ease-out;
+    z-index: 100;
+}
+
+.critical-hit {
+    position: absolute;
+    color: #ff0000;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(255,0,0,0.5);
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    animation: criticalPop 1s ease-out;
+    z-index: 101;
+}
+
+.combo-display {
+    position: absolute;
+    color: #ffd700;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    pointer-events: none; /* Prevents clicking */
+    animation: comboFloat 1s ease-out;
+    z-index: 102;
+    user-select: none; /* Prevents text selection */
+    -webkit-user-select: none; /* Safari support */
+    -moz-user-select: none; /* Firefox support */
+    -ms-user-select: none; /* IE/Edge support */
+}
+
+.hit-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    opacity: 0.3;
+    pointer-events: none;
+    animation: hitFlash 0.2s ease-out;
+}
+
+.monster-sprite {
+    transition: transform 0.1s ease;
+}
+
+.monster-sprite.hit {
+    transform: scale(0.95) rotate(-2deg);
+}
+
+@keyframes damageFloat {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+}
+
+@keyframes hitFlash {
+    0% { opacity: 0.3; }
+    100% { opacity: 0; }
+}
+
+@keyframes criticalPop {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0;
+    }
 }
