@@ -11,14 +11,14 @@
 <body>
   <div id="game-container">
     <!-- Header -->
-    <div class="osrs-header">
+    <!-- <div class="osrs-header">
       <h1>
         <span class="rune">⚔️</span>
         OSRS Idle
         <span class="rune">🛡️</span>
       </h1>
       <div class="header-border"></div>
-    </div>
+    </div>  -->
 
     <!-- Main Content Area -->
     <div class="main-content">
@@ -106,14 +106,48 @@
       <div class="osrs-panel achievements-panel" id="achievements-panel">
           <div id="achievements-container" class="achievements-grid"></div>
       </div>
+
+      <!-- Settings Panel -->
+      <div class="settings-container">
+        <div class="settings-section">
+            <h3>Game Settings</h3>
+            <div class="setting-row">
+                <span class="setting-label">Auto-Save</span>
+                <label class="setting-toggle">
+                    <input type="checkbox" id="auto-save-toggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Data Management</h3>
+          <div class="settings-buttons">
+              <button class="osrs-button" id="save-game-btn">💾 Save Game</button>
+              <button class="osrs-button" id="load-backup-btn">🔄 Load Backup</button>
+              <button class="osrs-button danger-button" id="reset-game-btn">
+                  ⚠️ Hard Reset
+              </button>
+          </div>
+      </div>
+
+        <div class="settings-section">
+            <h3>Game Information</h3>
+            <div class="game-info">
+                <p>Version: <span id="game-version"></span></p>
+                <p>Last Saved: <span id="last-saved"></span></p>
+            </div>
+        </div>
+    </div>
   </div>
 
   <!-- Bottom Tabs -->
   <div class="osrs-interface-tabs bottom-tabs">
-      <button class="osrs-interface-tab" data-panel="collection">📚 Collection Log</button>
-      <button class="osrs-interface-tab" data-panel="loot">💎 Loot Feed</button>
-      <button class="osrs-interface-tab" data-panel="achievements">🏆 Achievements</button>
-  </div>
+    <button class="osrs-interface-tab" data-panel="collection">📚 Collection Log</button>
+    <button class="osrs-interface-tab" data-panel="loot">💎 Loot Feed</button>
+    <button class="osrs-interface-tab" data-panel="achievements">🏆 Achievements</button>
+    <button class="osrs-interface-tab" data-panel="settings">⚙️ Settings</button>
+</div>
 </div>
 
       <!-- Center Panel (Combat) -->

@@ -26,16 +26,16 @@ body {
 
 /* Main game container */
 #game-container {
+  position: relative;
   width: 1280px;
   height: 720px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  position: relative;
+  overflow: hidden; /* Changed from visible to hidden */
   background-color: #1a1a1a;
   border-radius: 8px;
-
+  z-index: 1;
 }
 /* Header section */
 .osrs-header {
@@ -86,12 +86,15 @@ body {
 
 /* Main content area */
 .main-content {
+  position: relative;
+  z-index: 1;
   display: grid;
-  grid-template-columns: 400px 1fr; /* Increased from 300px */
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
   padding: 8px;
-  height: calc(100vh - 70px); /* Adjust for header */
-  min-height: 0;
+  height: calc(100% - 1px); /* Adjust for padding */
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .left-panel .osrs-panel,
@@ -99,6 +102,11 @@ body {
   display: none;
   height: 100%;
   overflow-y: auto;
+}
+
+.left-panel, .center-panel {
+  position: relative;
+  z-index: 2;
 }
 
 .left-panel .osrs-panel.active,
@@ -116,6 +124,20 @@ body {
   border-bottom: 2px solid #5a4b3d;
 }
 
+.left-panel, .center-panel {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(to bottom, rgba(43, 38, 34, 0.95), rgba(31, 26, 23, 0.95));
+  border: 2px solid #3d3228;
+  border-radius: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Left panel */
 .left-panel {
   background-color: rgba(25, 19, 15, 0.85);
   height: 100%;
@@ -124,18 +146,19 @@ body {
   border: 2px solid #3d3228;
   border-radius: 8px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* Center panel adjustments */
 .center-panel {
-  flex: 1;
-  height: 100%;
-  background-color: rgba(25, 19, 15, 0.85);
+  background: linear-gradient(to bottom, rgba(43, 38, 34, 0.95), rgba(31, 26, 23, 0.95));
   border: 2px solid #3d3228;
   border-radius: 8px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .osrs-interface-tabs {
@@ -166,12 +189,13 @@ body {
 /* Panel content adjustments */
 .osrs-panels {
   flex: 1;
-  overflow: hidden;
   position: relative;
+  overflow: hidden;
+  height: 100%; /* Changed from calc */
 }
 
 .osrs-panel {
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
   right: 0;
@@ -180,8 +204,10 @@ body {
   opacity: 0;
   transition: opacity 0.3s ease;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 15px;
   box-sizing: border-box;
+  height: 100%;
 }
 
 .osrs-panel::before {
@@ -243,6 +269,7 @@ body {
 .osrs-panel.active {
   visibility: visible;
   opacity: 1;
+  height: 100%;
 }
 
 /* Inventory Panel Specific */
@@ -409,8 +436,8 @@ body {
 }
 
 .level-box {
-  width: 50px; /* Fixed width */
-  height: 50px; /* Fixed height */
+  width: 25px; /* Fixed width */
+  height: 25px; /* Fixed height */
   background-color: #3d3228;
   border: 2px solid #5a4b3d;
   display: flex;
@@ -453,8 +480,8 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px; /* Reduced from 12px */
-  margin-top: 8px; /* Reduced from 12px */
+  gap: 8px;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -517,14 +544,14 @@ body {
   box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
 }
 
+/* Update scene container sizing */
 .scene-container {
   position: relative;
-  height: 350px; /* Reduced from 350px */
-  min-height: 300px; /* Reduced from 350px */
+  height: calc(100% - 100px); /* Adjust based on other elements */
+  min-height: 0;
   background-color: transparent;
   border: 2px solid #5a4b3d;
   border-radius: 8px;
-  margin-bottom: 4px; /* Reduced from 5px */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -987,7 +1014,8 @@ hit-effect {
   border: 2px solid #5a4b3d;
   border-radius: 8px;
   padding: 10px;
-  max-height: 200px;
+  height: 100%;
+  width: auto;
   overflow-y: auto;
 }
 
@@ -999,7 +1027,7 @@ hit-effect {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.7);
-  z-index: 1000;
+  z-index: 2000;
   justify-content: center;
   align-items: center;
 }
@@ -1190,14 +1218,6 @@ hit-effect {
   transform: scale(1.1);
 }
 
-/* Panel Content */
-.osrs-panels {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* Add this */
-}
-
 /* Shop Panel Specific */
 .shop-panel {
   display: flex;
@@ -1307,10 +1327,40 @@ hit-effect {
 
 /* Champions Panel Styles */
 .champions-panel {
+  position: relative;
+  z-index: 3;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   height: 100%;
+  overflow: hidden; /* Remove scrolling from main panel */
+}
+
+/* Add scrollable container for champions */
+.champions-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem;
+  margin-right: 4px; /* Give space for scrollbar */
+}
+
+/* Scrollbar styling for champions container */
+.champions-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.champions-scroll-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.champions-scroll-container::-webkit-scrollbar-thumb {
+  background: #5a4b3d;
+  border-radius: 4px;
+}
+
+.champions-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #6a5b4d;
 }
 
 .upgrade-indicator {
@@ -1340,7 +1390,6 @@ hit-effect {
 .champion-description,
 .upgrades-section {
     transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
-    overflow: hidden;
 }
 
 .hidden {
@@ -1405,13 +1454,18 @@ hit-effect {
 }
 
 .champion-card {
-  background: #2b2b2b;
-  border: 2px solid #3d3d3d;
+  position: relative;
+  background: linear-gradient(to bottom, #2b2622, #1f1a17);
+  border: 2px solid #3d3228;
   border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  width: calc(100% - 2rem);
-  box-sizing: border-box;
+  padding: 15px;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.champion-card:last-child {
+  margin-bottom: 0;
 }
 
 /* Stats panel specific */
@@ -1448,6 +1502,11 @@ hit-effect {
   border-color: #4CAF50;
 }
 
+.champion-content {
+  position: relative;
+  overflow: visible;
+}
+
 .champion-card.has-upgrade {
   border: 2px solid #FFD700;
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
@@ -1456,17 +1515,18 @@ hit-effect {
 .champion-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.1);
 }
 
 .champion-image {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
+  border: 2px solid #5a4634;
   overflow: hidden;
-  border: 2px solid #3c2d21;
-  background: #2b2622;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
 }
 
 .champion-image img {
@@ -1479,6 +1539,13 @@ hit-effect {
   flex: 1;
 }
 
+.champion-name {
+  color: #ffd700;
+  font-size: 18px;
+  margin: 0 0 4px 0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
 .champion-info {
   flex: 1;
 }
@@ -1489,9 +1556,36 @@ hit-effect {
 }
 
 .champion-upgrades {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 215, 0, 0.1);
+}
+
+.upgrades-header {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.upgrades-title {
+  color: #ffd700;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.minimize-button {
+  background: none;
+  border: none;
+  color: #ffd700;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+  transition: transform 0.2s ease;
+}
+
+.minimize-button:hover {
+  transform: scale(1.1);
 }
 
 .upgrade {
@@ -1511,8 +1605,18 @@ hit-effect {
 }
 
 .champion-card.locked {
-  opacity: 0.8;
-  background: #1a1a1a;
+  opacity: 0.7;
+  filter: grayscale(50%);
+}
+
+.champion-card.can-unlock {
+  border-color: #4CAF50;
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+}
+
+.champion-card.has-upgrade {
+  border-color: #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
 }
 
 .champion-card.locked .locked-image {
@@ -2045,18 +2149,43 @@ hit-effect {
 }
 
 .champion-stats {
-    margin-top: 8px;
-    padding: 4px;
-    background-color: #333;
-    border-radius: 4px;
+  display: flex;
+  gap: 15px;
+  margin: 10px 0;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.stat-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  color: #aaa;
+  font-size: 12px;
+}
+
+.stat-value {
+  color: #ffd700;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.champion-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .buy-buttons {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 5px;
-  margin-top: 10px;
-  padding: 5px;
+  gap: 8px;
+  width: 100%;
 }
 
 .buy-buttons .osrs-button {
@@ -2066,6 +2195,34 @@ hit-effect {
   text-align: center;
   border-radius: 4px;
   transition: all 0.2s;
+}
+
+.buy-button {
+  padding: 8px;
+  background: linear-gradient(to bottom, #3d3228, #2b2622);
+  border: 1px solid #5a4634;
+  border-radius: 4px;
+  color: #ffd700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  text-align: center;
+}
+
+.buy-button:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #4d3a2a, #362f2a);
+  transform: translateY(-1px);
+}
+
+.buy-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buy-button.can-afford {
+  background: linear-gradient(to bottom, #2d4a2d, #1f3a1f);
+  border-color: #4CAF50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
 }
 
 .buy-buttons .osrs-button:disabled {

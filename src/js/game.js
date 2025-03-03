@@ -7,6 +7,7 @@ import { getItemData } from './itemData.js';
 import { shopItems, itemPrices } from './shopData.js';
 import { updateZoneBackground, getMonsterVariantsForLevel, getZoneTitleForLevel } from './zoneUtils.js';
 import { calculateWeaponPrice } from './utils.js';
+import { saveSystem } from './saveSystem.js';
 
 const DOMCache = {
     elements: new Map(),
@@ -82,19 +83,19 @@ function initDOMCache() {
 // Game Constants
 const GAME_CONFIG = {
     VERSION: {
-        NUMBER: "0.6.1",
+        NUMBER: "0.6.2",
         NAME: "UI Enhancement Update",
         CHANGELOG: [
-            "Enhanced level selection container layout and sizing",
-            "Improved panel content fitting and organization",
-            "Enhanced combat panel visual layout",
-            "Optimized champions panel display",
-            "Improved left panel content organization",
-            "Added better visual feedback for buttons",
-            "Fixed content overflow issues",
-            "Enhanced map and auto-progress button styling",
-            "Improved overall UI scaling and spacing",
-            "Optimized panel header sizes"
+            "Fixed tooltip positioning and visibility",
+            "Added scrollable champions container",
+            "Improved save system functionality",
+            "Enhanced champion card layout",
+            "Added proper scroll position preservation",
+            "Fixed settings panel functionality",
+            "Improved content container sizing",
+            "Enhanced UI element stacking",
+            "Fixed panel overflow issues",
+            "Optimized tooltip display system"
         ]
     },
     AUTO_PROGRESS: {
@@ -467,6 +468,33 @@ let currentZone = "cowpen";
 
 // Call renderAchievements when the game initializes
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize player object first
+    if (!window.player) {
+        window.player = {
+            gold: 0,
+            damage: 1,
+            inventory: [],
+            prestigeLevel: 0,
+            luck: 1.0,
+            champions: {
+                owned: {},
+                totalDPS: 0
+            },
+            stats: {
+                monstersKilled: 0,
+                bossesKilled: 0,
+                totalGoldEarned: 0
+            },
+            settings: {
+                autoSave: true,
+                notifications: true
+            }
+        };
+    }
+
+    initializeSaveSystem();
+    initializeAutoSave();
+    initializeSettings();
     initializeMapControls();
     updateZoneBackground(currentZone, currentRegion);
     renderAchievements();
@@ -975,8 +1003,9 @@ function renderChampionsPanel() {
         const container = document.getElementById('champions-panel');
         if (!container) return;
 
-        // Cache the scroll position
-        const scrollPosition = container.scrollTop;
+        // Store the current scroll position
+        const scrollContainer = container.querySelector('.champions-scroll-container');
+        const scrollPosition = scrollContainer ? scrollContainer.scrollTop : 0;
 
         // Create a document fragment for better performance
         const fragment = document.createDocumentFragment();
@@ -989,6 +1018,10 @@ function renderChampionsPanel() {
         const buyControls = createBuyControls();
         fragment.appendChild(buyControls);
 
+        // Create scroll container for champions
+        const newScrollContainer = document.createElement('div');
+        newScrollContainer.className = 'champions-scroll-container';
+
         // Champions list container
         const championsContainer = document.createElement('div');
         championsContainer.className = 'champions-container';
@@ -998,7 +1031,6 @@ function renderChampionsPanel() {
 
         // Render champions
         championsData.champions.forEach((champion, index) => {
-            // Only show unlocked champions and the next available one
             if (index <= highestUnlockedIndex + 1) {
                 const championCard = createChampionCard(champion, index);
                 if (championCard) {
@@ -1007,14 +1039,16 @@ function renderChampionsPanel() {
             }
         });
 
-        fragment.appendChild(championsContainer);
+        // Add champions container to scroll container
+        newScrollContainer.appendChild(championsContainer);
+        fragment.appendChild(newScrollContainer);
 
         // Update the container efficiently
         container.innerHTML = '';
         container.appendChild(fragment);
 
         // Restore scroll position
-        container.scrollTop = scrollPosition;
+        newScrollContainer.scrollTop = scrollPosition;
 
         // Add buy button handlers
         attachBuyButtonHandlers();
@@ -1094,6 +1128,69 @@ function attachBuyButtonHandlers() {
     });
 }
 
+function generateUpgradeIcons(champion, owned) {
+    return champion.upgrades.map(upgrade => {
+        const isAvailable = owned.level >= upgrade.level;
+        const isPurchased = owned.upgrades?.includes(upgrade.name);
+        const canAfford = player.gold >= upgrade.cost;
+        const classes = [
+            'upgrade-icon',
+            isAvailable ? 'available' : 'locked',
+            isPurchased ? 'purchased' : '',
+            isAvailable && canAfford && !isPurchased ? 'can-afford' : ''
+        ].filter(Boolean).join(' ');
+
+        // Parse effect string to get multiplier and type
+        const effectMatch = upgrade.effect.match(/([A-Za-z]+)\sx(\d+)/);
+        const effectType = effectMatch ? effectMatch[1] : '';
+        const multiplier = effectMatch ? effectMatch[2] : '';
+
+        return `
+            <div class="${classes}" 
+                 onclick="purchaseChampionUpgrade('${champion.id}', '${upgrade.name}')"
+                 data-upgrade="${upgrade.name}">
+                <img src="assets/upgrades/${upgrade.icon || 'default.png'}" alt="${upgrade.name}">
+                <div class="upgrade-tooltip">
+                    <div class="upgrade-tooltip-tier">${upgrade.tier || 'C'}</div>
+                    <div class="upgrade-tooltip-header">${upgrade.name}</div>
+                    <div class="upgrade-tooltip-description">${upgrade.description}</div>
+                    <div class="upgrade-tooltip-stats">
+                        <div class="upgrade-stat">
+                            <span class="upgrade-stat-icon">
+                                ${effectType === 'DPS' ? '⚔️' : '🗡️'}
+                            </span>
+                            <span>${effectType} x${multiplier}</span>
+                        </div>
+                        ${upgrade.bonusEffect ? `
+                            <div class="upgrade-stat">
+                                <span class="upgrade-stat-icon">✨</span>
+                                <span>${upgrade.bonusEffect}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    ${!isPurchased ? `
+                        <div class="upgrade-tooltip-cost">
+                            <span class="gold-icon">💰</span>
+                            ${formatNumber(upgrade.cost)}
+                        </div>
+                        ${!isAvailable ? `
+                            <div class="upgrade-tooltip-requirement">
+                                <span>📊</span>
+                                Requires Level ${upgrade.level}
+                            </div>
+                        ` : ''}
+                    ` : `
+                        <div class="upgrade-tooltip-cost" style="color: #4CAF50">
+                            <span>✓</span>
+                            Purchased
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
 function generateChampionCardHTML(champion, owned, isUnlocked, canUnlock) {
     try {
         const buyAmount = document.querySelector('.buy-amount-btn.active')?.dataset.amount || '1';
@@ -1121,84 +1218,68 @@ function generateChampionCardHTML(champion, owned, isUnlocked, canUnlock) {
         }
 
         return `
-            <div class="champion-header ${owned.minimized ? 'minimized' : ''}" 
-                 onclick="toggleChampionMinimize('${champion.id}')">
-                <div class="champion-image">
-                    <img src="assets/champions/${champion.id}.png" alt="${champion.name}">
-                </div>
-                <div class="champion-title">
-                    <span class="champion-name">${champion.name}</span>
-                    <span class="champion-level">Level ${owned.level || 0}</span>
-                </div>
-                <div class="minimize-icon">${owned.minimized ? '▼' : '▲'}</div>
-            </div>
-            <div class="champion-content ${owned.minimized ? 'hidden' : ''}">
-                <div class="champion-stats">
-                    ${isUnlocked ? `
-                        <div class="stat">
-                            ${champion.id === 'worldguardian' ? 
-                                `🗡️ Click Damage: ${owned.clickDamageBonus || 0}` :
-                                `⚔️ DPS: ${formatNumber(owned.currentDPS || 0)}`}
-                        </div>
-                    ` : ''}
-                </div>
-                ${!isUnlocked ? `
-                    <div class="unlock-requirements">
-                        <h4>Requirements:</h4>
-                        ${renderChampionRequirements(champion.id)}
+            <div class="champion-card ${isUnlocked ? 'unlocked' : ''} ${canUnlock ? 'can-unlock' : ''}">
+                <div class="champion-header ${owned.minimized ? 'minimized' : ''}" 
+                     onclick="toggleChampionMinimize('${champion.id}')">
+                    <div class="champion-image">
+                        <img src="assets/champions/${champion.id}.png" alt="${champion.name}">
                     </div>
-                    <button class="osrs-button unlock-btn ${canUnlock ? '' : 'disabled'}"
-                            onclick="unlockChampion('${champion.id}')"
-                            ${canUnlock ? '' : 'disabled'}>
-                        Unlock Champion
-                    </button>
-                ` : `
-                    <div class="champion-upgrades">
-                        ${champion.upgrades.map(upgrade => {
-                            const purchased = owned.upgrades?.includes(upgrade.name);
-                            const available = owned.level >= upgrade.level && !purchased;
-                            const canAffordUpgrade = player.gold >= upgrade.cost;
-                            return `
-                                <div class="upgrade ${purchased ? 'purchased' : ''} ${available ? 'available' : ''} ${canAffordUpgrade ? 'can-afford' : ''}">
-                                    <div class="upgrade-info">
-                                        <span class="upgrade-name">${upgrade.name}</span>
-                                        <span class="upgrade-cost">💰 ${formatNumber(upgrade.cost)}</span>
-                                    </div>
-                                    <div class="upgrade-effect">${upgrade.effect}</div>
-                                    <button class="osrs-button upgrade-btn"
-                                            onclick="purchaseChampionUpgrade('${champion.id}', '${upgrade.name}')"
-                                            ${!available || !canAffordUpgrade ? 'disabled' : ''}>
-                                        ${purchased ? 'Purchased' : 'Purchase'}
-                                    </button>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                    <div class="champion-buy">
-                        ${purchaseInfo.levels > 0 ? `
-                            <div class="buy-info">
-                                <div class="buy-details">
-                                    <span class="levels-gain">
-                                        <span class="level-icon">📈</span>
-                                        Level ${owned.level} → ${owned.level + purchaseInfo.levels}
-                                        <span class="level-delta">(+${purchaseInfo.levels})</span>
-                                    </span>
-                                    <div class="dps-preview">
-                                        ${champion.id === 'worldguardian' ? 
-                                            `🗡️ Click Damage: ${owned.clickDamageBonus} → ${calculateChampionBonus(champion, owned.level + purchaseInfo.levels)}` :
-                                            `⚔️ DPS: ${formatNumber(owned.currentDPS)} → ${formatNumber(calculateChampionDPS(champion, owned.level + purchaseInfo.levels))}`
-                                        }
-                                    </div>
-                                </div>
+                    <div class="champion-info">
+                        <h3>${champion.name} ${owned.level > 0 ? `(Level ${owned.level})` : ''}</h3>
+                        ${isUnlocked ? `
+                            <div class="champion-stats">
+                                ${champion.id === 'worldguardian' ? 
+                                    `🗡️ Click Damage: ${owned.clickDamageBonus || 0}` :
+                                    `⚔️ DPS: ${formatNumber(owned.currentDPS || 0)}`}
                             </div>
                         ` : ''}
-                        <button class="osrs-button buy-btn ${canAfford ? '' : 'disabled'}"
-                                onclick="buyChampionLevels('${champion.id}', ${buyAmount === 'max' ? '\'max\'' : buyAmount})"
-                                ${canAfford ? '' : 'disabled'}>
-                            Buy ${buyAmount === 'max' ? 'Max' : buyAmount + 'x'} (${formatNumber(purchaseInfo.cost)})
-                        </button>
                     </div>
-                `}
+                    <div class="minimize-icon">${owned.minimized ? '▼' : '▲'}</div>
+                </div>
+                
+                <div class="champion-content ${owned.minimized ? 'hidden' : ''}">
+                    ${!isUnlocked ? `
+                        <div class="unlock-requirements">
+                            <h4>Requirements:</h4>
+                            ${renderChampionRequirements(champion.id)}
+                        </div>
+                        <button class="osrs-button unlock-btn ${canUnlock ? '' : 'disabled'}"
+                                onclick="unlockChampion('${champion.id}')"
+                                ${canUnlock ? '' : 'disabled'}>
+                            Unlock Champion
+                        </button>
+                    ` : `
+                        <div class="upgrades-section">
+                            ${generateUpgradeIcons(champion, owned)}
+                        </div>
+                        
+                        <div class="champion-buy">
+                            ${purchaseInfo.levels > 0 ? `
+                                <div class="buy-info">
+                                    <div class="buy-details">
+                                        <span class="levels-gain">
+                                            <span class="level-icon">📈</span>
+                                            Level ${owned.level} → ${owned.level + purchaseInfo.levels}
+                                            <span class="level-delta">(+${purchaseInfo.levels})</span>
+                                        </span>
+                                        <div class="dps-preview">
+                                            ${champion.id === 'worldguardian' ? 
+                                                `🗡️ Click Damage: ${owned.clickDamageBonus} → ${calculateChampionBonus(champion, owned.level + purchaseInfo.levels)}` :
+                                                `⚔️ DPS: ${formatNumber(owned.currentDPS)} → ${formatNumber(calculateChampionDPS(champion, owned.level + purchaseInfo.levels))}`
+                                            }
+                                        </div>
+                                    </div>s
+                                </div>
+                            ` : ''}
+                            <button class="osrs-button buy-btn ${canAfford ? '' : 'disabled'}"
+                                    onclick="buyChampionLevels('${champion.id}', ${buyAmount === 'max' ? '\'max\'' : buyAmount})"
+                                    ${canAfford ? '' : 'disabled'}>
+                                Buy ${buyAmount === 'max' ? 'Max' : buyAmount + 'x'} 
+                                (${formatNumber(purchaseInfo.cost)})
+                            </button>
+                        </div>
+                    `}
+                </div>
             </div>
         `;
     } catch (error) {
@@ -1225,10 +1306,30 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function toggleChampionMinimize(championId) {
-    const champion = player.champions.owned[championId];
-    if (champion) {
+    try {
+        const champion = player.champions.owned[championId];
+        if (!champion) return;
+
+        // Store scroll position
+        const scrollContainer = document.querySelector('.champions-scroll-container');
+        const scrollPosition = scrollContainer ? scrollContainer.scrollTop : 0;
+
+        // Toggle minimized state
         champion.minimized = !champion.minimized;
+
+        // Re-render and restore scroll
         renderChampionsPanel();
+
+        // Restore scroll position after a short delay to ensure DOM is updated
+        setTimeout(() => {
+            const newScrollContainer = document.querySelector('.champions-scroll-container');
+            if (newScrollContainer) {
+                newScrollContainer.scrollTop = scrollPosition;
+            }
+        }, 0);
+
+    } catch (error) {
+        console.error("Error toggling champion minimize:", error);
     }
 }
 
@@ -2255,72 +2356,35 @@ function updateZoneDisplay(zone) {
     }
 }
 
+function initializeSaveSystem() {
+    // Create game state object
+    const gameState = {
+        currentRegion,
+        currentZone,
+        isAutoProgressEnabled
+    };
+
+    // Initialize save system with both player and game state references
+    saveSystem.init(player, gameState);
+
+    // Add event listeners for save buttons
+    document.getElementById('save-game-btn')?.addEventListener('click', () => saveSystem.saveGame());
+    document.getElementById('load-backup-btn')?.addEventListener('click', () => saveSystem.loadBackupSave());
+    document.getElementById('reset-game-btn')?.addEventListener('click', showResetConfirmation);
+}
+
+
 // Load initial monster
 gameData.regions[currentRegion].zones[currentZone].monster =
   getCurrentMonsterStats(gameData.regions[currentRegion].zones[currentZone]);
 
-function saveGame() {
-    try {
-        const saveData = {
-            version: GAME_CONFIG.VERSION.NUMBER,
-            timestamp: Date.now(),
-            player: {
-                gold: player.gold,
-                damage: player.damage,
-                inventory: player.inventory,
-                prestigeLevel: player.prestigeLevel,
-                luck: player.luck,
-                champions: player.champions,
-                stats: player.stats,
-                settings: player.settings,
-                upgrades: player.upgrades || [],
-                activeBuffs: player.activeBuffs || {},
-                collectionLog: player.collectionLog || []
-            },
-            gameState: {
-                currentRegion,
-                currentZone,
-                isAutoProgressEnabled,
-                regions: Object.entries(gameData.regions).reduce((acc, [regionName, region]) => {
-                    acc[regionName] = {
-                        unlocked: region.unlocked,
-                        miniBossesDefeated: region.miniBossesDefeated,
-                        bossDefeated: region.bossDefeated,
-                        zones: Object.entries(region.zones).reduce((zoneAcc, [zoneName, zone]) => {
-                            zoneAcc[zoneName] = {
-                                unlocked: zone.unlocked,
-                                currentLevel: zone.currentLevel,
-                                highestLevel: zone.highestLevel,
-                                completedLevels: zone.completedLevels || [],
-                                currentKills: zone.currentKills,
-                                defeatedMiniBosses: zone.defeatedMiniBosses || [],
-                                monstersPerLevel: zone.monstersPerLevel
-                            };
-                            return zoneAcc;
-                        }, {})
-                    };
-                    return acc;
-                }, {})
-            }
-        };
-
-        // Store backup of previous save
-        const previousSave = localStorage.getItem("gameSave");
-        if (previousSave) {
-            localStorage.setItem("gameSaveBackup", previousSave);
+// Add auto-save functionality
+function initializeAutoSave() {
+    setInterval(() => {
+        if (player.settings?.autoSave) {
+            saveGame();
         }
-
-        // Save new data
-        localStorage.setItem("gameSave", JSON.stringify(saveData));
-        
-        if (!player.settings.autoSave) {
-            showLoot("Game saved successfully!", "info");
-        }
-
-    } catch (error) {
-        console.error("Error saving game:", error);
-        showLoot("Error saving game", "error");
-    }
+    }, GAME_CONFIG.SAVE.AUTOSAVE_INTERVAL);
 }
 
 function updateVersionButton() {
@@ -4911,28 +4975,84 @@ function addSlotInteractions(slot, itemName, count) {
   }
 }
 
-function updateTooltipPosition(event) {
-  try {
-      const tooltip = document.getElementById('tooltip');
-      if (!tooltip || tooltip.style.display === 'none') return;
+function initializeSettings() {
+    // Auto-save toggle
+    const autoSaveToggle = document.getElementById('auto-save-toggle');
+    if (autoSaveToggle) {
+        autoSaveToggle.checked = player.settings.autoSave;
+        autoSaveToggle.addEventListener('change', (e) => {
+            player.settings.autoSave = e.target.checked;
+            saveGame();
+        });
+    }
 
-      const tooltipRect = tooltip.getBoundingClientRect();
-      let left = event.clientX + 10;
-      let top = event.clientY + 10;
-
-      if (left + tooltipRect.width > window.innerWidth) {
-          left = event.clientX - tooltipRect.width - 10;
-      }
-      if (top + tooltipRect.height > window.innerHeight) {
-          top = event.clientY - tooltipRect.height - 10;
-      }
-
-      tooltip.style.left = `${left}px`;
-      tooltip.style.top = `${top}px`;
-  } catch (error) {
-      console.error('Error updating tooltip position:', error);
-  }
+    // Update game information
+    updateGameInfo();
 }
+
+function updateGameInfo() {
+    const versionElement = document.getElementById('game-version');
+    const lastSavedElement = document.getElementById('last-saved');
+
+    if (versionElement) {
+        versionElement.textContent = GAME_CONFIG.VERSION.NUMBER;
+    }
+
+    if (lastSavedElement) {
+        const lastSaved = localStorage.getItem('lastSaved');
+        lastSavedElement.textContent = lastSaved ? 
+            new Date(parseInt(lastSaved)).toLocaleString() : 
+            'Never';
+    }
+}
+
+function updateTooltipPosition(event) {
+    const tooltip = event.currentTarget.querySelector('.upgrade-tooltip');
+    if (!tooltip) return;
+
+    const icon = event.currentTarget;
+    const iconRect = icon.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const gameContainer = document.getElementById('game-container');
+    const containerRect = gameContainer.getBoundingClientRect();
+
+    // Reset tooltip position and classes
+    tooltip.style.transform = '';
+    tooltip.classList.remove('tooltip-adjusted-left', 'tooltip-adjusted-right');
+
+    // Default position (above the icon)
+    let top = iconRect.top - tooltipRect.height - 10;
+    let left = iconRect.left + (iconRect.width / 2) - (tooltipRect.width / 2);
+
+    // Check left edge
+    if (left < containerRect.left + 10) {
+        left = containerRect.left + 10;
+        tooltip.classList.add('tooltip-adjusted-left');
+    }
+    // Check right edge
+    else if (left + tooltipRect.width > containerRect.right - 10) {
+        left = containerRect.right - tooltipRect.width - 10;
+        tooltip.classList.add('tooltip-adjusted-right');
+    }
+
+    // Check top edge - if too close, show below instead
+    if (top < containerRect.top + 10) {
+        top = iconRect.bottom + 10;
+        tooltip.classList.add('tooltip-bottom');
+    } else {
+        tooltip.classList.add('tooltip-top');
+    }
+
+    // Apply new position
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+}
+
+// Add event listeners
+document.querySelectorAll('.upgrade-icon').forEach(icon => {
+    icon.addEventListener('mouseenter', updateTooltipPosition);
+    icon.addEventListener('mousemove', updateTooltipPosition);
+});
 
 function preloadAssets() {
   const images = [];
@@ -5998,6 +6118,7 @@ window.findCurrentTier = findCurrentTier;
 window.renderEquipmentShop = renderEquipmentShop;
 window.renderShop = renderShop;
 window.buyItem = buyItem;
+window.saveGame = () => saveSystem.saveGame();
 window.applyItemEffect = applyItemEffect;
 window.findItemByName = findItemByName;
 window.getNextUpgrade = getNextUpgrade;
