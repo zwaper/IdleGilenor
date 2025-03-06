@@ -23,7 +23,10 @@ export const gameData = {
                             baseHP: 30,
                             baseDamage: 2,
                             images: [
-                                "cow.png",
+                                "/monsters/cow/pasture/cow.png",
+                                "/monsters/cow/pasture/cow-1.png",
+                                "/monsters/cow/pasture/cow-2.png",
+                                "/monsters/cow/pasture/cow-3.png"
                             ],
                             weight: 100,
                             tier: "C",

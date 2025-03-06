@@ -44,53 +44,80 @@
       </div>
 
       <!-- Stats Panel -->
-      <div class="osrs-panel stats-panel" id="stats-panel">
-        <div class="stats-container">
-            <h3>Combat Stats</h3>
-            <div class="stats-section">
-                <div class="stat-row">
-                    <span class="stat-label">🗡️ Base Damage:</span>
-                    <span class="stat-value" id="damage-stat">0</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">⚔️ Champion DPS:</span>
-                    <span class="stat-value" id="champion-dps-stat">0</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">🍀 Luck Multiplier:</span>
-                    <span class="stat-value" id="luck-stat">1.0x</span>
+<!-- Replace the existing stats-panel content in index.html -->
+<!-- Replace the existing stats panel in index.html -->
+<div class="osrs-panel stats-panel" id="stats-panel">
+    <div class="stats-container">
+        <div class="stats-grid">
+            <!-- Combat Stats -->
+            <div class="stat-box">
+                <img src="assets/icons/damage.png" alt="Damage" class="stat-icon">
+                <div class="stat-info">
+                    <div class="stat-name">Damage</div>
+                    <div class="stat-value" id="player-damage-stat">0</div>
                 </div>
             </div>
-    
-            <h3>Progress Stats</h3>
-            <div class="stats-section">
-                <div class="stat-row">
-                    <span class="stat-label">👹 Monsters Killed:</span>
-                    <span class="stat-value" id="monsters-killed-stat">0</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">💀 Bosses Defeated:</span>
-                    <span class="stat-value" id="bosses-killed-stat">0</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">💰 Total Gold Earned:</span>
-                    <span class="stat-value" id="total-gold-stat">0</span>
+            <div class="stat-box">
+                <img src="assets/icons/dps.png" alt="DPS" class="stat-icon">
+                <div class="stat-info">
+                    <div class="stat-name">Champion DPS</div>
+                    <div class="stat-value" id="champion-dps-stat">0</div>
                 </div>
             </div>
-    
-            <h3>Game Stats</h3>
-            <div class="stats-section">
-                <div class="stat-row">
-                    <span class="stat-label">🌟 Prestige Level:</span>
-                    <span class="stat-value" id="prestige-stat">0</span>
+            <div class="stat-box">
+                <img src="assets/icons/luck.png" alt="Luck" class="stat-icon">
+                <div class="stat-info">
+                    <div class="stat-name">Luck</div>
+                    <div class="stat-value" id="player-luck-stat">1.0x</div>
                 </div>
-                <div class="stat-row">
-                    <span class="stat-label">📚 Collection Log:</span>
-                    <span class="stat-value" id="collection-stat">0/0</span>
+            </div>
+            <!-- Progress Stats -->
+            <div class="stat-box">
+                <img src="assets/icons/kills.png" alt="Kills" class="stat-icon">
+                <div class="stat-info">
+                    <div class="stat-name">Monster Kills</div>
+                    <div class="stat-value" id="monsters-killed-stat">0</div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <img src="assets/icons/combat_achievements.png" alt="Bosses" class="stat-icon">
+                <div class="stat-info">
+                    <div class="stat-name">Boss Kills</div>
+                    <div class="stat-value" id="bosses-killed-stat">0</div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <img src="assets/icons/gold.png" alt="Gold" class="stat-icon">
+                <div class="stat-info">
+                    <div class="stat-name">Total Gold</div>
+                    <div class="stat-value" id="total-gold-stat">0</div>
+                </div>
+            </div>
+            <!-- Game Stats -->
+            <div class="stat-box">
+                <img src="assets/icons/prestige.png" alt="Prestige" class="stat-icon">
+                <div class="stat-info">
+                    <div class="stat-name">Prestige</div>
+                    <div class="stat-value" id="prestige-stat">0</div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <img src="assets/icons/collection_log.png" alt="Collection" class="stat-icon">
+                <div class="stat-info">
+                    <div class="stat-name">Collection</div>
+                    <div class="stat-value" id="collection-stat">0/0</div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <img src="assets/icons/achievements_icon.png" alt="Achievements" class="stat-icon">
+                <div class="stat-info">
+                    <div class="stat-name">Achievements</div>
+                    <div class="stat-value" id="achievements-stat">0/0</div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
       <!-- Collection Log Panel -->
       <div id="collection-panel" class="osrs-panel collection-panel">

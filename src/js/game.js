@@ -524,9 +524,38 @@ let player = {
         totalDPS: 0
     },
     stats: {
-        monstersKilled: 0,
-        bossesKilled: 0,
-        totalGoldEarned: 0
+        combat: {
+            totalDamageDealt: 0,
+            highestDamage: 0,
+            criticalHits: 0,
+            longestCombo: 0
+        },
+        monsters: {
+            killed: 0,
+            bossesKilled: 0,
+            elitesKilled: 0,
+            highestLevel: 0
+        },
+        progression: {
+            highestZoneLevel: 0,
+            zonesUnlocked: 0,
+            regionsUnlocked: 1
+        },
+        loot: {
+            totalGoldEarned: 0,
+            itemsCollected: 0,
+            totalItemsAvailable: 0,
+            rarityFound: {
+                C: 0,
+                B: 0,
+                A: 0,
+                S: 0
+            }
+        },
+        achievements: {
+            completed: 0,
+            total: ACHIEVEMENTS.length
+        }
     },
     settings: {
         autoSave: true,
@@ -2357,15 +2386,17 @@ function updateZoneDisplay(zone) {
 }
 
 function initializeSaveSystem() {
-    // Create game state object
-    const gameState = {
-        currentRegion,
-        currentZone,
-        isAutoProgressEnabled
-    };
+    // Make current region/zone states part of gameData
+    if (!gameData.currentState) {
+        gameData.currentState = {
+            currentRegion: "lumbridge",
+            currentZone: "cowpen",
+            isAutoProgressEnabled: false
+        };
+    }
 
-    // Initialize save system with both player and game state references
-    saveSystem.init(player, gameState);
+    // Initialize save system with both player and gameData references
+    saveSystem.init(player, gameData);
 
     // Add event listeners for save buttons
     document.getElementById('save-game-btn')?.addEventListener('click', () => saveSystem.saveGame());
@@ -2464,20 +2495,32 @@ function calculateAttackDamage() {
             showCriticalHit();
         }
 
-        // Combo system
-        if (!player.combo) player.combo = { count: 0, timer: null };
-        player.combo.count++;
-        
-        if (player.combo.count > 5) {
-            damage *= 1 + (player.combo.count - 5) * 0.1; // 10% more damage per combo after 5
+        // Initialize combo if it doesn't exist
+        if (!player.combo) {
+            player.combo = { count: 0, timer: null };
         }
 
-        // Reset combo after 2 seconds of no clicks
-        clearTimeout(player.combo.timer);
+        // Cap combo at 20
+        if (player.combo.count < 20) {
+            player.combo.count++;
+        }
+        
+        // Apply combo damage bonus (only after 5 hits, capped at 100% bonus)
+        if (player.combo.count > 5) {
+            const comboBonus = Math.min(1.0, (player.combo.count - 5) * 0.1); // Cap at 100% bonus
+            damage *= (1 + comboBonus);
+        }
+
+        // Reset combo immediately if timer exists
+        if (player.combo.timer) {
+            clearTimeout(player.combo.timer);
+        }
+
+        // Set new timer to reset combo
         player.combo.timer = setTimeout(() => {
             player.combo.count = 0;
             updateComboDisplay();
-        }, 2000);
+        }, 1000); // Reduced from 2000ms to 1000ms for quicker reset
 
         updateComboDisplay();
         return Math.floor(damage);
