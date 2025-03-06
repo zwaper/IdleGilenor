@@ -1297,7 +1297,7 @@ function generateChampionCardHTML(champion, owned, isUnlocked, canUnlock) {
                                                 `⚔️ DPS: ${formatNumber(owned.currentDPS)} → ${formatNumber(calculateChampionDPS(champion, owned.level + purchaseInfo.levels))}`
                                             }
                                         </div>
-                                    </div>s
+                                    </div>
                                 </div>
                             ` : ''}
                             <button class="osrs-button buy-btn ${canAfford ? '' : 'disabled'}"
