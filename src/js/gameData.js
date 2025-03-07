@@ -36,7 +36,7 @@ export const gameData = {
                             name: "Zanaris Cow", // Unlocks at level 10-19
                             baseHP: 45,
                             baseDamage: 3,
-                            image: "zanaris_cow.png",
+                            image: "/monsters/cow/pasture/cow-1.png",
                             weight: 70,
                             tier: "B",
                             dropTable: DROP_TABLES.cow.zanaris
@@ -45,7 +45,7 @@ export const gameData = {
                             name: "Zombie Cow", // Unlocks at level 20+
                             baseHP: 60,
                             baseDamage: 4,
-                            image: "zombie_cow.png",
+                            image: "/monsters/cow/pasture/cow-1.png",
                             weight: 50,
                             tier: "A",
                             dropTable: DROP_TABLES.cow.zombie

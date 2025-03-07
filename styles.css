@@ -596,6 +596,7 @@ body {
   border-radius: 4px;
   overflow: hidden;
   position: relative;
+  transition: width 0.05s linear;
 }
 
 .health-fill {
@@ -987,6 +988,13 @@ hit-effect {
 .osrs-loot-feed {
   height: calc(100% - 20px);
   overflow-y: auto;
+}
+
+.loot-entry {
+  margin-bottom: 5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
 #collection-log {

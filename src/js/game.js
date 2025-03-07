@@ -83,19 +83,16 @@ function initDOMCache() {
 // Game Constants
 const GAME_CONFIG = {
     VERSION: {
-        NUMBER: "0.6.2",
+        NUMBER: "0.6.5",
         NAME: "UI Enhancement Update",
         CHANGELOG: [
-            "Fixed tooltip positioning and visibility",
-            "Added scrollable champions container",
-            "Improved save system functionality",
-            "Enhanced champion card layout",
-            "Added proper scroll position preservation",
-            "Fixed settings panel functionality",
-            "Improved content container sizing",
-            "Enhanced UI element stacking",
-            "Fixed panel overflow issues",
-            "Optimized tooltip display system"
+            "Added smooth animation for champion DPS",
+            "Added drag scrolling for champions panel",
+            "Fixed integer display for monster health",
+            "Fixed save system issues",
+            "Improved champions initialization",
+            "Optimized damage application system",
+            "Enhanced UI responsiveness"
         ]
     },
     AUTO_PROGRESS: {
@@ -492,6 +489,13 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Make sure championsData is available globally
+    if (!window.championsData) {
+        console.error("Champions data not available! Check import statements.");
+        // Create fallback object to prevent errors
+        window.championsData = { champions: [] };
+    }
+
     initializeSaveSystem();
     initializeAutoSave();
     initializeSettings();
@@ -499,14 +503,21 @@ document.addEventListener('DOMContentLoaded', () => {
     updateZoneBackground(currentZone, currentRegion);
     renderAchievements();
     initializeCombatListeners();
-    renderChampionsPanel();
+    
+    // Only initialize champions if the data is available
+    if (window.championsData && window.championsData.champions) {
+        renderChampionsPanel();
+        initializeChampions();
+    } else {
+        console.error("Could not initialize champions - data missing");
+    }
+    
     updateUI();
 
     const autoProgressBtn = document.getElementById('auto-progress');
     if (autoProgressBtn) {
         autoProgressBtn.addEventListener('click', toggleAutoProgress);
     }
-    // ...other initialization code...
 });
 
 let tooltipTimeout = null;
@@ -893,18 +904,6 @@ function applyChampionDPS() {
     }
 }
 
-// Add this to your initGame function
-function initializeChampions() {
-    if (!player.champions) {
-        player.champions = {
-            owned: {},
-            totalDPS: 0
-        };
-    }
-    // Start champion DPS application
-    setInterval(applyChampionDPS, 1000);
-}
-
 function checkChampionUnlock(championId) {
     const champion = championsData.champions.find(c => c.id === championId);
     if (!champion) return false;
@@ -1027,6 +1026,53 @@ function purchaseChampionUpgrade(championId, upgradeName) {
     }
 }
 
+function addDragScrollToChampions() {
+    const scrollContainer = document.querySelector('.champions-scroll-container');
+    if (!scrollContainer) return;
+    
+    let isDragging = false;
+    let startY;
+    let scrollTop;
+    
+    scrollContainer.addEventListener('mousedown', (e) => {
+        // Only respond to primary mouse button (left click)
+        if (e.button !== 0) return;
+        
+        // Don't enable drag if clicking on a button or interactive element
+        if (e.target.closest('button') || e.target.closest('.upgrade-icon')) return;
+        
+        isDragging = true;
+        startY = e.pageY;
+        scrollTop = scrollContainer.scrollTop;
+        scrollContainer.style.cursor = 'grabbing';
+        
+        // Prevent default behavior to avoid text selection during drag
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        const y = e.pageY;
+        const walkY = (y - startY);
+        scrollContainer.scrollTop = scrollTop - walkY;
+    });
+    
+    // Use document for mouseup to catch events outside the container
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        scrollContainer.style.cursor = '';
+    });
+    
+    // Cancel drag on mouse leave
+    scrollContainer.addEventListener('mouseleave', () => {
+        if (isDragging) {
+            isDragging = false;
+            scrollContainer.style.cursor = '';
+        }
+    });
+}
+
 function renderChampionsPanel() {
     try {
         const container = document.getElementById('champions-panel');
@@ -1082,10 +1128,57 @@ function renderChampionsPanel() {
         // Add buy button handlers
         attachBuyButtonHandlers();
 
+        // Add drag scrolling functionality
+        addDragScrollToChampions();
+
     } catch (error) {
         console.error("Error rendering champions panel:", error);
         showLoot("Error updating champions display", "error");
     }
+}
+
+let lastTimestamp = 0;
+let animationFrameId = null;
+
+function applyDamageLoop(timestamp) {
+    // Calculate elapsed time since last frame
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const elapsed = timestamp - lastTimestamp;
+    lastTimestamp = timestamp;
+    
+    try {
+        if (player.champions.totalDPS > 0) {
+            const zone = gameData.regions[currentRegion].zones[currentZone];
+            if (!zone) return;
+            
+            // Calculate damage for this frame (damage per millisecond * elapsed ms)
+            const damagePerMs = player.champions.totalDPS / 1000;
+            const frameDamage = damagePerMs * elapsed;
+            
+            if (frameDamage <= 0) return;
+            
+            // Apply the damage
+            if (player.currentBoss) {
+                player.currentBoss.hp -= frameDamage;
+                if (player.currentBoss.hp <= 0) {
+                    handleBossDefeat(zone);
+                }
+            } else if (zone.monster) {
+                zone.monster.hp -= frameDamage;
+                if (zone.monster.hp <= 0) {
+                    handleMonsterDeath(zone);
+                }
+            }
+            
+            // Update health bar for smooth animation
+            updateHealthDisplay();
+        }
+    } catch (error) {
+        console.error("Error in damage loop:", error);
+    }
+    
+    // Continue the animation loop
+    animationFrameId = requestAnimationFrame(applyDamageLoop);
 }
 
 function createChampionsPanelHeader() {
@@ -1317,22 +1410,23 @@ function generateChampionCardHTML(champion, owned, isUnlocked, canUnlock) {
     }
 }
 
-function initializeChampionsPanel() {
-    renderChampionsPanel();
+function initializeChampions() {
+    if (!player.champions) {
+        player.champions = {
+            owned: {},
+            totalDPS: 0
+        };
+    }
     
-    // Update DPS display every second
-    setInterval(() => {
-        const header = document.querySelector('.champions-header .total-dps');
-        if (header) {
-            header.textContent = `Total DPS: ${formatNumber(player.champions.totalDPS)}`;
-        }
-    }, 1000);
+    // Cancel any existing animation frame
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
+    
+    // Start the smooth damage application loop
+    lastTimestamp = 0;
+    animationFrameId = requestAnimationFrame(applyDamageLoop);
 }
-
-// Update your DOMContentLoaded event
-document.addEventListener('DOMContentLoaded', () => {
-    initializeChampionsPanel();
-});
 
 function toggleChampionMinimize(championId) {
     try {
@@ -1495,6 +1589,7 @@ window.formatRequirement = formatRequirement;
 // Ensure the Champions Panel is always rendered
 document.addEventListener('DOMContentLoaded', () => {
     renderChampionsPanel();
+    initializeChampions();
 });
 
 function formatRequirement(requirement, value) {
@@ -1577,8 +1672,6 @@ function unlockChampion(championId) {
         showLoot("Error unlocking champion", "error");
     }
 }
-
-setInterval(applyChampionDPS, 1000); // Apply champion DPS every
 
 function formatNumber(num) {
     try {
@@ -2242,15 +2335,15 @@ const UIManager = {
   },
 
   updateHealthDisplay(monster) {
-      if (!monster) return;
+    if (!monster) return;
 
-      if (this.elements.healthBar && this.elements.healthText) {
-          const healthPercent = (monster.hp / monster.maxHp) * 100;
-          this.elements.healthBar.style.width = `${healthPercent}%`;
-          this.elements.healthBar.style.backgroundColor = getHealthColor(healthPercent);
-          this.elements.healthText.textContent = `${monster.hp}/${monster.maxHp} HP`;
-      }
-  },
+    if (this.elements.healthBar && this.elements.healthText) {
+        const healthPercent = (monster.hp / monster.maxHp) * 100;
+        this.elements.healthBar.style.width = `${healthPercent}%`;
+        this.elements.healthBar.style.backgroundColor = getHealthColor(healthPercent);
+        this.elements.healthText.textContent = `${formatNumber(monster.hp)}/${formatNumber(monster.maxHp)} HP`;
+    }
+},
 
   updateProgressBar(zone) {
       if (this.elements.progressContainer) {
@@ -2399,7 +2492,7 @@ function initializeSaveSystem() {
     saveSystem.init(player, gameData);
 
     // Add event listeners for save buttons
-    document.getElementById('save-game-btn')?.addEventListener('click', () => saveSystem.saveGame());
+    document.getElementById('save-game-btn')?.addEventListener('click', () => saveGame(true));
     document.getElementById('load-backup-btn')?.addEventListener('click', () => saveSystem.loadBackupSave());
     document.getElementById('reset-game-btn')?.addEventListener('click', showResetConfirmation);
 }
@@ -2487,12 +2580,13 @@ function calculateAttackDamage() {
     try {
         let damage = player.damage;
         
-        // Critical hit system
-        const critChance = 0.1 + (player.luck - 1) * 0.05; // Base 10% + bonus from luck
+        // Critical hit system - only apply if at least one champion is unlocked
+        const hasCriticalHitAbility = Object.keys(player.champions.owned).length > 0;
+        const critChance = hasCriticalHitAbility ? (0.1 + (player.luck - 1) * 0.05) : 0; // Base 10% + bonus from luck
         const isCrit = Math.random() < critChance;
         if (isCrit) {
             damage *= 2;
-            showCriticalHit();
+            showCriticalHit(player.lastClickEvent);
         }
 
         // Initialize combo if it doesn't exist
@@ -3006,31 +3100,31 @@ function calculateHP(level, isBoss = false) {
 }
 
 function updateMiniBossUI() {
-  try {
-    if (!player.currentBoss) return;
-
-    const monsterSprite = document.getElementById("monster-sprite");
-    const monsterName = document.getElementById("monster-name");
-    const healthText = document.getElementById("health-text");
-    const healthBar = document.getElementById("health-bar");
-    const variantIndicator = document.querySelector(".variant-indicator");
-
-    if (monsterSprite) monsterSprite.src = `assets/${player.currentBoss.image}`;
-    if (monsterName) monsterName.textContent = player.currentBoss.name;
-    if (healthText)
-      healthText.textContent = `${player.currentBoss.hp}/${player.currentBoss.maxHp} HP`;
-    if (healthBar)
-      healthBar.style.width = `${
-        (player.currentBoss.hp / player.currentBoss.maxHp) * 100
-      }%`;
-    if (variantIndicator) {
-      variantIndicator.className = "variant-indicator S-tier";
-      variantIndicator.textContent = "S";
+    try {
+      if (!player.currentBoss) return;
+  
+      const monsterSprite = document.getElementById("monster-sprite");
+      const monsterName = document.getElementById("monster-name");
+      const healthText = document.getElementById("health-text");
+      const healthBar = document.getElementById("health-bar");
+      const variantIndicator = document.querySelector(".variant-indicator");
+  
+      if (monsterSprite) monsterSprite.src = `assets/${player.currentBoss.image}`;
+      if (monsterName) monsterName.textContent = player.currentBoss.name;
+      if (healthText)
+        healthText.textContent = `${formatNumber(player.currentBoss.hp)}/${formatNumber(player.currentBoss.maxHp)} HP`;
+      if (healthBar)
+        healthBar.style.width = `${
+          (player.currentBoss.hp / player.currentBoss.maxHp) * 100
+        }%`;
+      if (variantIndicator) {
+        variantIndicator.className = "variant-indicator S-tier";
+        variantIndicator.textContent = "S";
+      }
+    } catch (error) {
+      console.error("Error updating miniboss UI:", error);
     }
-  } catch (error) {
-    console.error("Error updating miniboss UI:", error);
   }
-}
 
 function updateBossTimer() {
   const bossTimer = document.getElementById("boss-timer");
@@ -3133,36 +3227,37 @@ function renderLevelSelect() {
 }
 
 function updateHealthDisplay() {
-  try {
-      const healthBar = DOMCache.get('#health-bar');
-      const healthText = DOMCache.get('#health-text');
-      const monsterName = DOMCache.get('#monster-name');
-      const zone = gameData.regions[currentRegion].zones[currentZone];
-      const monster = player.currentBoss || zone.monster;
-      
-      if (!monster) return;
-      
-      // Update health bar width and color
-      if (healthBar) {
-          const healthPercent = (monster.hp / monster.maxHp) * 100;
-          healthBar.style.width = `${healthPercent}%`;
-          healthBar.style.backgroundColor = getHealthColor(healthPercent);
-      }
-
-      // Update health text
-      if (healthText) {
-        const currentHealth = formatNumber(monster.hp);
-        const maxHealth = formatNumber(monster.maxHp);
-        healthText.textContent = `${currentHealth}/${maxHealth} HP`;
+    try {
+        const healthBar = DOMCache.get('#health-bar');
+        const healthText = DOMCache.get('#health-text');
+        const monsterName = DOMCache.get('#monster-name');
+        const zone = gameData.regions[currentRegion].zones[currentZone];
+        const monster = player.currentBoss || zone.monster;
+        
+        if (!monster) return;
+        
+        // Update health bar width and color
+        if (healthBar) {
+            const healthPercent = (monster.hp / monster.maxHp) * 100;
+            healthBar.style.width = `${healthPercent}%`;
+            healthBar.style.backgroundColor = getHealthColor(healthPercent);
+        }
+  
+        // Update health text with formatted numbers and ensure integers
+        if (healthText) {
+            // Math.floor to ensure we always show integer health values
+            const currentHealth = formatNumber(Math.floor(monster.hp));
+            const maxHealth = formatNumber(Math.floor(monster.maxHp));
+            healthText.textContent = `${currentHealth}/${maxHealth} HP`;
+        }
+  
+        // Update monster name
+        if (monsterName) {
+            monsterName.textContent = monster.name;
+        }
+    } catch (error) {
+        console.error('Error updating health display:', error);
     }
-
-      // Update monster name
-      if (monsterName) {
-          monsterName.textContent = monster.name;
-      }
-  } catch (error) {
-      console.error('Error updating health display:', error);
-  }
 }
 
 function getHealthColor(percentage) {
@@ -5679,6 +5774,12 @@ function cleanupGame() {
             championsPanelInterval = null;
         }
 
+                // Cancel animation frame for smooth DPS
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+
         // Save one last time
         saveGame();
 
@@ -5890,6 +5991,14 @@ function renderZoneTabs() {
     }
 }
 
+function saveGame(showMessage = false) {
+    if (window.saveSystem) {
+        window.saveSystem.saveGame(showMessage);
+    } else {
+        console.error("Save system not initialized");
+    }
+}
+
 function switchRegion(region) {
   try {
       // Update current region
@@ -6098,6 +6207,8 @@ window.handleGoldEarned = handleGoldEarned;
 window.showTab = showTab;
 window.renderAchievements = renderAchievements;
 window.showVersionInfo = showVersionInfo;
+window.CHAMPION_CONFIG = CHAMPION_CONFIG;
+window.championsData = championsData;
 window.positionTooltip = positionTooltip;
 window.showAchievementTooltip = showAchievementTooltip;
 window.getAchievementRequirementText = getAchievementRequirementText;
@@ -6105,6 +6216,7 @@ window.formatReward = formatReward;
 window.toggleAutoProgress = toggleAutoProgress;
 window.REGION_DIFFICULTY_MULTIPLIERS = REGION_DIFFICULTY_MULTIPLIERS;
 window.gameData = gameData;
+window.saveGame = saveGame;
 window.varrockItems = varrockItems;
 window.checkZoneUnlocks = checkZoneUnlocks;
 window.calculateChampionBonus = calculateChampionBonus;
@@ -6164,6 +6276,7 @@ window.buyItem = buyItem;
 window.saveGame = () => saveSystem.saveGame();
 window.applyItemEffect = applyItemEffect;
 window.findItemByName = findItemByName;
+window.saveSystem = saveSystem;
 window.getNextUpgrade = getNextUpgrade;
 window.toggleSellButton = toggleSellButton;
 window.sellItem = sellItem;
