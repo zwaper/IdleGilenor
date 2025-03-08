@@ -44,119 +44,81 @@ export const saveSystem = {
 
     saveGame(showMessage = false) {
         try {
-            // Construct complete save data object with all important game state
+            // Create a flat structure - don't nest stringified objects
             const saveData = {
                 version: GAME_CONFIG.VERSION.NUMBER,
                 timestamp: Date.now(),
                 player: {
-                    // Basic player stats
                     gold: this.player.gold,
                     damage: this.player.damage,
-                    luck: this.player.luck,
                     prestigeLevel: this.player.prestigeLevel,
-                    
-                    // Collections and inventory
-                    inventory: [...this.player.inventory],
-                    collectionLog: [...this.player.collectionLog],
-                    upgrades: [...this.player.upgrades],
-                    
-                    // Champions data
+                    luck: this.player.luck,
+                    inventory: Array.isArray(this.player.inventory) ? [...this.player.inventory] : [],
+                    collectionLog: Array.isArray(this.player.collectionLog) ? [...this.player.collectionLog] : [],
+                    upgrades: Array.isArray(this.player.upgrades) ? [...this.player.upgrades] : [],
+                    settings: this.player.settings ? {...this.player.settings} : {autoSave: true, notifications: true},
+                    stats: this.player.stats ? {...this.player.stats} : {monstersKilled: 0, bossesKilled: 0, totalGoldEarned: 0},
                     champions: {
-                        owned: {},
-                        totalDPS: this.player.champions?.totalDPS || 0
+                        owned: this.player.champions ? {...this.player.champions.owned} : {},
+                        totalDPS: this.player.champions ? this.player.champions.totalDPS : 0
                     },
-                    
-                    // Game statistics
-                    stats: {
-                        monstersKilled: this.player.stats?.monstersKilled || 0,
-                        bossesKilled: this.player.stats?.bossesKilled || 0,
-                        totalGoldEarned: this.player.stats?.totalGoldEarned || 0,
-                        highestDamage: this.player.stats?.highestDamage || 0,
-                        criticalHits: this.player.stats?.criticalHits || 0,
-                        longestCombo: this.player.stats?.longestCombo || 0
-                    },
-                    
-                    // User preferences
-                    settings: {
-                        autoSave: this.player.settings?.autoSave ?? true,
-                        notifications: this.player.settings?.notifications ?? true
-                    },
-                    
-                    // Achievements
-                    achievements: {}
+                    selectedSellAmount: this.player.selectedSellAmount || 1
                 },
-                
-                // Game state
                 gameState: {
                     currentRegion: this.gameData.currentState?.currentRegion || "lumbridge",
                     currentZone: this.gameData.currentState?.currentZone || "cowpen",
                     isAutoProgressEnabled: this.gameData.currentState?.isAutoProgressEnabled || false,
                     regions: {}
-                }
+                },
+                achievements: ACHIEVEMENTS.map(achievement => ({
+                    id: achievement.id,
+                    unlocked: achievement.unlocked || false
+                }))
             };
-            
-            // Save champions data
-            if (this.player.champions?.owned) {
-                Object.entries(this.player.champions.owned).forEach(([id, champ]) => {
-                    saveData.player.champions.owned[id] = {
-                        level: champ.level || 0,
-                        currentDPS: champ.currentDPS || 0,
-                        clickDamageBonus: champ.clickDamageBonus || 0,
-                        upgrades: [...(champ.upgrades || [])],
-                        minimized: champ.minimized || false
-                    };
-                });
-            }
-            
-            // Save achievements
-            ACHIEVEMENTS.forEach(achievement => {
-                saveData.player.achievements[achievement.id] = achievement.unlocked || false;
-            });
-            
-            // Save regions data
-            Object.entries(this.gameData.regions).forEach(([regionId, region]) => {
-                saveData.gameState.regions[regionId] = {
-                    unlocked: region.unlocked || regionId === "lumbridge",
-                    miniBossesDefeated: region.miniBossesDefeated || 0,
+    
+            // Add regions data
+            Object.entries(this.gameData.regions).forEach(([regionName, region]) => {
+                saveData.gameState.regions[regionName] = {
+                    unlocked: region.unlocked || false,
                     bossDefeated: region.bossDefeated || false,
+                    miniBossesDefeated: region.miniBossesDefeated || 0,
                     zones: {}
                 };
                 
-                // Save zones data for this region
-                Object.entries(region.zones).forEach(([zoneId, zone]) => {
-                    saveData.gameState.regions[regionId].zones[zoneId] = {
-                        unlocked: zone.unlocked || (regionId === "lumbridge" && zoneId === "cowpen"),
-                        currentLevel: zone.currentLevel || 1,
-                        highestLevel: zone.highestLevel || 1,
-                        completedLevels: [...(zone.completedLevels || [])],
-                        currentKills: zone.currentKills || 0,
-                        defeatedMiniBosses: [...(zone.defeatedMiniBosses || [])],
-                        monstersPerLevel: zone.monstersPerLevel || 10
-                    };
+                // Add zones data with proper null checks
+                Object.entries(region.zones).forEach(([zoneName, zone]) => {
+                    if (zone) {
+                        saveData.gameState.regions[regionName].zones[zoneName] = {
+                            unlocked: zone.unlocked || false,
+                            currentLevel: zone.currentLevel || 1,
+                            highestLevel: zone.highestLevel || 1,
+                            currentKills: zone.currentKills || 0,
+                            completedLevels: Array.isArray(zone.completedLevels) ? [...zone.completedLevels] : [],
+                            defeatedMiniBosses: Array.isArray(zone.defeatedMiniBosses) ? [...zone.defeatedMiniBosses] : [],
+                            monstersPerLevel: zone.monstersPerLevel || 10
+                        };
+                    }
                 });
             });
-
-            // Store backup of previous save
-            const previousSave = localStorage.getItem("gameSave");
-            if (previousSave) {
-                localStorage.setItem("gameSaveBackup", previousSave);
+    
+            // Add validation check
+            const jsonString = JSON.stringify(saveData);
+            if (!jsonString || jsonString === '{}' || jsonString === '"[object Object]"') {
+                throw new Error('Failed to create valid JSON save data');
             }
-
-            // Save the game
-            localStorage.setItem("gameSave", JSON.stringify(saveData));
-            localStorage.setItem('lastSaved', Date.now().toString());
-            
-            // Show message if explicitly requested OR if auto-save is disabled
-            if (showMessage || !this.player.settings?.autoSave) {
-                showLoot("Game saved successfully!", "info");
-            }
-            
+    
+            // Rotate backups and save
             this.rotateSaveBackups();
-            this.updateGameInfo();
+            localStorage.setItem('lastSaved', Date.now().toString());
+            localStorage.setItem('gameSave', jsonString);
+    
+            if (showMessage) {
+                showLoot('Game saved successfully!', 'info');
+            }
             return true;
         } catch (error) {
-            console.error("Error saving game:", error);
-            showLoot("Error saving game: " + error.message, "error");
+            console.error('Error saving game:', error);
+            showLoot('Error saving game: ' + error.message, 'error');
             return false;
         }
     },
@@ -298,18 +260,18 @@ export const saveSystem = {
         // Load sell amount
         this.player.selectedSellAmount = saveData.player.selectedSellAmount || 1;
 
-        // Load current game state
-        this.gameData.currentState = {
-            currentRegion: saveData.gameState?.currentRegion || "lumbridge",
-            currentZone: saveData.gameState?.currentZone || "cowpen",
-            isAutoProgressEnabled: saveData.gameState?.isAutoProgressEnabled || false
-        };
-        
-        // Set global variables for backward compatibility
-        window.currentRegion = this.gameData.currentState.currentRegion;
-        window.currentZone = this.gameData.currentState.currentZone;
-        window.isAutoProgressEnabled = this.gameData.currentState.isAutoProgressEnabled;
-        
+    // Load current game state
+    this.gameData.currentState = {
+        currentRegion: saveData.gameState?.currentRegion || "lumbridge",
+        currentZone: saveData.gameState?.currentZone || "cowpen",
+        isAutoProgressEnabled: saveData.gameState?.isAutoProgressEnabled || false
+    };
+    
+    // Set global variables for backward compatibility
+    window.currentRegion = this.gameData.currentState.currentRegion;
+    window.currentZone = this.gameData.currentState.currentZone;
+    window.isAutoProgressEnabled = this.gameData.currentState.isAutoProgressEnabled;
+    
         // Load regions data carefully
         if (saveData.gameState?.regions) {
             Object.entries(saveData.gameState.regions).forEach(([regionName, regionData]) => {
@@ -366,27 +328,34 @@ export const saveSystem = {
             achievement.unlocked = saveData.player.achievements?.[achievement.id] || false;
         });
 
-        // Initialize current zone monster
-        const currentZone = this.gameData.regions[this.gameData.currentState.currentRegion].zones[this.gameData.currentState.currentZone];
-        if (currentZone && !currentZone.monster) {
-            currentZone.monster = getCurrentMonsterStats(currentZone);
-        }
+    // Initialize current zone monster
+    const currentZone = this.gameData.regions[this.gameData.currentState.currentRegion].zones[this.gameData.currentState.currentZone];
+    if (currentZone && !currentZone.monster) {
+        currentZone.monster = getCurrentMonsterStats(currentZone);
+    }
 
-        // Update UI elements
-        updateUI();
-        renderChampionsPanel();
-        renderCollectionLog();
-        renderAchievements();
-        updateZoneBackground(this.gameData.currentState.currentZone, this.gameData.currentState.currentRegion);
-        renderLevelSelect();
-        
-        // Update auto-save interval based on settings
-        if (this.player.settings.autoSave) {
-            this.startAutoSaveInterval();
-        } else {
-            this.stopAutoSaveInterval();
-        }
-    },
+    // Update UI elements
+    updateUI();
+    renderChampionsPanel();
+    renderCollectionLog();
+    renderAchievements();
+    updateZoneBackground(this.gameData.currentState.currentZone, this.gameData.currentState.currentRegion);
+    renderLevelSelect();
+    
+    // Restart the champions DPS animation frame
+    if (window.initializeChampions) {
+        window.initializeChampions();
+    } else {
+        console.error("Champions initialization function not found");
+    }
+    
+    // Update auto-save interval based on settings
+    if (this.player.settings.autoSave) {
+        this.startAutoSaveInterval();
+    } else {
+        this.stopAutoSaveInterval();
+    }
+},
 
     resetGameState() {
         // Reset critical game state to avoid references to old state

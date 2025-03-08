@@ -83,16 +83,21 @@ function initDOMCache() {
 // Game Constants
 const GAME_CONFIG = {
     VERSION: {
-        NUMBER: "0.6.5",
+        NUMBER: "0.6.6",
         NAME: "UI Enhancement Update",
         CHANGELOG: [
-            "Added smooth animation for champion DPS",
-            "Added drag scrolling for champions panel",
-            "Fixed integer display for monster health",
-            "Fixed save system issues",
-            "Improved champions initialization",
-            "Optimized damage application system",
-            "Enhanced UI responsiveness"
+            "Fixed champion tooltip visibility issues:",
+            "Made tooltips use fixed positioning with z-index: 9999",
+            "Ensured tooltips appear above all other elements",
+            "Fixed tooltip arrows and positioning",
+            "Added Champions pause functionality:",
+            "Added a new settings toggle to pause/resume champion DPS",
+            "Added visual feedback when pausing/resuming",
+            "Fixed scrolling in Champions panel:",
+            "Restored proper scrollbar functionality while maintaining tooltip visibility",
+            "Save system improvements:",
+            "Enhanced save data structure and validation",
+            "Improved error handling for save/load operations"
         ]
     },
     AUTO_PROGRESS: {
@@ -485,7 +490,10 @@ document.addEventListener('DOMContentLoaded', () => {
             settings: {
                 autoSave: true,
                 notifications: true
-            }
+            },
+            upgrades: [],  // Explicitly initialize upgrades as an array
+            collectionLog: [], // Explicitly initialize collection log as an array
+            selectedSellAmount: 1
         };
     }
 
@@ -496,13 +504,16 @@ document.addEventListener('DOMContentLoaded', () => {
         window.championsData = { champions: [] };
     }
 
+    initGame();
     initializeSaveSystem();
     initializeAutoSave();
     initializeSettings();
+    validatePlayerObject();
     initializeMapControls();
     updateZoneBackground(currentZone, currentRegion);
     renderAchievements();
     initializeCombatListeners();
+    validateZoneData();
     
     // Only initialize champions if the data is available
     if (window.championsData && window.championsData.champions) {
@@ -514,6 +525,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     updateUI();
 
+        // Start the damage loop
+        animationFrameId = requestAnimationFrame(applyDamageLoop);
+
     const autoProgressBtn = document.getElementById('auto-progress');
     if (autoProgressBtn) {
         autoProgressBtn.addEventListener('click', toggleAutoProgress);
@@ -524,7 +538,8 @@ let tooltipTimeout = null;
 let isAutoProgressEnabled = true;
 
 // Game State
-let player = {
+if (!window.player) {
+    window.player = {
     gold: 0,
     damage: 1,
     inventory: [],
@@ -573,6 +588,41 @@ let player = {
         notifications: true
     }
 };
+}
+
+function validatePlayerObject() {
+    // Initialize critical arrays if they don't exist
+    if (!Array.isArray(player.upgrades)) player.upgrades = [];
+    if (!Array.isArray(player.inventory)) player.inventory = [];
+    if (!Array.isArray(player.collectionLog)) player.collectionLog = [];
+    
+    // Ensure champions structure exists
+    if (!player.champions) {
+        player.champions = { owned: {}, totalDPS: 0 };
+    } else if (!player.champions.owned) {
+        player.champions.owned = {};
+    }
+    
+    // Ensure stats object exists with correct properties
+    if (!player.stats) {
+        player.stats = { monstersKilled: 0, bossesKilled: 0, totalGoldEarned: 0 };
+    }
+    
+    // Ensure settings exist
+    if (!player.settings) {
+        player.settings = { autoSave: true, notifications: true };
+    }
+    
+    // Ensure selectedSellAmount has a value
+    if (player.selectedSellAmount === undefined) {
+        player.selectedSellAmount = 1;
+    }
+    
+    // Ensure selectedBuyAmount has a value
+    if (player.selectedBuyAmount === undefined) {
+        player.selectedBuyAmount = '1';
+    }
+}
 
 function toggleAutoProgress() {
     try {
@@ -867,6 +917,7 @@ function updateTotalChampionDPS() {
             }
         });
         player.champions.totalDPS = Math.max(0, Math.floor(total));
+        console.log(`Total DPS updated: ${player.champions.totalDPS}`);
     } catch (error) {
         console.error("Error updating total DPS:", error);
         player.champions.totalDPS = 0;
@@ -1121,21 +1172,24 @@ function renderChampionsPanel() {
         // Update the container efficiently
         container.innerHTML = '';
         container.appendChild(fragment);
-
+        
         // Restore scroll position
         newScrollContainer.scrollTop = scrollPosition;
-
+        
         // Add buy button handlers
         attachBuyButtonHandlers();
-
+        
+        // Initialize tooltips for buy buttons
+        initializeBuyButtonTooltips();
+        
         // Add drag scrolling functionality
         addDragScrollToChampions();
-
-    } catch (error) {
+        
+      } catch (error) {
         console.error("Error rendering champions panel:", error);
         showLoot("Error updating champions display", "error");
+      }
     }
-}
 
 let lastTimestamp = 0;
 let animationFrameId = null;
@@ -1143,35 +1197,82 @@ let animationFrameId = null;
 function applyDamageLoop(timestamp) {
     // Calculate elapsed time since last frame
     if (!lastTimestamp) lastTimestamp = timestamp;
-    const elapsed = timestamp - lastTimestamp;
+    let elapsed = timestamp - lastTimestamp;
     lastTimestamp = timestamp;
+
+    // Ensure elapsed time is greater than zero and set a minimum threshold
+    if (elapsed <= 0) {
+        elapsed = 1; // Set a minimum threshold of 1 millisecond
+    }
     
     try {
-        if (player.champions.totalDPS > 0) {
+        // Only apply champion damage if not paused
+        if (player.champions.totalDPS > 0 && !isChampionsPaused) {
             const zone = gameData.regions[currentRegion].zones[currentZone];
-            if (!zone) return;
+            if (!zone) {
+                console.log("Zone is not valid");
+                return; // Exit if zone is not valid
+            }
             
             // Calculate damage for this frame (damage per millisecond * elapsed ms)
             const damagePerMs = player.champions.totalDPS / 1000;
             const frameDamage = damagePerMs * elapsed;
             
-            if (frameDamage <= 0) return;
+            if (frameDamage <= 0) {
+                console.log(`Frame damage is zero or negative: totalDPS=${player.champions.totalDPS}, elapsed=${elapsed}, damagePerMs=${damagePerMs}`);
+                return; // Exit if no damage to apply
+            }
+            
+            // Make sure we have a monster to attack
+            if (!zone.monster) {
+                console.log("No monster found, spawning new one");
+                spawnMonster(zone);
+                return;
+            }
             
             // Apply the damage
             if (player.currentBoss) {
+                // Apply damage to boss
                 player.currentBoss.hp -= frameDamage;
+                console.log(`Applied ${frameDamage} damage to boss, remaining HP: ${player.currentBoss.hp}`);
+                
+                // Check if boss is defeated
                 if (player.currentBoss.hp <= 0) {
-                    handleBossDefeat(zone);
+                    if (player.currentBoss.isRegionBoss) {
+                        handleRegionBossDefeat(gameData.regions[currentRegion]);
+                    } else {
+                        handleBossDefeat(zone);
+                    }
                 }
+                
+                // Force immediate health display update
+                updateHealthDisplay();
+                
             } else if (zone.monster) {
+                // Apply damage to regular monster
                 zone.monster.hp -= frameDamage;
+                console.log(`Applied ${frameDamage} damage to monster, remaining HP: ${zone.monster.hp}`);
+                
+                // Check if monster is defeated
                 if (zone.monster.hp <= 0) {
                     handleMonsterDeath(zone);
+                    spawnMonster(zone);
+                } else {
+                    // Force immediate health display update with direct DOM manipulation
+                    const healthBar = document.getElementById('health-bar');
+                    const healthText = document.getElementById('health-text');
+                    
+                    if (healthBar && healthText) {
+                        const healthPercent = (zone.monster.hp / zone.monster.maxHp) * 100;
+                        healthBar.style.width = `${healthPercent}%`;
+                        healthBar.style.backgroundColor = getHealthColor(healthPercent);
+                        
+                        const currentHealth = formatNumber(Math.floor(zone.monster.hp));
+                        const maxHealth = formatNumber(Math.floor(zone.monster.maxHp));
+                        healthText.textContent = `${currentHealth}/${maxHealth} HP`;
+                    }
                 }
             }
-            
-            // Update health bar for smooth animation
-            updateHealthDisplay();
         }
     } catch (error) {
         console.error("Error in damage loop:", error);
@@ -1192,7 +1293,9 @@ function createChampionsPanelHeader() {
 }
 
 function createBuyControls() {
-    const activeBuyAmount = document.querySelector('.buy-amount-btn.active')?.dataset.amount || '1';
+    // Get current buy amount from player settings
+    const activeBuyAmount = player.selectedBuyAmount || '1';
+    
     const buyControls = document.createElement('div');
     buyControls.className = 'buy-controls';
     buyControls.innerHTML = `
@@ -1227,7 +1330,7 @@ function createChampionCard(champion, index) {
     const card = document.createElement('div');
     card.className = `champion-card ${isUnlocked ? 'unlocked' : ''} ${canUnlock ? 'can-unlock' : ''} ${hasAvailableUpgrade ? 'has-upgrade' : ''}`;
     
-    card.innerHTML = generateChampionCardHTML(champion, owned, isUnlocked, canUnlock);
+    card.innerHTML = generateChampionCardHTML(champion, owned, isUnlocked, canUnlock, hasAvailableUpgrade);
     return card;
 }
 
@@ -1243,8 +1346,20 @@ function attachBuyButtonHandlers() {
     document.querySelectorAll('.buy-amount-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
+            
+            // Remove active class from all buttons
             document.querySelectorAll('.buy-amount-btn').forEach(b => b.classList.remove('active'));
+            
+            // Add active class to clicked button
             btn.classList.add('active');
+            
+            // Store selected amount in player settings
+            player.selectedBuyAmount = btn.dataset.amount;
+            
+            // Save game to persist this setting
+            saveGame();
+            
+            // Re-render champions panel to update buy buttons
             renderChampionsPanel();
         });
     });
@@ -1313,102 +1428,195 @@ function generateUpgradeIcons(champion, owned) {
     }).join('');
 }
 
-function generateChampionCardHTML(champion, owned, isUnlocked, canUnlock) {
-    try {
-        const buyAmount = document.querySelector('.buy-amount-btn.active')?.dataset.amount || '1';
-        let purchaseInfo = { levels: 0, cost: 0 };
-        let nextLevelCost = 0;
-        let canAfford = false;
-
-        if (isUnlocked) {
-            nextLevelCost = calculateChampionCost(champion, owned.level + 1);
-            canAfford = player.gold >= nextLevelCost;
-
-            if (buyAmount === 'max') {
-                purchaseInfo = calculateMaxAffordableLevels(champion, owned.level, player.gold);
-            } else {
-                const numericAmount = parseInt(buyAmount);
-                purchaseInfo.cost = calculateBulkChampionCost(champion, owned.level, numericAmount);
-                purchaseInfo.levels = numericAmount;
-                canAfford = player.gold >= purchaseInfo.cost;
-            }
-
-            // Calculate DPS preview for the potential purchase
-            const currentDPS = owned.currentDPS || 0;
-            const futureDPS = calculateChampionDPS(champion, owned.level + purchaseInfo.levels);
-            const dpsIncrease = futureDPS - currentDPS;
+// Add this function after generateChampionCardHTML
+function initializeBuyButtonTooltips() {
+    document.querySelectorAll('.buy-button').forEach(button => {
+      button.addEventListener('mouseenter', positionBuyTooltip);
+      button.addEventListener('mouseleave', () => {
+        const tooltip = button.querySelector('.buy-tooltip');
+        if (tooltip) {
+          tooltip.style.opacity = '0';
+          tooltip.style.visibility = 'hidden';
         }
-
-        return `
-            <div class="champion-card ${isUnlocked ? 'unlocked' : ''} ${canUnlock ? 'can-unlock' : ''}">
-                <div class="champion-header ${owned.minimized ? 'minimized' : ''}" 
-                     onclick="toggleChampionMinimize('${champion.id}')">
-                    <div class="champion-image">
-                        <img src="assets/champions/${champion.id}.png" alt="${champion.name}">
-                    </div>
-                    <div class="champion-info">
-                        <h3>${champion.name} ${owned.level > 0 ? `(Level ${owned.level})` : ''}</h3>
-                        ${isUnlocked ? `
-                            <div class="champion-stats">
-                                ${champion.id === 'worldguardian' ? 
-                                    `🗡️ Click Damage: ${owned.clickDamageBonus || 0}` :
-                                    `⚔️ DPS: ${formatNumber(owned.currentDPS || 0)}`}
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="minimize-icon">${owned.minimized ? '▼' : '▲'}</div>
-                </div>
-                
-                <div class="champion-content ${owned.minimized ? 'hidden' : ''}">
-                    ${!isUnlocked ? `
-                        <div class="unlock-requirements">
-                            <h4>Requirements:</h4>
-                            ${renderChampionRequirements(champion.id)}
-                        </div>
-                        <button class="osrs-button unlock-btn ${canUnlock ? '' : 'disabled'}"
-                                onclick="unlockChampion('${champion.id}')"
-                                ${canUnlock ? '' : 'disabled'}>
-                            Unlock Champion
-                        </button>
-                    ` : `
-                        <div class="upgrades-section">
-                            ${generateUpgradeIcons(champion, owned)}
-                        </div>
-                        
-                        <div class="champion-buy">
-                            ${purchaseInfo.levels > 0 ? `
-                                <div class="buy-info">
-                                    <div class="buy-details">
-                                        <span class="levels-gain">
-                                            <span class="level-icon">📈</span>
-                                            Level ${owned.level} → ${owned.level + purchaseInfo.levels}
-                                            <span class="level-delta">(+${purchaseInfo.levels})</span>
-                                        </span>
-                                        <div class="dps-preview">
-                                            ${champion.id === 'worldguardian' ? 
-                                                `🗡️ Click Damage: ${owned.clickDamageBonus} → ${calculateChampionBonus(champion, owned.level + purchaseInfo.levels)}` :
-                                                `⚔️ DPS: ${formatNumber(owned.currentDPS)} → ${formatNumber(calculateChampionDPS(champion, owned.level + purchaseInfo.levels))}`
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-                            ` : ''}
-                            <button class="osrs-button buy-btn ${canAfford ? '' : 'disabled'}"
-                                    onclick="buyChampionLevels('${champion.id}', ${buyAmount === 'max' ? '\'max\'' : buyAmount})"
-                                    ${canAfford ? '' : 'disabled'}>
-                                Buy ${buyAmount === 'max' ? 'Max' : buyAmount + 'x'} 
-                                (${formatNumber(purchaseInfo.cost)})
-                            </button>
-                        </div>
-                    `}
-                </div>
-            </div>
-        `;
-    } catch (error) {
-        console.error("Error generating champion card HTML:", error);
-        return '<div class="error">Error loading champion card</div>';
-    }
+      });
+    });
+  }
+  
+function positionBuyTooltip(event) {
+  const tooltip = event.currentTarget.querySelector('.buy-tooltip');
+  if (!tooltip) return;
+  
+  // Get the button's position
+  const buttonRect = event.currentTarget.getBoundingClientRect();
+  
+  // Position tooltip above the button
+  tooltip.style.left = (buttonRect.left + buttonRect.width/2 - tooltip.offsetWidth/2) + 'px';
+  tooltip.style.top = (buttonRect.top - tooltip.offsetHeight - 10) + 'px'; // 10px spacing
+  
+  // Make sure tooltip stays in viewport
+  const tooltipRect = tooltip.getBoundingClientRect();
+  
+  // Handle horizontal overflow
+  if (tooltipRect.left < 10) {
+    tooltip.style.left = '10px';
+  } else if (tooltipRect.right > window.innerWidth - 10) {
+    tooltip.style.left = (window.innerWidth - tooltip.offsetWidth - 10) + 'px';
+  }
+  
+  // Handle vertical overflow (show below if no room above)
+  if (tooltipRect.top < 10) {
+    tooltip.style.top = (buttonRect.bottom + 10) + 'px';
+    tooltip.classList.add('tooltip-bottom');
+    tooltip.classList.remove('tooltip-top');
+  } else {
+    tooltip.classList.add('tooltip-top');
+    tooltip.classList.remove('tooltip-bottom');
+  }
 }
+
+  function generateChampionCardHTML(champion, owned = false, isUnlocked = false, canUnlock = false, hasAvailableUpgrade = false) {
+    const championData = owned ? player.champions.owned[champion.id] : null;
+    const level = championData ? championData.level : 0;
+    const dps = championData ? championData.currentDPS : calculateRawChampionDPS(champion, 1);
+    
+    // Get current buy amount
+    const buyAmount = player.selectedBuyAmount || '1';
+    
+    // Calculate cost for selected amount
+    const cost = calculateBulkChampionCost(champion, level, buyAmount === 'max' ? 1 : parseInt(buyAmount));
+    const canAfford = player.gold >= cost;
+    const buttonState = !canAfford ? "disabled" : "";
+    const buttonClass = canAfford ? "can-afford" : "";
+    
+    // Calculate future DPS after purchase
+    const levelsToAdd = buyAmount === 'max' ? 
+                        calculateMaxAffordableLevels(champion, level, player.gold).levels : 
+                        parseInt(buyAmount);
+    const nextLevel = level + levelsToAdd;
+    const futureDPS = isUnlocked ? calculateRawChampionDPS(champion, nextLevel) : dps;
+    const dpsIncrease = futureDPS - dps;
+    const dpsPercentIncrease = dps > 0 ? Math.round((dpsIncrease / dps) * 100) : 100;
+    
+    // Create champion card
+    let cardHTML = `
+      <div class="champion-card ${!isUnlocked ? 'locked' : ''} ${canUnlock ? 'can-unlock' : ''} ${hasAvailableUpgrade ? 'has-upgrade' : ''}" data-champion-id="${champion.id}">
+    `;
+    
+    if (isUnlocked) {
+      // Champion is unlocked, show full card
+      const buyText = buyAmount === 'max' ? 
+                     `Buy Max (${calculateMaxAffordableLevels(champion, level, player.gold).levels})` : 
+                     `Buy ${buyAmount}x`;
+      
+      cardHTML += `
+        <div class="champion-buy">
+          <button class="buy-button ${buttonClass}" 
+                  onclick="buyChampionLevels('${champion.id}', '${buyAmount}')" 
+                  ${buttonState}
+                  data-current-dps="${formatNumber(dps)}"
+                  data-future-dps="${formatNumber(futureDPS)}"
+                  data-dps-increase="${formatNumber(dpsIncrease)}"
+                  data-dps-percent="${dpsPercentIncrease}">
+            ${buyText}<br>
+            <small>💰 ${formatNumber(cost)}</small>
+            <div class="buy-tooltip">
+              <div class="tooltip-header">DPS Preview</div>
+              <div class="tooltip-content">
+                <div class="tooltip-row">Current: ${formatNumber(dps)}</div>
+                <div class="tooltip-row">After: ${formatNumber(futureDPS)}</div>
+                <div class="tooltip-row increase">+${formatNumber(dpsIncrease)} (${dpsPercentIncrease}%)</div>
+              </div>
+            </div>
+          </button>
+          <div class="champion-dps">${formatNumber(dps)} DPS</div>
+        </div>
+        
+        <div class="champion-content">
+          <div class="champion-header">
+            <div class="champion-name">${champion.name}</div>
+            <div class="champion-level">Level ${level}</div>
+          </div>
+          
+          <div class="champion-upgrades">
+      `;
+      
+      // Add upgrades
+      if (champion.upgrades && champion.upgrades.length > 0) {
+        champion.upgrades.forEach(upgrade => {
+          const isPurchased = championData && championData.upgrades && championData.upgrades.includes(upgrade.name);
+          const isAvailable = level >= upgrade.level;
+          const canAffordUpgrade = player.gold >= upgrade.cost;
+          
+          cardHTML += `
+            <div class="upgrade-item 
+              ${isPurchased ? 'purchased' : ''} 
+              ${isAvailable && !isPurchased ? 'available' : ''} 
+              ${isAvailable && !isPurchased && canAffordUpgrade ? 'can-afford' : ''}
+              ${!isAvailable ? 'locked' : ''}"
+              ${isAvailable && !isPurchased ? `onclick="purchaseChampionUpgrade('${champion.id}', '${upgrade.name}')"` : ''}
+              title="${upgrade.name}: ${upgrade.description}">
+              ${upgrade.shortName || upgrade.name} ${isPurchased ? '✓' : ''}
+              ${!isPurchased && isAvailable ? `<small>💰${formatNumber(upgrade.cost)}</small>` : ''}
+            </div>
+          `;
+        });
+      } else {
+        cardHTML += `<div class="no-upgrades">No upgrades available</div>`;
+      }
+      
+      cardHTML += `
+          </div>
+        </div>
+        
+        <div class="champion-image">
+          <img src="${champion.image}" alt="${champion.name}">
+        </div>
+      `;
+    } else if (canUnlock) {
+      // Champion can be unlocked
+      cardHTML += `
+        <div class="champion-buy">
+          <button class="buy-button can-afford" onclick="unlockChampion('${champion.id}')">Unlock</button>
+        </div>
+        
+        <div class="champion-content">
+          <div class="champion-header">
+            <div class="champion-name">${champion.name}</div>
+          </div>
+          <div class="unlock-requirements">
+            ${renderChampionRequirements(champion.id)}
+          </div>
+        </div>
+        
+        <div class="champion-image">
+          <img src="${champion.image}" alt="${champion.name}" class="locked-image">
+        </div>
+      `;
+    } else {
+      // Champion is locked
+      cardHTML += `
+        <div class="champion-buy">
+          <button class="buy-button" disabled>Locked</button>
+        </div>
+        
+        <div class="champion-content">
+          <div class="champion-header">
+            <div class="champion-name">${champion.name}</div>
+          </div>
+          <div class="unlock-requirements">
+            ${renderChampionRequirements(champion.id)}
+          </div>
+        </div>
+        
+        <div class="champion-image">
+          <img src="${champion.image}" alt="${champion.name}" class="locked-image">
+        </div>
+      `;
+    }
+    
+    cardHTML += `</div>`;
+    return cardHTML;
+  }
 
 function initializeChampions() {
     if (!player.champions) {
@@ -1418,15 +1626,78 @@ function initializeChampions() {
         };
     }
     
+    // Debug the champions data
+    console.log("Champion initialization started");
+    console.log("Current champions owned:", Object.keys(player.champions.owned));
+    console.log("Champion levels:", Object.entries(player.champions.owned).map(([id, data]) => `${id}: ${data.level}`));
+    
+    // Check for each owned champion
+    Object.entries(player.champions.owned).forEach(([championId, data]) => {
+        // Find champion data
+        const champion = championsData.champions.find(c => c.id === championId);
+        if (!champion) {
+            console.error(`Champion data not found for ${championId}`);
+            return;
+        }
+        
+        // Calculate DPS for each champion and force update their currentDPS
+        if (champion.id !== "worldguardian") {
+            const calculatedDPS = calculateRawChampionDPS(champion, data.level);
+            console.log(`Champion ${championId} calculated DPS: ${calculatedDPS}`);
+            data.currentDPS = calculatedDPS;
+        }
+    });
+    
+    // Recalculate total champion DPS
+    updateTotalChampionDPS();
+    console.log(`Total champion DPS after recalculation: ${player.champions.totalDPS}`);
+    
     // Cancel any existing animation frame
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
     }
     
     // Start the smooth damage application loop
     lastTimestamp = 0;
     animationFrameId = requestAnimationFrame(applyDamageLoop);
+    console.log("Champion damage loop initialized with animation frame:", animationFrameId);
 }
+
+// Add a simpler function to directly calculate champion DPS without side effects
+function calculateRawChampionDPS(champion, level) {
+    try {
+        if (!champion || !champion.baseDPS || level <= 0) return 0;
+        
+        // Start with base DPS
+        let dps = champion.baseDPS;
+        
+        // Linear scaling for first 8 champions
+        if (championsData.champions.indexOf(champion) < 8) {
+            dps = champion.baseDPS + (level - 1) * champion.baseDPS;
+        } else {
+            // Exponential scaling for later champions
+            dps *= Math.pow(CHAMPION_CONFIG.DPS_MULTIPLIER * 1.5, level - 1);
+        }
+        
+        // Apply level multipliers
+        dps *= calculateChampionBonusMultiplier(level);
+        
+        // Apply region multiplier
+        dps *= REGION_DIFFICULTY_MULTIPLIERS[currentRegion] || 1;
+        
+        return Math.floor(Math.max(0, dps));
+    } catch (error) {
+        console.error("Error calculating raw champion DPS:", error);
+        return 0;
+    }
+}
+
+// Ensure this is globally accessible
+window.initializeChampions = initializeChampions;
+window.calculateRawChampionDPS = calculateRawChampionDPS;
+
+window.initializeChampions = initializeChampions;
 
 function toggleChampionMinimize(championId) {
     try {
@@ -1536,8 +1807,8 @@ function buyChampionLevels(championId, amount) {
             totalCost = maxLevels.cost;
             levelsToBuy = maxLevels.levels;
         } else {
-            totalCost = calculateBulkChampionCost(champion, currentLevel, amount);
-            levelsToBuy = amount;
+            levelsToBuy = parseInt(amount);
+            totalCost = calculateBulkChampionCost(champion, currentLevel, levelsToBuy);
         }
 
         if (player.gold >= totalCost && levelsToBuy > 0) {
@@ -1548,7 +1819,8 @@ function buyChampionLevels(championId, amount) {
                 player.champions.owned[championId] = {
                     level: 0,
                     currentDPS: 0,
-                    clickDamageBonus: 0
+                    clickDamageBonus: 0,
+                    upgrades: []
                 };
             }
 
@@ -1572,6 +1844,8 @@ function buyChampionLevels(championId, amount) {
 
             if (levelsToBuy > 1) {
                 showLoot(`Purchased ${levelsToBuy} levels for ${champion.name}!`, "S");
+            } else {
+                showLoot(`Purchased 1 level for ${champion.name}!`, "S");
             }
         } else {
             showLoot("Not enough gold!", "error");
@@ -3176,8 +3450,8 @@ function renderLevelSelect() {
 
         const zone = gameData.regions[currentRegion].zones[currentZone];
         
-        // Ensure completedLevels exists and is an array
-        if (!zone.completedLevels) {
+        // Always ensure completedLevels exists
+        if (!Array.isArray(zone.completedLevels)) {
             zone.completedLevels = [];
         }
 
@@ -3218,7 +3492,10 @@ function renderLevelSelect() {
         const nextBtn = document.getElementById('next-levels');
         
         if (prevBtn) prevBtn.disabled = currentPageStart <= 1;
-        if (nextBtn) nextBtn.disabled = currentPageStart + levelsPerPage > zone.highestLevel + 1;
+        if (nextBtn) {
+            const maxLevel = Math.max(zone.highestLevel, zone.currentLevel) + 1;
+            nextBtn.disabled = currentPageStart + levelsPerPage > maxLevel;
+        }
 
     } catch (error) {
         console.error('Error rendering level select:', error);
@@ -3228,13 +3505,15 @@ function renderLevelSelect() {
 
 function updateHealthDisplay() {
     try {
-        const healthBar = DOMCache.get('#health-bar');
-        const healthText = DOMCache.get('#health-text');
-        const monsterName = DOMCache.get('#monster-name');
+        const healthBar = document.getElementById('health-bar');
+        const healthText = document.getElementById('health-text');
         const zone = gameData.regions[currentRegion].zones[currentZone];
         const monster = player.currentBoss || zone.monster;
         
-        if (!monster) return;
+        if (!monster) {
+            console.error("No monster found for health display update");
+            return;
+        }
         
         // Update health bar width and color
         if (healthBar) {
@@ -3243,17 +3522,11 @@ function updateHealthDisplay() {
             healthBar.style.backgroundColor = getHealthColor(healthPercent);
         }
   
-        // Update health text with formatted numbers and ensure integers
+        // Update health text with formatted numbers
         if (healthText) {
-            // Math.floor to ensure we always show integer health values
             const currentHealth = formatNumber(Math.floor(monster.hp));
             const maxHealth = formatNumber(Math.floor(monster.maxHp));
             healthText.textContent = `${currentHealth}/${maxHealth} HP`;
-        }
-  
-        // Update monster name
-        if (monsterName) {
-            monsterName.textContent = monster.name;
         }
     } catch (error) {
         console.error('Error updating health display:', error);
@@ -3446,6 +3719,9 @@ function selectLevel(level) {
             }
         }
 
+        // Store previous level to check for level up
+        const previousLevel = zone.currentLevel;
+        
         // Set new level and reset kills
         zone.currentLevel = level;
         zone.currentKills = 0;
@@ -3463,6 +3739,12 @@ function selectLevel(level) {
             spawnMiniBoss(zone);
         } else {
             spawnMonster(zone);
+        }
+
+        // Mark current level as completed if level is increasing
+        if (level > previousLevel && !zone.completedLevels.includes(previousLevel)) {
+            zone.completedLevels.push(previousLevel);
+            zone.completedLevels.sort((a, b) => a - b);
         }
 
         // Update UI and save
@@ -3517,15 +3799,47 @@ function checkRegionCompletion(region) {
     }
 }
 
+function validateZoneData() {
+    try {
+        Object.values(gameData.regions).forEach(region => {
+            Object.values(region.zones).forEach(zone => {
+                // Ensure critical arrays exist
+                if (!Array.isArray(zone.completedLevels)) {
+                    zone.completedLevels = [];
+                }
+                if (!Array.isArray(zone.defeatedMiniBosses)) {
+                    zone.defeatedMiniBosses = [];
+                }
+                
+                // Ensure other essential properties
+                if (!zone.monstersPerLevel) {
+                    zone.monstersPerLevel = 10;
+                }
+                if (zone.currentLevel === undefined) {
+                    zone.currentLevel = 1;
+                }
+                if (zone.highestLevel === undefined) {
+                    zone.highestLevel = zone.currentLevel;
+                }
+                if (zone.currentKills === undefined) {
+                    zone.currentKills = 0;
+                }
+            });
+        });
+    } catch (error) {
+        console.error("Error validating zone data:", error);
+    }
+}
+
 function handleLevelUp(zone) {
     try {
-        // Reset kills for current level
-        zone.currentKills = 0;
-
-        // Initialize completedLevels array if it doesn't exist
-        if (!zone.completedLevels) {
+        // Always ensure completedLevels exists
+        if (!Array.isArray(zone.completedLevels)) {
             zone.completedLevels = [];
         }
+        
+        // Reset kills for current level
+        zone.currentKills = 0;
 
         // Mark current level as completed if not already done
         if (!zone.completedLevels.includes(zone.currentLevel)) {
@@ -3542,17 +3856,8 @@ function handleLevelUp(zone) {
             showLoot(`🔄 Farming at level cap (${regionCap})!`, "S");
             spawnMonster(zone);
             
-            // Check if all zones in the region are at cap
-            const region = gameData.regions[currentRegion];
-            const allZonesAtCap = Object.values(region.zones).every(z => z.currentLevel >= regionCap);
-
-            // If all zones are at cap and boss isn't defeated, show boss button
-            if (allZonesAtCap && !region.bossDefeated) {
-                const regionBossBtn = document.getElementById("region-boss-btn");
-                if (regionBossBtn) {
-                    regionBossBtn.style.display = "block";
-                }
-            }
+            // Check region completion
+            checkRegionBossAvailability();
         } else {
             // Normal level up progression
             zone.currentLevel++;
@@ -3563,26 +3868,11 @@ function handleLevelUp(zone) {
                 showLoot(`🎉 New highest level in ${formatZoneName(currentZone)}: ${zone.currentLevel}!`, "S");
             }
 
-            // Handle zone name changes
-            if (zone.currentLevel % 10 === 1) {
-                const zoneNameElement = document.getElementById("zone-name");
-                if (zoneNameElement) {
-                    zoneNameElement.classList.add("changing");
-                    setTimeout(() => zoneNameElement.classList.remove("changing"), 500);
-                }
-                showLoot(`🌟 Entering new area: ${getZoneTitleForLevel(currentZone, zone.currentLevel)}!`, "S");
-            }
-
-                    // Check if entering new sub-zone (every 20 levels)
-                    if (zone.currentLevel % 20 === 1) {
-                        updateZoneBackground(currentZone, currentRegion);  // FIXED: Added currentRegion parameter
-                        const zoneName = getZoneTitleForLevel(currentZone, zone.currentLevel);
-                        showLoot(`🌟 Entering new area: ${zoneName}!`, "S");
-                    }
+            // Handle zone name changes and interface updates
+            updateZoneName(zone);
 
             // Spawn appropriate monster or boss
-            const isMiniBossLevel = zone.currentLevel % GAME_CONFIG.COMBAT.MINIBOSS_LEVEL_INTERVAL === 0;
-            if (isMiniBossLevel) {
+            if (zone.currentLevel % GAME_CONFIG.COMBAT.MINIBOSS_LEVEL_INTERVAL === 0) {
                 showLoot(`👑 Mini-boss encounter at level ${zone.currentLevel}!`, "S");
                 spawnMiniBoss(zone);
             } else {
@@ -3594,14 +3884,34 @@ function handleLevelUp(zone) {
         updateItemValues(zone.currentLevel);
         updateUI();
         renderLevelSelect();
-        saveGame();
+        saveGame(); // Save after level changes
         checkZoneUnlocks(zone);
-        updateZoneDisplay(zone);
 
     } catch (error) {
         console.error("Error handling level up:", error);
         showLoot("Error processing level up", "error");
     }
+}
+
+// Helper function to update zone name display with animation
+function updateZoneName(zone) {
+    const zoneNameElement = document.getElementById("zone-name");
+    if (!zoneNameElement) return;
+    
+    // Prepare for zone name change animations
+    if (zone.currentLevel % 10 === 1) {
+        zoneNameElement.classList.add("changing");
+        setTimeout(() => zoneNameElement.classList.remove("changing"), 500);
+        showLoot(`🌟 Entering new area: ${getZoneTitleForLevel(currentZone, zone.currentLevel)}!`, "S");
+    }
+    
+    // Update background for major zone transitions (every 20 levels)
+    if (zone.currentLevel % 20 === 1) {
+        updateZoneBackground(currentZone, currentRegion);
+    }
+    
+    // Update the zone name display
+    zoneNameElement.textContent = getZoneTitleForLevel(currentZone, zone.currentLevel);
 }
 
 const AUTO_PROGRESS_DELAY = GAME_CONFIG.AUTO_PROGRESS.DELAY;
@@ -3626,37 +3936,8 @@ function handleMonsterDeath(zone) {
             
             // Check for level completion
             if (zone.currentKills >= zone.monstersPerLevel) {
-                const nextLevel = zone.currentLevel + 1;
-                const regionCap = GAME_CONFIG.REGIONS[currentRegion].levelCap;
-
-                // Mark current level as completed before handling progression
-                if (!zone.completedLevels.includes(zone.currentLevel)) {
-                    zone.completedLevels.push(zone.currentLevel);
-                    zone.completedLevels.sort((a, b) => a - b);
-                }
-
-                if (isAutoProgressEnabled) {
-                    // Only auto-progress if within level constraints
-                    if (nextLevel <= regionCap && (nextLevel <= zone.highestLevel || nextLevel <= regionCap)) {
-                        setTimeout(() => {
-                            zone.currentLevel = nextLevel;
-                            zone.currentKills = 0;
-                            if (nextLevel > zone.highestLevel) {
-                                zone.highestLevel = nextLevel;
-                                showLoot(`🎉 New highest level: ${nextLevel}!`, "S");
-                            }
-                            selectLevel(nextLevel);
-                        }, AUTO_PROGRESS_DELAY);
-                    } else {
-                        // Reset kills and stay at current level if can't progress
-                        zone.currentKills = 0;
-                        spawnMonster(zone);
-                    }
-                } else {
-                    // When auto-progress is disabled, stay at current level
-                    zone.currentKills = 0;
-                    spawnMonster(zone);
-                }
+                // Call handleLevelUp instead of implementing level logic here
+                handleLevelUp(zone);
             } else {
                 // Not at level completion, spawn next monster
                 spawnMonster(zone);
@@ -3680,34 +3961,34 @@ function handleMonsterDeath(zone) {
 }
 
 function spawnMonster(zone) {
-  try {
-      if (!zone) return;
-      if (player.currentBoss) return;
+    try {
+        if (!zone) return;
+        if (player.currentBoss) return;
 
-      // Get new monster stats
-      zone.monster = getCurrentMonsterStats(zone);
+        // Get new monster stats
+        zone.monster = getCurrentMonsterStats(zone);
 
-      // Update monster display
-      const monsterSprite = document.getElementById('monster-sprite');
-      if (monsterSprite && zone.monster) {
-          // If monster has multiple images, pick one randomly
-          if (Array.isArray(zone.monster.images)) {
-              const randomIndex = Math.floor(Math.random() * zone.monster.images.length);
-              monsterSprite.src = `assets/${zone.monster.images[randomIndex]}`;
-          } else {
-              // Fallback to single image
-              monsterSprite.src = `assets/${zone.monster.image}`;
-          }
-      }
+        // Update monster display
+        const monsterSprite = document.getElementById('monster-sprite');
+        if (monsterSprite && zone.monster) {
+            // If monster has multiple images, pick one randomly
+            if (Array.isArray(zone.monster.images)) {
+                const randomIndex = Math.floor(Math.random() * zone.monster.images.length);
+                monsterSprite.src = `assets/${zone.monster.images[randomIndex]}`;
+            } else {
+                // Fallback to single image
+                monsterSprite.src = `assets/${zone.monster.image}`;
+            }
+        }
 
-      // Immediately update displays
-      updateHealthDisplay();
-      updateProgressBar();
-      updateUI();
-  } catch (error) {
-      console.error('Error spawning monster:', error);
-      showLoot('Error spawning monster', 'error');
-  }
+        // Immediately update displays
+        updateHealthDisplay();
+        updateProgressBar();
+        updateUI();
+    } catch (error) {
+        console.error('Error spawning monster:', error);
+        showLoot('Error spawning monster', 'error');
+    }
 }
 
 function handleTabSwitching(panelSelector, tabSelector, activeClass) {
@@ -4576,35 +4857,86 @@ function loadGame() {
     try {
         const savedGame = localStorage.getItem("gameSave");
         if (!savedGame) return false;
+        
+        // Extra validation for corrupt saves
+        if (savedGame === "[object Object]") {
+            console.error("Invalid save format detected");
+            showLoot("Save data corrupted. Loading backup...", "error");
+            return loadBackupSave();
+        }
 
-        const saveData = JSON.parse(savedGame);
+        // Parse the save data
+        let saveData;
+        try {
+            saveData = JSON.parse(savedGame);
+        } catch (parseError) {
+            console.error("Error parsing save data:", parseError);
+            return loadBackupSave();
+        }
 
         // Version check
         if (saveData.version !== GAME_CONFIG.VERSION.NUMBER) {
             return handleVersionMigration(saveData);
         }
 
-        // Load player data with defaults
-        player = {
-            gold: saveData.player.gold || 0,
-            damage: saveData.player.damage || 1,
-            inventory: saveData.player.inventory || [],
-            prestigeLevel: saveData.player.prestigeLevel || 0,
-            luck: saveData.player.luck || 1.0,
-            champions: saveData.player.champions || { owned: {}, totalDPS: 0 },
-            stats: saveData.player.stats || {
-                monstersKilled: 0,
-                bossesKilled: 0,
-                totalGoldEarned: 0
-            },
-            settings: saveData.player.settings || {
-                autoSave: true,
-                notifications: true
-            },
-            upgrades: saveData.player.upgrades || [],
-            activeBuffs: saveData.player.activeBuffs || {},
-            collectionLog: saveData.player.collectionLog || []
+        // Access player data directly - it's no longer stringified in saveData
+        const playerData = saveData.player || {};
+
+        // Initialize the player object first
+        validatePlayerObject();
+        
+        // Then load player data with defaults
+        player.gold = playerData.gold || 0;
+        player.damage = playerData.damage || 1;
+        player.inventory = Array.isArray(playerData.inventory) ? [...playerData.inventory] : [];
+        player.prestigeLevel = playerData.prestigeLevel || 0;
+        player.luck = playerData.luck || 1.0;
+        player.upgrades = Array.isArray(playerData.upgrades) ? [...playerData.upgrades] : [];
+        player.collectionLog = Array.isArray(playerData.collectionLog) ? [...playerData.collectionLog] : [];
+        player.selectedSellAmount = playerData.selectedSellAmount || 1;
+        
+        // Load stats with defaults
+        player.stats = {
+            monstersKilled: playerData.stats?.monstersKilled || 0,
+            bossesKilled: playerData.stats?.bossesKilled || 0,
+            totalGoldEarned: playerData.stats?.totalGoldEarned || 0
         };
+        
+        player.settings = {
+            autoSave: playerData.settings?.autoSave ?? true,
+            notifications: playerData.settings?.notifications ?? true,
+            championsPaused: playerData.settings?.championsPaused ?? false
+        };
+        
+        // Set the champion pause state
+        isChampionsPaused = player.settings.championsPaused || false;
+        
+        // Update the champion pause toggle state
+        const championsPauseToggle = document.getElementById('champions-pause-toggle');
+        if (championsPauseToggle) {
+            championsPauseToggle.checked = isChampionsPaused;
+        }
+        
+        // Load champions data properly
+        player.champions = {
+            owned: {},
+            totalDPS: playerData.champions?.totalDPS || 0
+        };
+        
+        // Process each champion individually
+        if (playerData.champions?.owned) {
+            Object.entries(playerData.champions.owned).forEach(([championId, data]) => {
+                if (data) {
+                    player.champions.owned[championId] = {
+                        level: data.level || 0,
+                        currentDPS: data.currentDPS || 0,
+                        clickDamageBonus: data.clickDamageBonus || 0,
+                        minimized: data.minimized || false,
+                        upgrades: Array.isArray(data.upgrades) ? [...data.upgrades] : []
+                    };
+                }
+            });
+        }
 
         // Load game state
         currentRegion = saveData.gameState.currentRegion || "lumbridge";
@@ -4616,33 +4948,48 @@ function loadGame() {
             Object.entries(saveData.gameState.regions).forEach(([regionName, regionData]) => {
                 if (gameData.regions[regionName]) {
                     gameData.regions[regionName].unlocked = regionData.unlocked;
-                    gameData.regions[regionName].miniBossesDefeated = regionData.miniBossesDefeated;
-                    gameData.regions[regionName].bossDefeated = regionData.bossDefeated;
+                    gameData.regions[regionName].miniBossesDefeated = regionData.miniBossesDefeated || 0;
+                    gameData.regions[regionName].bossDefeated = regionData.bossDefeated || false;
 
                     // Load zone data
-                    Object.entries(regionData.zones).forEach(([zoneName, zoneData]) => {
+                    Object.entries(regionData.zones || {}).forEach(([zoneName, zoneData]) => {
                         if (gameData.regions[regionName].zones[zoneName]) {
-                            Object.assign(gameData.regions[regionName].zones[zoneName], {
-                                unlocked: zoneData.unlocked,
-                                currentLevel: zoneData.currentLevel,
-                                highestLevel: zoneData.highestLevel,
-                                completedLevels: zoneData.completedLevels || [],
-                                currentKills: zoneData.currentKills,
-                                defeatedMiniBosses: zoneData.defeatedMiniBosses || [],
-                                monstersPerLevel: zoneData.monstersPerLevel
-                            });
+                            gameData.regions[regionName].zones[zoneName].unlocked = zoneData.unlocked || false;
+                            gameData.regions[regionName].zones[zoneName].currentLevel = zoneData.currentLevel || 1;
+                            gameData.regions[regionName].zones[zoneName].highestLevel = zoneData.highestLevel || 1;
+                            gameData.regions[regionName].zones[zoneName].completedLevels = 
+                                Array.isArray(zoneData.completedLevels) ? [...zoneData.completedLevels] : [];
+                            gameData.regions[regionName].zones[zoneName].currentKills = zoneData.currentKills || 0;
+                            gameData.regions[regionName].zones[zoneName].defeatedMiniBosses = 
+                                Array.isArray(zoneData.defeatedMiniBosses) ? [...zoneData.defeatedMiniBosses] : [];
+                            gameData.regions[regionName].zones[zoneName].monstersPerLevel = zoneData.monstersPerLevel || 10;
                         }
                     });
                 }
             });
         }
 
+        // Load achievements state
+        if (saveData.achievements && Array.isArray(saveData.achievements)) {
+            saveData.achievements.forEach(savedAchievement => {
+                const achievement = ACHIEVEMENTS.find(a => a.id === savedAchievement.id);
+                if (achievement) {
+                    achievement.unlocked = savedAchievement.unlocked || false;
+                }
+            });
+        }
+
+        // Validate zone data after loading
+        validateZoneData();
+
         // Update UI states
         updateAutoProgressButton();
         updateUI();
         renderChampionsPanel();
         renderLevelSelect();
-        updateZoneBackground(currentZone, currentRegion);  // FIXED: Added currentRegion parameter
+        updateZoneBackground(currentZone, currentRegion);
+        renderCollectionLog();
+        renderAchievements();
         
         // Initialize current monster
         const zone = gameData.regions[currentRegion].zones[currentZone];
@@ -4658,20 +5005,68 @@ function loadGame() {
     }
 }
 
+function validateGameData() {
+    validatePlayerObject();
+    validateZoneData();
+    
+    // Ensure all champions have necessary properties
+    Object.entries(player.champions.owned || {}).forEach(([championId, data]) => {
+        if (!Array.isArray(data.upgrades)) {
+            data.upgrades = [];
+        }
+    });
+    
+    // Check that all achievements are tracked
+    ACHIEVEMENTS.forEach(achievement => {
+        if (achievement.unlocked === undefined) {
+            achievement.unlocked = false;
+        }
+    });
+}
+
+// Call this periodically to maintain data integrity
+setInterval(validateGameData, 60000); // Every minute
+
 function loadBackupSave() {
     try {
-        const backupSave = localStorage.getItem("gameSaveBackup");
-        if (!backupSave) {
-            showLoot("No backup save found. Starting new game.", "error");
-            return false;
+        // Try each backup save in order
+        for (let i = 0; i < GAME_CONFIG.SAVE.BACKUP_COUNT; i++) {
+            const backupKey = `gameSaveBackup_${i}`;
+            const backupSave = localStorage.getItem(backupKey);
+            
+            if (backupSave && backupSave !== "[object Object]") {
+                try {
+                    // Verify it's valid JSON
+                    JSON.parse(backupSave);
+                    
+                    // Use this backup
+                    console.log(`Trying backup save ${i}`);
+                    localStorage.setItem("gameSave", backupSave);
+                    const success = loadGame();
+                    
+                    if (success) {
+                        showLoot(`Loaded from backup save #${i+1}`, "info");
+                        return true;
+                    }
+                } catch (parseError) {
+                    console.error(`Backup ${i} is corrupted:`, parseError);
+                }
+            }
         }
 
-        localStorage.setItem("gameSave", backupSave);
-        return loadGame();
-
+        // If we get here, no backup worked - clear saves and start fresh
+        console.error("All saves are corrupted. Starting new game.");
+        localStorage.removeItem("gameSave");
+        for (let i = 0; i < GAME_CONFIG.SAVE.BACKUP_COUNT; i++) {
+            localStorage.removeItem(`gameSaveBackup_${i}`);
+        }
+        
+        showLoot("All saves were corrupted. Starting new game.", "error");
+        return false;
     } catch (error) {
         console.error("Error loading backup save:", error);
-        showLoot("Error loading backup save. Starting new game.", "error");
+        showLoot("Critical error loading backup saves. Starting new game.", "error");
+        localStorage.clear(); // Last resort - clear everything
         return false;
     }
 }
@@ -5113,6 +5508,8 @@ function addSlotInteractions(slot, itemName, count) {
   }
 }
 
+let isChampionsPaused = false;
+
 function initializeSettings() {
     // Auto-save toggle
     const autoSaveToggle = document.getElementById('auto-save-toggle');
@@ -5123,9 +5520,36 @@ function initializeSettings() {
             saveGame();
         });
     }
+    
+    // Champions pause toggle
+    const championsPauseToggle = document.getElementById('champions-pause-toggle');
+    if (championsPauseToggle) {
+        // Set initial state from player settings
+        isChampionsPaused = player.settings.championsPaused || false;
+        championsPauseToggle.checked = isChampionsPaused;
+        
+        // Add event listener
+        championsPauseToggle.addEventListener('change', function() {
+            toggleChampionsPause(this.checked);
+        });
+    }
 
     // Update game information
     updateGameInfo();
+}
+
+function toggleChampionsPause(paused) {
+    isChampionsPaused = paused;
+    
+    // Visual feedback
+    const message = isChampionsPaused ? "Champions paused" : "Champions resumed";
+    showLoot(message, "info");
+    
+    // Save the setting
+    if (player.settings) {
+        player.settings.championsPaused = isChampionsPaused;
+        saveGame();
+    }
 }
 
 function updateGameInfo() {
@@ -6121,6 +6545,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
         initDOMCache();
         UIManager.init(); // Initialize UI element references
+        validateGameData(); 
         await preloadAssets();
         initGame();
         setupEventListeners();

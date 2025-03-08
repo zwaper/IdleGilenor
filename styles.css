@@ -1348,7 +1348,7 @@ hit-effect {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 1rem;
+  padding: 0.5rem; /* Reduced padding */
   margin-right: 4px; /* Give space for scrollbar */
 }
 
@@ -1448,7 +1448,7 @@ hit-effect {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem;
+  padding: 0.25rem; /* Reduced padding */
   background: #3d3d3d;
   border-radius: 4px;
 }
@@ -1457,23 +1457,8 @@ hit-effect {
 .champions-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 0.5rem;
-}
-
-.champion-card {
-  position: relative;
-  background: linear-gradient(to bottom, #2b2622, #1f1a17);
-  border: 2px solid #3d3228;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 15px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.champion-card:last-child {
-  margin-bottom: 0;
+  gap: 0.5rem; /* Reduced gap */
+  padding: 0.5rem; /* Reduced padding */
 }
 
 /* Stats panel specific */
@@ -1510,31 +1495,13 @@ hit-effect {
   border-color: #4CAF50;
 }
 
-.champion-content {
-  position: relative;
-  overflow: visible;
-}
-
 .champion-card.has-upgrade {
   border: 2px solid #FFD700;
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
 }
 
 .champion-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 10px;
   border-bottom: 1px solid rgba(255, 215, 0, 0.1);
-}
-
-.champion-image {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  border: 2px solid #5a4634;
-  overflow: hidden;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
 }
 
 .champion-image img {
@@ -1547,13 +1514,6 @@ hit-effect {
   flex: 1;
 }
 
-.champion-name {
-  color: #ffd700;
-  font-size: 18px;
-  margin: 0 0 4px 0;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-}
-
 .champion-info {
   flex: 1;
 }
@@ -1563,22 +1523,16 @@ hit-effect {
   color: #ffd700;
 }
 
-.champion-upgrades {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 215, 0, 0.1);
-}
-
 .upgrades-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px; /* Reduced margin */
 }
 
 .upgrades-title {
   color: #ffd700;
-  font-size: 14px;
+  font-size: 12px; /* Reduced font size */
   font-weight: bold;
 }
 
@@ -1587,8 +1541,8 @@ hit-effect {
   border: none;
   color: #ffd700;
   cursor: pointer;
-  font-size: 18px;
-  padding: 4px;
+  font-size: 16px; /* Reduced font size */
+  padding: 2px; /* Reduced padding */
   transition: transform 0.2s ease;
 }
 
@@ -1597,9 +1551,9 @@ hit-effect {
 }
 
 .upgrade {
-  padding: 0.5rem;
+  padding: 0.25rem; /* Reduced padding */
   border-radius: 4px;
-  font-size: 0.9rem;
+  font-size: 0.8rem; /* Reduced font size */
 }
 
 .upgrade.unlocked {
@@ -1610,11 +1564,6 @@ hit-effect {
 .upgrade.locked {
   background: #666;
   color: #999;
-}
-
-.champion-card.locked {
-  opacity: 0.7;
-  filter: grayscale(50%);
 }
 
 .champion-card.can-unlock {
@@ -1637,21 +1586,21 @@ hit-effect {
 }
 
 .unlock-conditions {
-  padding: 0.5rem;
+  padding: 0.25rem; /* Reduced padding */
   background: #2a2a2a;
   border-radius: 4px;
-  margin: 0.5rem 0;
+  margin: 0.25rem 0; /* Reduced margin */
 }
 
 .unlock-conditions ul {
   list-style: none;
-  padding-left: 1rem;
-  margin: 0.5rem 0;
+  padding-left: 0.5rem; /* Reduced padding */
+  margin: 0.25rem 0; /* Reduced margin */
 }
 
 .unlock-conditions li {
   color: #aaa;
-  margin: 0.2rem 0;
+  margin: 0.1rem 0; /* Reduced margin */
 }
 
 .unlock-conditions li.met {
@@ -1870,10 +1819,9 @@ hit-effect {
 
 .modal-content {
   position: relative;
-  width: 90%;
+  width: auto;
   max-width: 1200px;
-  height: 90vh;
-  margin: 20px auto;
+  height: fit-content;
   background-color: #2b2622;
   border: 2px solid #5a4b3d;
   border-radius: 8px;
@@ -2117,16 +2065,6 @@ hit-effect {
     transition: max-height 0.3s ease-out;
 }
 
-/* Real-time gold updates and button state management */
-.champion-card {
-    background-color: #2b2b2b;
-    border: 1px solid #3e3e3e;
-    border-radius: 4px;
-    padding: 10px;
-    margin: 5px;
-    transition: all 0.3s ease;
-}
-
 .champion-card.unlocked {
     border-color: #4a4;
 }
@@ -2288,19 +2226,6 @@ hit-effect {
   flex-direction: column;
   gap: 8px;
   transition: opacity 0.2s ease-out;
-}
-
-.upgrade-item {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #3e3e3e;
-  transform: translateY(-2px);
-}
-
-.upgrade-item.purchased {
-  background: rgba(76, 175, 80, 0.2);
-  border-color: #4CAF50;
 }
 
 .upgrade-item.locked {
