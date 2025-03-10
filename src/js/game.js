@@ -255,8 +255,7 @@ function checkAchievements() {
 }
 
 function handleGoldEarned(amount) {
-    player.gold += amount;
-    player.stats.totalGoldEarned += amount;
+    awardGold(goldEarned);
     checkAchievements(); // Add this line
     updateUI();
 }
@@ -1027,6 +1026,16 @@ function purchaseChampionUpgrade(championId, upgradeName) {
             return;
         }
 
+        if (upgrade && upgrade.specialEffect) {
+            // Process special effects
+            if (upgrade.specialEffect.type === "goldMultiplier") {
+                // Show a special message for gold multiplier
+                showLoot(`Gold drops increased by ${upgrade.specialEffect.value * 100}%!`, "legendary");
+            }
+            
+            // Other special effects can be handled here
+        }
+
         const championData = player.champions.owned[championId];
         const championLevel = championData.level;
 
@@ -1178,6 +1187,10 @@ function renderChampionsPanel() {
         
         // Add buy button handlers
         attachBuyButtonHandlers();
+
+        setTimeout(() => {
+            handleChampionTooltips();
+        }, 50);
         
         // Initialize tooltips for buy buttons
         initializeBuyButtonTooltips();
@@ -1189,6 +1202,67 @@ function renderChampionsPanel() {
         console.error("Error rendering champions panel:", error);
         showLoot("Error updating champions display", "error");
       }
+}
+
+    // Add this function after the renderChampionsPanel function
+
+    function handleChampionTooltips() {
+        // Apply a small delay to ensure DOM is fully rendered
+        setTimeout(() => {
+            // Get all buy buttons in champion panel
+            const buyButtons = document.querySelectorAll('.buy-button');
+            
+            buyButtons.forEach(button => {
+                // Remove any existing listeners
+                button.removeEventListener('mouseenter', showChampionTooltip);
+                button.removeEventListener('mouseleave', hideChampionTooltip);
+                button.removeEventListener('mousemove', updateTooltipPosition);
+                
+                // Add fresh event listeners
+                button.addEventListener('mouseenter', showChampionTooltip);
+                button.addEventListener('mouseleave', hideChampionTooltip);
+                
+                // Add mousemove for continuous position updates
+                button.addEventListener('mousemove', (e) => {
+                    // Only update position if tooltip is visible
+                    const tooltip = button.querySelector('.buy-tooltip');
+                    if (tooltip && tooltip.style.visibility === 'visible') {
+                        positionBuyTooltip(e);
+                    }
+                });
+            });
+            
+            console.log(`Initialized tooltips for ${buyButtons.length} buy buttons`);
+        }, 100); // Small delay to ensure DOM is ready
+    }
+
+    function showChampionTooltip(event) {
+        try {
+            const button = event.currentTarget;
+            const tooltip = button.querySelector('.buy-tooltip');
+            if (!tooltip) return;
+            
+            // Force visibility with !important flags to override any CSS
+            tooltip.setAttribute('style', 'opacity: 1 !important; visibility: visible !important; z-index: 9999 !important; position: fixed !important;');
+            
+            // Call the position function
+            positionBuyTooltip(event);
+            
+        } catch (error) {
+            console.error("Error showing champion tooltip:", error);
+        }
+    }
+
+    function hideChampionTooltip(event) {
+        try {
+            const tooltip = event.currentTarget.querySelector('.buy-tooltip');
+            if (tooltip) {
+                // Use style.cssText for multiple important declarations
+                tooltip.setAttribute('style', 'opacity: 0 !important; visibility: hidden !important;');
+            }
+        } catch (error) {
+            console.error("Error hiding champion tooltip:", error);
+        }
     }
 
 let lastTimestamp = 0;
@@ -1365,6 +1439,80 @@ function attachBuyButtonHandlers() {
     });
 }
 
+function showUpgradeTooltip(event) {
+    try {
+        const icon = event.currentTarget;
+        const tooltip = icon.querySelector('.upgrade-tooltip');
+        if (!tooltip) return;
+
+        // Force visibility with !important flags to override any CSS
+        tooltip.setAttribute('style', 'opacity: 1 !important; visibility: visible !important; z-index: 9999 !important; position: fixed !important;');
+
+        // Call the position function
+        positionUpgradeTooltip(event);
+    } catch (error) {
+        console.error("Error showing upgrade tooltip:", error);
+    }
+}
+
+function hideUpgradeTooltip(event) {
+    try {
+        const tooltip = event.currentTarget.querySelector('.upgrade-tooltip');
+        if (tooltip) {
+            // Use style.cssText for multiple important declarations
+            tooltip.setAttribute('style', 'opacity: 0 !important; visibility: hidden !important;');
+        }
+    } catch (error) {
+        console.error("Error hiding upgrade tooltip:", error);
+    }
+}
+
+function positionUpgradeTooltip(event) {
+    try {
+        const icon = event.currentTarget;
+        const tooltip = icon.querySelector('.upgrade-tooltip');
+        if (!tooltip) return;
+
+        // Get position data
+        const iconRect = icon.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+
+        // Default position (above the icon)
+        let top = iconRect.top - tooltipRect.height - 10;
+        let left = iconRect.left + (iconRect.width / 2) - (tooltipRect.width / 2);
+
+        // Adjust if tooltip would go off the top edge
+        if (top < 0) {
+            top = iconRect.bottom + 10;
+        } else {
+            tooltip.classList.remove('tooltip-bottom');
+            tooltip.classList.add('tooltip-top');
+        }
+
+        // Adjust if tooltip would go off left or right edges
+        if (left < 0) {
+            left = 10;
+        } else if (left + tooltipRect.width > window.innerWidth) {
+            left = window.innerWidth - tooltipRect.width - 10;
+        }
+
+        // Apply position
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+        tooltip.style.opacity = '1';
+        tooltip.style.visibility = 'visible';
+    } catch (error) {
+        console.error("Error positioning upgrade tooltip:", error);
+    }
+}
+
+// Add event listeners for upgrade icons
+document.querySelectorAll('.upgrade-icon').forEach(icon => {
+    icon.addEventListener('mouseenter', showUpgradeTooltip);
+    icon.addEventListener('mouseleave', hideUpgradeTooltip);
+    icon.addEventListener('mousemove', positionUpgradeTooltip);
+});
+
 function generateUpgradeIcons(champion, owned) {
     return champion.upgrades.map(upgrade => {
         const isAvailable = owned.level >= upgrade.level;
@@ -1377,51 +1525,24 @@ function generateUpgradeIcons(champion, owned) {
             isAvailable && canAfford && !isPurchased ? 'can-afford' : ''
         ].filter(Boolean).join(' ');
 
-        // Parse effect string to get multiplier and type
-        const effectMatch = upgrade.effect.match(/([A-Za-z]+)\sx(\d+)/);
-        const effectType = effectMatch ? effectMatch[1] : '';
-        const multiplier = effectMatch ? effectMatch[2] : '';
-
         return `
             <div class="${classes}" 
                  onclick="purchaseChampionUpgrade('${champion.id}', '${upgrade.name}')"
                  data-upgrade="${upgrade.name}">
                 <img src="assets/upgrades/${upgrade.icon || 'default.png'}" alt="${upgrade.name}">
                 <div class="upgrade-tooltip">
-                    <div class="upgrade-tooltip-tier">${upgrade.tier || 'C'}</div>
                     <div class="upgrade-tooltip-header">${upgrade.name}</div>
                     <div class="upgrade-tooltip-description">${upgrade.description}</div>
                     <div class="upgrade-tooltip-stats">
                         <div class="upgrade-stat">
-                            <span class="upgrade-stat-icon">
-                                ${effectType === 'DPS' ? '⚔️' : '🗡️'}
-                            </span>
-                            <span>${effectType} x${multiplier}</span>
+                            <span class="upgrade-stat-icon">⚔️</span>
+                            <span>${upgrade.effect}</span>
                         </div>
-                        ${upgrade.bonusEffect ? `
-                            <div class="upgrade-stat">
-                                <span class="upgrade-stat-icon">✨</span>
-                                <span>${upgrade.bonusEffect}</span>
-                            </div>
-                        ` : ''}
                     </div>
-                    ${!isPurchased ? `
-                        <div class="upgrade-tooltip-cost">
-                            <span class="gold-icon">💰</span>
-                            ${formatNumber(upgrade.cost)}
-                        </div>
-                        ${!isAvailable ? `
-                            <div class="upgrade-tooltip-requirement">
-                                <span>📊</span>
-                                Requires Level ${upgrade.level}
-                            </div>
-                        ` : ''}
-                    ` : `
-                        <div class="upgrade-tooltip-cost" style="color: #4CAF50">
-                            <span>✓</span>
-                            Purchased
-                        </div>
-                    `}
+                    <div class="upgrade-tooltip-cost">
+                        <span class="gold-icon">💰</span>
+                        ${formatNumber(upgrade.cost)}
+                    </div>
                 </div>
             </div>
         `;
@@ -1442,39 +1563,62 @@ function initializeBuyButtonTooltips() {
     });
   }
   
-function positionBuyTooltip(event) {
-  const tooltip = event.currentTarget.querySelector('.buy-tooltip');
-  if (!tooltip) return;
-  
-  // Get the button's position
-  const buttonRect = event.currentTarget.getBoundingClientRect();
-  
-  // Position tooltip above the button
-  tooltip.style.left = (buttonRect.left + buttonRect.width/2 - tooltip.offsetWidth/2) + 'px';
-  tooltip.style.top = (buttonRect.top - tooltip.offsetHeight - 10) + 'px'; // 10px spacing
-  
-  // Make sure tooltip stays in viewport
-  const tooltipRect = tooltip.getBoundingClientRect();
-  
-  // Handle horizontal overflow
-  if (tooltipRect.left < 10) {
-    tooltip.style.left = '10px';
-  } else if (tooltipRect.right > window.innerWidth - 10) {
-    tooltip.style.left = (window.innerWidth - tooltip.offsetWidth - 10) + 'px';
-  }
-  
-  // Handle vertical overflow (show below if no room above)
-  if (tooltipRect.top < 10) {
-    tooltip.style.top = (buttonRect.bottom + 10) + 'px';
-    tooltip.classList.add('tooltip-bottom');
-    tooltip.classList.remove('tooltip-top');
-  } else {
-    tooltip.classList.add('tooltip-top');
-    tooltip.classList.remove('tooltip-bottom');
-  }
+  function positionBuyTooltip(event) {
+    try {
+        const button = event.currentTarget;
+        const tooltip = button.querySelector('.buy-tooltip');
+        if (!tooltip) return;
+
+        // Get position data
+        const buttonRect = button.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+
+        // Default position (above the button)
+        let top = buttonRect.top - tooltipRect.height - 10;
+        let left = buttonRect.left + (buttonRect.width / 2) - (tooltipRect.width / 2);
+
+        // Adjust if tooltip would go off the top edge
+        if (top < 0) {
+            top = buttonRect.bottom + 10;
+            tooltip.classList.remove('tooltip-top');
+            tooltip.classList.add('tooltip-bottom');
+        } else {
+            tooltip.classList.remove('tooltip-bottom');
+            tooltip.classList.add('tooltip-top');
+        }
+
+        // Adjust if tooltip would go off left or right edges
+        if (left < 0) {
+            left = 10;
+        } else if (left + tooltipRect.width > window.innerWidth) {
+            left = window.innerWidth - tooltipRect.width - 10;
+        }
+
+        // Apply position
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+        tooltip.style.opacity = '1';
+        tooltip.style.visibility = 'visible';
+    } catch (error) {
+        console.error("Error positioning tooltip:", error);
+    }
 }
 
-  function generateChampionCardHTML(champion, owned = false, isUnlocked = false, canUnlock = false, hasAvailableUpgrade = false) {
+// Add event listeners for buy buttons
+document.querySelectorAll('.buy-button').forEach(button => {
+    button.addEventListener('mouseenter', positionBuyTooltip);
+    button.addEventListener('mouseleave', hideBuyTooltip);
+});
+
+function hideBuyTooltip(event) {
+    const tooltip = event.currentTarget.querySelector('.buy-tooltip');
+    if (tooltip) {
+        tooltip.style.opacity = '0';
+        tooltip.style.visibility = 'hidden';
+    }
+}
+
+function generateChampionCardHTML(champion, owned = false, isUnlocked = false, canUnlock = false, hasAvailableUpgrade = false) {
     const championData = owned ? player.champions.owned[champion.id] : null;
     const level = championData ? championData.level : 0;
     const dps = championData ? championData.currentDPS : calculateRawChampionDPS(champion, 1);
@@ -1538,33 +1682,7 @@ function positionBuyTooltip(event) {
           </div>
           
           <div class="champion-upgrades">
-      `;
-      
-      // Add upgrades
-      if (champion.upgrades && champion.upgrades.length > 0) {
-        champion.upgrades.forEach(upgrade => {
-          const isPurchased = championData && championData.upgrades && championData.upgrades.includes(upgrade.name);
-          const isAvailable = level >= upgrade.level;
-          const canAffordUpgrade = player.gold >= upgrade.cost;
-          
-          cardHTML += `
-            <div class="upgrade-item 
-              ${isPurchased ? 'purchased' : ''} 
-              ${isAvailable && !isPurchased ? 'available' : ''} 
-              ${isAvailable && !isPurchased && canAffordUpgrade ? 'can-afford' : ''}
-              ${!isAvailable ? 'locked' : ''}"
-              ${isAvailable && !isPurchased ? `onclick="purchaseChampionUpgrade('${champion.id}', '${upgrade.name}')"` : ''}
-              title="${upgrade.name}: ${upgrade.description}">
-              ${upgrade.shortName || upgrade.name} ${isPurchased ? '✓' : ''}
-              ${!isPurchased && isAvailable ? `<small>💰${formatNumber(upgrade.cost)}</small>` : ''}
-            </div>
-          `;
-        });
-      } else {
-        cardHTML += `<div class="no-upgrades">No upgrades available</div>`;
-      }
-      
-      cardHTML += `
+            ${generateUpgradeIcons(champion, owned)}
           </div>
         </div>
         
@@ -1616,7 +1734,7 @@ function positionBuyTooltip(event) {
     
     cardHTML += `</div>`;
     return cardHTML;
-  }
+}
 
 function initializeChampions() {
     if (!player.champions) {
@@ -1993,6 +2111,47 @@ function formatLargeNumber(num) {
         const scaled = num / Math.pow(1000, magnitude);
         return scaled.toFixed(2) + suffixes[magnitude];
     }
+}
+
+function getGoldMultiplier() {
+    let multiplier = 1.0; // Base multiplier is 1x
+    
+    // Check for Brother Clement's gold boost upgrade
+    if (player.champions && player.champions.owned && player.champions.owned.brotherclement) {
+        // Check if Brother Clement is at least level 75
+        if (player.champions.owned.brotherclement.level >= 75) {
+            // Check if the "Alms of Prosperity" upgrade is purchased
+            const championData = player.champions.owned.brotherclement;
+            
+            // Use 'upgrades' instead of 'purchasedUpgrades'
+            if (championData.upgrades && 
+                championData.upgrades.includes("Alms of Prosperity")) {
+                multiplier += 0.25; // Add 25% gold boost
+            }
+        }
+    }
+    
+    return multiplier;
+}
+
+function awardGold(amount) {
+    // Apply the gold multiplier
+    const multiplier = getGoldMultiplier();
+    const boostedAmount = Math.floor(amount * multiplier);
+    
+    player.gold += boostedAmount;
+    player.stats.totalGoldEarned += boostedAmount;
+    
+    // If the amount was boosted, show a special message
+    if (multiplier > 1) {
+        const bonusAmount = boostedAmount - amount;
+        if (bonusAmount > 0) {
+            // Optionally show a notification about the bonus gold
+            // showLoot(`+${bonusAmount} bonus gold!`, "gold");
+        }
+    }
+    
+    updateUI(); // Update the UI to show the new gold amount
 }
 
 function calculateBaseGold(level, isBoss = false) {
@@ -3926,8 +4085,7 @@ function handleMonsterDeath(zone) {
         // Increment monster kill count and add gold
         player.stats.monstersKilled++;
         const goldEarned = zone.monster.goldValue;
-        player.gold += goldEarned;
-        player.stats.totalGoldEarned += goldEarned;
+        awardGold(goldEarned);
 
         // Handle regular monster drops
         if (!player.currentBoss) {
@@ -4107,8 +4265,7 @@ function handleBossDefeat(zone) {
         const goldReward = Math.floor(baseGold * regionMultiplier * 
             (player.currentBoss.isEliteBoss ? 3 : 2));
         
-        player.gold += goldReward;
-        player.stats.totalGoldEarned += goldReward;
+            awardGold(goldEarned);
 
         // Reset boss state
         player.currentBoss = null;
@@ -5754,7 +5911,7 @@ function updateInventory() {
   try {
       const grid = document.querySelector('.inventory-grid');
       if (!grid) {
-          console.error('Inventory grid not found');
+          /*console.error('Inventory grid not found');*/
           return;
       }
 
@@ -6134,6 +6291,40 @@ class UIBatcher {
 
         this.pendingUpdates.clear();
         this.lastUpdate = performance.now();
+    }
+}
+
+function handleAutoProgress() {
+    try {
+        // Don't progress if we're fighting a boss
+        if (player.currentBoss) return;
+        
+        const zone = gameData.regions[currentRegion].zones[currentZone];
+        if (!zone) return;
+        
+        // Check if enough kills to level up
+        if (zone.currentKills >= zone.monstersPerLevel) {
+            const nextLevel = zone.currentLevel + 1;
+            const regionCap = GAME_CONFIG.REGIONS[currentRegion].levelCap;
+            
+            // Only auto-progress if:
+            // 1. Next level is within region cap
+            // 2. Next level is either previously reached or just one level higher
+            if (nextLevel <= regionCap && (nextLevel <= zone.highestLevel + 1)) {
+                // Use setTimeout to prevent instant progression
+                setTimeout(() => {
+                    // Double-check conditions before selecting level
+                    // (conditions might have changed during timeout)
+                    if (isAutoProgressEnabled && 
+                        !player.currentBoss && 
+                        zone.currentKills >= zone.monstersPerLevel) {
+                        selectLevel(nextLevel);
+                    }
+                }, GAME_CONFIG.AUTO_PROGRESS.DELAY);
+            }
+        }
+    } catch (error) {
+        console.error("Error in auto-progress:", error);
     }
 }
 

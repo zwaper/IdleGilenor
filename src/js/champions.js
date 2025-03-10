@@ -132,7 +132,17 @@ export const championsData = {
             upgrades: [
                 { level: 10, name: "Blessing of the Light", effect: "DPS x2", cost: 50000 },
                 { level: 25, name: "Divine Reckoning", effect: "DPS x3", cost: 200000 },
-                { level: 50, name: "Equilibrium Shift", effect: "DPS x5", cost: 1000000 }
+                { level: 50, name: "Equilibrium Shift", effect: "DPS x5", cost: 1000000 },
+                { 
+                    level: 75, 
+                    name: "Alms of Prosperity", 
+                    effect: "Gold drops +25%", 
+                    cost: 5000000,
+                    specialEffect: {
+                        type: "goldMultiplier",
+                        value: 0.25
+                    }
+                }
             ]
         },
         { //5th champion
