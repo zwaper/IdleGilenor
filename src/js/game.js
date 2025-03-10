@@ -8,6 +8,7 @@ import { shopItems, itemPrices } from './shopData.js';
 import { updateZoneBackground, getMonsterVariantsForLevel, getZoneTitleForLevel } from './zoneUtils.js';
 import { calculateWeaponPrice } from './utils.js';
 import { saveSystem } from './saveSystem.js';
+import { ACHIEVEMENTS, checkAchievements, getAchievementRequirementText, formatReward } from './achievements.js';
 
 const DOMCache = {
     elements: new Map(),
@@ -83,21 +84,43 @@ function initDOMCache() {
 // Game Constants
 const GAME_CONFIG = {
     VERSION: {
-        NUMBER: "0.6.6",
-        NAME: "UI Enhancement Update",
+        NUMBER: "0.7.0",
+        NAME: "Champion and UI Overhaul Update",
         CHANGELOG: [
-            "Fixed champion tooltip visibility issues:",
-            "Made tooltips use fixed positioning with z-index: 9999",
-            "Ensured tooltips appear above all other elements",
-            "Fixed tooltip arrows and positioning",
-            "Added Champions pause functionality:",
-            "Added a new settings toggle to pause/resume champion DPS",
-            "Added visual feedback when pausing/resuming",
-            "Fixed scrolling in Champions panel:",
-            "Restored proper scrollbar functionality while maintaining tooltip visibility",
-            "Save system improvements:",
-            "Enhanced save data structure and validation",
-            "Improved error handling for save/load operations"
+            {
+                subtitle: "Achievements System:",
+                changes: [
+                    "Moved achievements logic to a separate file (achievements.js).",
+                    "Added new achievements and their criteria.",
+                    "Improved achievements rendering and checking logic"
+                ]
+            },
+            {
+                subtitle: "Champions Pause Functionality",
+                changes: [
+                    "Added Champions pause functionality:",
+                    "Added a new settings toggle to pause/resume champion DPS",
+                    "Added visual feedback when pausing/resuming"
+                ]
+            },
+            {
+                subtitle: "Scrolling Fixes",
+                changes: [
+                    "Fixed scrolling in Champions panel:",
+                    "Restored proper scrollbar functionality while maintaining tooltip visibility"
+                ]
+            },
+            {
+                subtitle: "Save System Improvements",
+                changes: [
+                    "Enhanced save data structure and validation",
+                    "Improved error handling for save/load operations"
+                ]
+            }
+        ],
+        GUIDELINES: [
+            "Maintain a structured changelog to document changes in each version.",
+            "Use sub-headlines for section titles to categorize changes."
         ]
     },
     AUTO_PROGRESS: {
@@ -148,112 +171,6 @@ const GAME_CONFIG = {
     },
 };
 
-const ACHIEVEMENTS = [
-    // Combat Achievements
-    {
-        id: "firstKill",
-        name: "First Blood",
-        description: "Kill your first monster",
-        criteria: () => player.stats.monstersKilled >= 1,
-        unlocked: false,
-        category: "Combat",
-        reward: { gold: 100 }
-    },
-    {
-        id: "hundredKills",
-        name: "Monster Hunter",
-        description: "Kill 100 monsters",
-        criteria: () => player.stats.monstersKilled >= 100,
-        unlocked: false,
-        category: "Combat",
-        reward: { gold: 1000 }
-    },
-    {
-        id: "thousandKills",
-        name: "Monster Slayer",
-        description: "Kill 1,000 monsters",
-        criteria: () => player.stats.monstersKilled >= 1000,
-        unlocked: false,
-        category: "Combat",
-        reward: { gold: 10000 }
-    },
-    // Boss Achievements
-    {
-        id: "firstBossKill",
-        name: "Boss Slayer",
-        description: "Defeat your first boss",
-        criteria: () => player.stats.bossesKilled >= 1,
-        unlocked: false,
-        category: "Bosses",
-        reward: { gold: 500 }
-    },
-    {
-        id: "tenBossKills",
-        name: "Boss Hunter",
-        description: "Defeat 10 bosses",
-        criteria: () => player.stats.bossesKilled >= 10,
-        unlocked: false,
-        category: "Bosses",
-        reward: { gold: 5000 }
-    },
-    // Wealth Achievements
-    {
-        id: "thousandGold",
-        name: "Gold Hoarder",
-        description: "Earn 1,000 gold",
-        criteria: () => player.stats.totalGoldEarned >= 1000,
-        unlocked: false,
-        category: "Wealth",
-        reward: { gold: 100 }
-    },
-    {
-        id: "millionGold",
-        name: "Millionaire",
-        description: "Earn 1,000,000 gold",
-        criteria: () => player.stats.totalGoldEarned >= 1000000,
-        unlocked: false,
-        category: "Wealth",
-        reward: { gold: 100000 }
-    },
-    {
-        id: "unlockLumbridgeSwamp",
-        name: "Goblin Slayer",
-        description: "Unlock the Goblin Village by reaching level 50 in Cow Pen",
-        criteria: () => {
-            const cowpen = gameData.regions.lumbridge.zones.cowpen;
-            const lumbridgeswamp = gameData.regions.lumbridge.zones.lumbridgeswamp;
-            return lumbridgeswamp.unlocked && cowpen.currentLevel >= 50;
-        },
-        unlocked: false,
-        category: "Zones",
-        reward: { gold: 5000 }
-    },
-];
-
-function checkAchievements() {
-    let achievementUnlocked = false;
-    ACHIEVEMENTS.forEach(achievement => {
-        if (!achievement.unlocked && achievement.criteria()) {
-            achievement.unlocked = true;
-            // Give rewards
-            if (achievement.reward) {
-                if (achievement.reward.gold) {
-                    player.gold += achievement.reward.gold;
-                    showLoot(`🎉 Achievement Unlocked: ${achievement.name}! (+${achievement.reward.gold} gold)`, "S");
-                }
-            } else {
-                showLoot(`🎉 Achievement Unlocked: ${achievement.name}!`, "S");
-            }
-            achievementUnlocked = true;
-        }
-    });
-
-    if (achievementUnlocked) {
-        renderAchievements();
-        saveGame();
-    }
-}
-
 function handleGoldEarned(amount) {
     awardGold(goldEarned);
     checkAchievements(); // Add this line
@@ -274,7 +191,7 @@ function showTab(tabId) {
     }
 }
 
-function renderAchievements() {
+export function renderAchievements() {
     const container = document.getElementById('achievements-container');
     if (!container) return;
 
@@ -315,6 +232,11 @@ function renderAchievements() {
     `;
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    renderChampionsPanel();
+    initializeChampions();
+});
+
 // Add this function to show version info
 function showVersionInfo() {
     try {
@@ -322,19 +244,30 @@ function showVersionInfo() {
         if (!modalContainer) return;
 
         modalContainer.innerHTML = `
-            <div class="modal version-modal">
+            <div class="modal">
                 <div class="modal-content">
                     <h2>IdleGielinor v${GAME_CONFIG.VERSION.NUMBER}</h2>
                     <h3>${GAME_CONFIG.VERSION.NAME}</h3>
                     <div class="changelog">
                         <h4>Latest Changes:</h4>
+                        ${GAME_CONFIG.VERSION.CHANGELOG.map(section => `
+                            <div class="changelog-section">
+                                <h5>${section.subtitle}</h5>
+                                <ul>
+                                    ${section.changes.map(change => `<li>${change}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="guidelines">
+                        <h4>Versioning Guidelines:</h4>
                         <ul>
-                            ${GAME_CONFIG.VERSION.CHANGELOG.map(change => 
-                                `<li>${change}</li>`
-                            ).join('')}
+                            ${GAME_CONFIG.VERSION.GUIDELINES.map(guideline => `<li>${guideline}</li>`).join('')}
                         </ul>
                     </div>
-                    <button class="osrs-button" onclick="closeModal()">Close</button>
+                    <div class="modal-buttons">
+                        <button class="osrs-button" onclick="closeModal()">Close</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -441,27 +374,6 @@ function showAchievementTooltip(event, achievementId) {
     `;
 
     positionTooltip(event, tooltip);
-}
-
-function getAchievementRequirementText(achievement) {
-    switch(achievement.id) {
-        case 'firstKill':
-            return 'Kill 1 monster';
-        case 'hundredKills':
-            return `Kill 100 monsters (${Math.min(player.stats.monstersKilled, 100)}/100)`;
-        case 'thousandKills':
-            return `Kill 1,000 monsters (${Math.min(player.stats.monstersKilled, 1000)}/1,000)`;
-        // Add more cases for other achievements
-        default:
-            return achievement.description;
-    }
-}
-
-function formatReward(reward) {
-    if (reward.gold) {
-        return `${reward.gold.toLocaleString()} gold`;
-    }
-    return 'No reward';
 }
 
 let currentRegion = "lumbridge";
@@ -656,6 +568,13 @@ function toggleAutoProgress() {
     }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    const saveGameBtn = document.getElementById('save-game-btn');
+    if (saveGameBtn) {
+        saveGameBtn.addEventListener('click', () => saveSystem.saveGame(true));
+    }
+});
+
 const REGION_DIFFICULTY_MULTIPLIERS = {
     lumbridge: 1.0,  // Base difficulty
     varrock: 2.5,    // 2.5x harder than Lumbridge
@@ -770,9 +689,9 @@ function calculateChampionBonusMultiplier(level) {
     try {
         let multiplier = 1;
 
-        // Apply 4x multiplier every 25 levels from 200 onwards
-        if (level >= 200) {
-            const bonusTiers = Math.floor((level - 200) / 25);
+        // Apply 4x multiplier every 25 levels starting from level 25
+        if (level >= 25) {
+            const bonusTiers = Math.floor((level - 25) / 25) + 1;
             multiplier *= Math.pow(4, bonusTiers);
         }
 
@@ -1325,7 +1244,7 @@ function applyDamageLoop(timestamp) {
             } else if (zone.monster) {
                 // Apply damage to regular monster
                 zone.monster.hp -= frameDamage;
-                console.log(`Applied ${frameDamage} damage to monster, remaining HP: ${zone.monster.hp}`);
+                /*console.log(`Applied ${frameDamage} damage to monster, remaining HP: ${zone.monster.hp}`);*/
                 
                 // Check if monster is defeated
                 if (zone.monster.hp <= 0) {
@@ -1622,7 +1541,8 @@ function generateChampionCardHTML(champion, owned = false, isUnlocked = false, c
     const championData = owned ? player.champions.owned[champion.id] : null;
     const level = championData ? championData.level : 0;
     const dps = championData ? championData.currentDPS : calculateRawChampionDPS(champion, 1);
-    
+    const clickDamage = championData ? championData.clickDamageBonus : 1; // Default click damage
+
     // Get current buy amount
     const buyAmount = player.selectedBuyAmount || '1';
     
@@ -1672,7 +1592,7 @@ function generateChampionCardHTML(champion, owned = false, isUnlocked = false, c
               </div>
             </div>
           </button>
-          <div class="champion-dps">${formatNumber(dps)} DPS</div>
+          <div class="champion-dps">${champion.id === 'worldguardian' ? formatNumber(clickDamage) + ' Click Damage' : formatNumber(dps) + ' DPS'}</div>
         </div>
         
         <div class="champion-content">
@@ -2835,13 +2755,14 @@ function updateStatsDisplay() {
     try {
         // Update combat stats
         if (document.getElementById('damage-stat')) {
-            document.getElementById('damage-stat').textContent = formatNumber(player.damage || 0);
+            document.getElementById('damage-stat').textContent = formatNumber(player.champions.owned.worldguardian?.clickDamageBonus || player.damage || 0);
         }
         if (document.getElementById('champion-dps-stat')) {
             document.getElementById('champion-dps-stat').textContent = formatNumber(player.champions?.totalDPS || 0);
         }
         if (document.getElementById('luck-stat')) {
-            document.getElementById('luck-stat').textContent = (player.luck || 1).toFixed(2) + 'x';
+            const goldModifier = getGoldMultiplier();
+            document.getElementById('luck-stat').textContent = `${(goldModifier).toFixed(2)}x`;
         }
 
         // Update progress stats
@@ -2859,13 +2780,18 @@ function updateStatsDisplay() {
         if (document.getElementById('prestige-stat')) {
             document.getElementById('prestige-stat').textContent = formatNumber(player.prestigeLevel || 0);
         }
-        
-        // Calculate collection log completion with safety checks
-        if (document.getElementById('collection-stat') && window.itemData) {
-            const totalItems = Object.keys(window.itemData).length;
+
+        // Update achievements stats
+        if (document.getElementById('achievements-stat')) {
+            const unlockedAchievements = ACHIEVEMENTS.filter(a => a.unlocked).length;
+            document.getElementById('achievements-stat').textContent = `${unlockedAchievements}/${ACHIEVEMENTS.length}`;
+        }
+
+        // Update collection log stats
+        if (document.getElementById('collection-stat')) {
+            const totalItems = Object.keys(itemData).length;
             const collectedItems = player.collectionLog?.length || 0;
-            document.getElementById('collection-stat').textContent = 
-                `${formatNumber(collectedItems)}/${formatNumber(totalItems)}`;
+            document.getElementById('collection-stat').textContent = `${formatNumber(collectedItems)}/${formatNumber(totalItems)}`;
         }
 
     } catch (error) {
@@ -3992,11 +3918,11 @@ function validateZoneData() {
 
 function handleLevelUp(zone) {
     try {
-        // Always ensure completedLevels exists
+        // Ensure completedLevels exists
         if (!Array.isArray(zone.completedLevels)) {
             zone.completedLevels = [];
         }
-        
+
         // Reset kills for current level
         zone.currentKills = 0;
 
@@ -4014,7 +3940,7 @@ function handleLevelUp(zone) {
             // Stay at cap level but show completion message
             showLoot(`🔄 Farming at level cap (${regionCap})!`, "S");
             spawnMonster(zone);
-            
+
             // Check region completion
             checkRegionBossAvailability();
         } else {
@@ -4265,7 +4191,7 @@ function handleBossDefeat(zone) {
         const goldReward = Math.floor(baseGold * regionMultiplier * 
             (player.currentBoss.isEliteBoss ? 3 : 2));
         
-            awardGold(goldEarned);
+        awardGold(goldReward);
 
         // Reset boss state
         player.currentBoss = null;
@@ -4460,7 +4386,7 @@ function unlockNewRegion(regionName) {
             maxHP: 1000,
             damage: 10,
             image: "master_thief.png",
-            timeLimit: 60,
+            timeLimit: 30,
             dropTable: [{ item: "Thief's Cape", chance: 1, tier: "A" }],
             unlocked: false,
           },
@@ -5791,7 +5717,7 @@ function getStackedInventory() {
   return stackedItems;
 }
 
-function showLoot(message, tier) {
+export function showLoot(message, tier) {
     const feed = DOMCache.get("#loot-feed");
     const entry = document.createElement("div");
     entry.className = `loot-entry ${tier}-tier`; // Instead of just 'error'
@@ -6478,7 +6404,10 @@ function hardResetGame() {
             settings: {
                 autoSave: true,
                 notifications: true
-            }
+            },
+            upgrades: [],  // Explicitly initialize upgrades as an array
+            collectionLog: [], // Explicitly initialize collection log as an array
+            selectedSellAmount: 1
         };
 
         // Reset game state
@@ -6500,7 +6429,13 @@ function hardResetGame() {
                 zone.currentKills = 0;
                 zone.defeatedMiniBosses = [];
                 zone.monstersPerLevel = 10;
+                zone.monster = null; // Reset monster
             });
+        });
+
+        // Reset achievements
+        ACHIEVEMENTS.forEach(achievement => {
+            achievement.unlocked = false;
         });
 
         // Reset UI and game state
@@ -6512,7 +6447,7 @@ function hardResetGame() {
         renderShop();
         renderRegionTabs();
         renderZoneTabs();
-        updateZoneBackground(currentZone);
+        updateZoneBackground(currentZone, currentRegion);
 
         // Save the reset state
         saveGame();
@@ -6522,11 +6457,6 @@ function hardResetGame() {
         console.error("Error resetting game:", error);
         showLoot("Error resetting game", "error");
     }
-}
-
-function closeModal() {
-  const modalContainer = document.getElementById("modal-container");
-  if (modalContainer) modalContainer.style.display = 'none';
 }
 
 // Add helper function to format zone names
@@ -6606,7 +6536,7 @@ function renderZoneTabs() {
     }
 }
 
-function saveGame(showMessage = false) {
+export function saveGame(showMessage = false) {
     if (window.saveSystem) {
         window.saveSystem.saveGame(showMessage);
     } else {
@@ -6664,9 +6594,9 @@ function switchZone(zoneId) {
         const zone = gameData.regions[currentRegion].zones[zoneId];
         
         // Check if zone is locked
-        if (!zone.unlocked) {
+        if (!zone || !zone.unlocked) {
             // Show requirements message
-            if (zone.requiredForUnlock) {
+            if (zone && zone.requiredForUnlock) {
                 const reqZone = zone.requiredForUnlock.zone;
                 const reqLevel = zone.requiredForUnlock.level;
                 showLoot(`Reach level ${reqLevel} in ${formatZoneName(reqZone)} to unlock ${formatZoneName(zoneId)}!`, "error");
@@ -6678,7 +6608,7 @@ function switchZone(zoneId) {
 
         // Clear any existing boss timers in the current zone
         const currentZoneData = gameData.regions[currentRegion].zones[currentZone];
-        if (currentZoneData.bossTimer) {
+        if (currentZoneData && currentZoneData.bossTimer) {
             clearInterval(currentZoneData.bossTimer);
             currentZoneData.bossTimer = null;
         }
@@ -6694,7 +6624,7 @@ function switchZone(zoneId) {
         });
 
         // Update background
-        updateZoneBackground(zoneId, currentRegion);  // FIXED: Added currentRegion parameter
+        updateZoneBackground(zoneId, currentRegion);
 
         // Reset monster and update UI
         if (zone) {
@@ -6703,11 +6633,22 @@ function switchZone(zoneId) {
         }
 
         // Update UI elements
-        document.getElementById('zone-name').textContent = zone.name;
-        document.getElementById('zone-level').textContent = zone.currentLevel;
+        const zoneNameElement = document.getElementById('zone-name');
+        const zoneLevelElement = document.getElementById('zone-level');
+        
+        if (zoneNameElement) {
+            zoneNameElement.textContent = zone.name;
+        }
+        
+        if (zoneLevelElement) {
+            zoneLevelElement.textContent = zone.currentLevel;
+        }
         
         updateUI();
         renderLevelSelect();
+
+        // Restart the applyDamageLoop
+        initializeChampions();
     } catch (error) {
         console.error('Error switching zone:', error);
         showLoot('Error switching zone', 'error');
@@ -6739,6 +6680,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         validateGameData(); 
         await preloadAssets();
         initGame();
+        checkAchievements();
         setupEventListeners();
         setupLevelNavigation();
         setupTabPanels(); // Ensure this is called
@@ -6768,6 +6710,42 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("Error initializing game:", error);
         showLoot("Error loading game assets", "error");
     }
+});
+
+export function showAchievementModal(achievement) {
+    const modal = document.getElementById("achievement-modal");
+    if (!modal) return;
+
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h2>Achievement Unlocked!</h2>
+            <h3>${achievement.name}</h3>
+            <p>${achievement.description}</p>
+        </div>
+    `;
+
+    // Show the modal
+    modal.classList.add('show');
+    modal.classList.remove('hide');
+
+    // Hide the modal after 3 seconds
+    setTimeout(() => {
+        modal.classList.add('hide');
+        modal.classList.remove('show');
+    }, 3000);
+}
+
+function closeModal() {
+    const modalContainer = document.getElementById("modal-container");
+    if (modalContainer) {
+        modalContainer.style.display = "none";
+    }
+}
+
+// Example usage
+document.addEventListener('DOMContentLoaded', () => {
+    // Assuming you have a function to check achievements
+    checkAchievements();
 });
 
 function checkAllZonesCapped(region) {
