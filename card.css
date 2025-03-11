@@ -1,0 +1,969 @@
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Adjust columns to fit the container */
+    gap: 15px;
+    padding: 15px;
+}
+
+.card-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 180px;
+    height: 250px;
+    background: #f8f8f8;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    perspective: 1000px;
+  }
+
+  .card-container:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Card content area */
+.card-inner-content {
+    position: relative;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
+    margin: 8px;
+    background: white;
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-header {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 10px;
+    background: #f2f2f2;
+    border-bottom: 2px solid #e0e0e0;
+  }
+
+  .card-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    text-transform: uppercase;
+  }
+
+  .card-tier-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+  }
+  
+  .card-container[data-tier="C"] .card-tier-badge { background: #72bc56; color: white; }
+  .card-container[data-tier="B"] .card-tier-badge { background: #4a94fd; color: white; }
+  .card-container[data-tier="A"] .card-tier-badge { background: #f15bb5; color: white; }
+  .card-container[data-tier="S"] .card-tier-badge { 
+    background: #ffc93c; 
+    color: #333;
+    box-shadow: 0 0 5px #ffd700;
+  }
+
+  /* Card image area */
+.card-image-container {
+    position: relative;
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+    border-bottom: 2px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+
+
+.card-container[data-tier="A"]:hover::before,
+.card-container[data-tier="S"]:hover::before {
+  transform: translateX(50%);
+}
+
+.card-container[data-tier="S"] {
+  animation: rainbow-border 3s infinite;
+}
+
+@keyframes rainbow-border {
+    0% { border-color: #ffd700; }
+    33% { border-color: #ff9900; }
+    66% { border-color: #ffcc00; }
+    100% { border-color: #ffd700; }
+  }
+
+  /* Monster zone info */
+.card-zone {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    padding: 2px 6px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    font-size: 10px;
+    border-radius: 10px;
+  }
+
+  .card-body {
+    flex: 1;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #fff;
+  }
+
+.card-image {
+    max-width: 85%;
+    max-height: 85%;
+    object-fit: contain;
+  }
+
+  .card-effect {
+    font-size: 11px;
+    color: #333;
+    text-align: center;
+    padding: 4px;
+    border-radius: 4px;
+    background: #f2f2f2;
+    border: 1px solid #ddd;
+    margin-bottom: 5px;
+  }
+
+  .card-count {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    margin-bottom: 5px;
+  }
+
+.card-tier {
+    font-size: 10px;
+    color: #ffcb05;
+    margin-top: 8px;
+    background: #333;
+    padding: 3px 6px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Add to your existing card.css file */
+
+.cards-panel-header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: linear-gradient(to bottom, #3d3228, #2b2622);
+    border-radius: 6px;
+    border: 2px solid #5a4634;
+}
+
+.cards-panel-header h2 {
+    color: #ffcb05;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    margin: 0;
+}
+
+/* Locked cards */
+.card-container.locked {
+    filter: grayscale(85%);
+    opacity: 0.8;
+    border-color: #999;
+    background: linear-gradient(135deg, #aaa, #666);
+  }
+
+  .card-container.locked .card-image-container {
+    background: #888;
+  }
+  
+  .card-container.locked .card-name {
+    color: #555;
+  }
+
+.card-container.locked .card-header {
+    color: #999;
+}
+
+.card-locked-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-30deg);
+    font-size: 18px;
+    font-weight: bold;
+    color: red;
+    background: rgba(255,255,255,0.7);
+    padding: 5px 15px;
+    border: 2px solid red;
+    border-radius: 5px;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  }
+
+.card-container.locked:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card-container.unlocked {
+    border-color: #ffcb05;
+}
+
+/* Card tab system */
+.cards-tabs {
+    display: flex;
+    background: #2b2622;
+    border-bottom: 2px solid #5a4634;
+    margin-bottom: 10px;
+}
+
+.card-tab {
+    padding: 10px 20px;
+    background: #3d3228;
+    color: #ffcb05;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.card-tab:hover {
+    background: #4e4034;
+}
+
+.card-tab.active {
+    background: #5a4634;
+    color: #fff;
+}
+
+/* Card shop styles */
+.card-shop-container {
+    padding: 15px;
+}
+
+.card-packs-section h3,
+.card-tier-container h3 {
+    color: #ffcb05;
+    border-bottom: 1px solid #5a4634;
+    padding-bottom: 5px;
+    margin-top: 5px;
+}
+
+.card-packs-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.card-pack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(to bottom, #3d3228, #2b2622);
+    border: 2px solid #5a4634;
+    border-radius: 8px;
+    padding: 15px;
+    transition: transform 0.2s;
+    min-width: 180px;
+}
+
+.card-pack:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.card-pack img {
+    width: 120px;
+    height: 160px;
+    margin: 10px 0;
+    object-fit: cover;
+}
+
+.card-pack h3 {
+    color: #ffcb05;
+    margin: 0;
+    border-bottom: none;
+}
+
+.card-pack p {
+    color: #fff;
+    font-size: 14px;
+    text-align: center;
+}
+
+.tier-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.tier-button {
+    padding: 8px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tier-button:hover {
+    transform: scale(1.05);
+}
+
+.tier-button.c-tier { background: #44ff44; color: #222; }
+.tier-button.b-tier { background: #4444ff; color: white; }
+.tier-button.a-tier { background: #ff44ff; color: #222; }
+.tier-button.s-tier { background: #ffd700; color: #222; }
+
+.pack-card.holographic:not(.reveal)::before,
+.pack-card.holographic:not(.reveal)::after,
+.pack-card.holographic:not(.reveal) .holographic-badge,
+.pack-card.holographic:not(.reveal) .holographic-tooltip {
+  display: none;
+}
+
+.pack-card.holographic:not(.reveal) {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: none;
+    background: none;
+  }
+
+  .card-container.holographic .card-inner-content,
+.pack-card.holographic.reveal .card-inner-content {
+  background: rgba(255, 255, 255, 0.85);  /* Semi-transparent white */
+  backdrop-filter: blur(1px);
+}
+
+.pack-card.holographic.reveal .holographic-badge {
+    display: block;
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: linear-gradient(to right, #ff00cc, #3333ff, #00ff99);
+    color: white;
+    padding: 2px 5px;
+    font-size: 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+    z-index: 10;
+  }
+
+/* Add new holographic effect */
+.card-container.holographic::before,
+.pack-card.holographic.reveal::before {
+    content: "";
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.1) 10%,
+      rgba(255, 255, 255, 0.5) 20%,
+      rgba(255, 255, 255, 0.8) 30%,
+      rgba(255, 255, 255, 0.5) 40%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0) 60%
+    );
+    transform: rotate(30deg);
+    animation: enhanced-shine-effect 4s infinite linear;
+    pointer-events: none;
+    z-index: 4;
+  }
+
+/* Enhanced animations */
+@keyframes enhanced-shine-effect {
+    0% {
+      transform: rotate(30deg) translateX(-150%);
+    }
+    100% {
+      transform: rotate(30deg) translateX(150%);
+    }
+  }
+  
+  @keyframes pulse {
+    0% { box-shadow: 0 0 8px rgba(255, 255, 255, 0.8); }
+    50% { box-shadow: 0 0 15px rgba(255, 100, 255, 0.9); }
+    100% { box-shadow: 0 0 8px rgba(255, 255, 255, 0.8); }
+  }
+  
+  /* Enhanced color shift */
+  @keyframes holographic-color-shift {
+    0% { filter: hue-rotate(0deg); }
+    25% { filter: hue-rotate(45deg); }
+    50% { filter: hue-rotate(90deg); }
+    75% { filter: hue-rotate(180deg); }
+    100% { filter: hue-rotate(0deg); }
+  }
+
+/* Only apply glow effect after reveal */
+.pack-card.holographic.reveal .card-glow {
+    box-shadow: 0 0 25px 8px rgba(255, 100, 255, 0.8);
+    border: 2px solid #ff00cc;
+    z-index: 3;
+  }
+
+  .card-container.holographic:hover::before {
+    animation-duration: 1s;
+  }
+
+  .pack-card.holographic.reveal::before {
+    animation-duration: 1.5s;
+  }
+
+  /* Animation keyframes for the shine and border effects */
+@keyframes shine-effect {
+    0% {
+      transform: rotate(30deg) translateX(-100%);
+    }
+    100% {
+      transform: rotate(30deg) translateX(100%);
+    }
+  }
+  
+  @keyframes rotate-gradient {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 100% 100%;
+    }
+  }
+
+/* Enhanced holographic card effect */
+.card-container.holographic,
+.pack-card.holographic.reveal {
+    position: relative;
+    box-shadow: 0 0 20px rgba(255, 100, 255, 0.6);
+    border: 2px solid transparent;
+    overflow: hidden;
+    background: linear-gradient(125deg, 
+      rgba(255, 0, 255, 0.15), 
+      rgba(0, 255, 255, 0.15) 30%,
+      rgba(255, 255, 0, 0.15) 60%, 
+      rgba(255, 0, 255, 0.15)
+    );
+    animation: holographic-color-shift 5s infinite linear;
+  }
+
+/* Rainbow border effect */
+.card-container.holographic::after,
+.pack-card.holographic.reveal::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: 
+      linear-gradient(45deg, #ff00cc, #3333ff, #00ff99, #ff00cc) border-box,
+      url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none" stroke-width="1" stroke="rgba(255,255,255,0.1)" /></svg>');
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.6;
+    animation: rotate-gradient 3s linear infinite;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .card-container.holographic .holographic-badge {
+    display: block;
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: linear-gradient(45deg, #ff00cc, #3333ff, #00ff99);
+    color: white;
+    padding: 3px 6px;
+    font-size: 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 1px;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    z-index: 10;
+    animation: pulse 2s infinite;
+  }
+
+.holographic-count {
+  color: #ff00cc;
+  font-weight: bold;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.holographic-tooltip {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(to right, #ff00cc, #3333ff, #00ff99);
+    color: white;
+    padding: 2px 6px;
+    font-size: 9px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s, bottom 0.3s;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  }
+  
+  .card-container.holographic:hover .holographic-tooltip,
+  .pack-card.holographic:hover .holographic-tooltip {
+    opacity: 1;
+    bottom: -25px;
+  }
+
+
+/* Pack opening modal */
+.modal {
+    background-color: #3d3228;
+    border-radius: 10px;
+    border: 3px solid #5a4634;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.modal-content h2 {
+    color: #ffcb05;
+    text-align: center;
+    margin-top: 0;
+    border-bottom: 2px solid #5a4634;
+    padding-bottom: 10px;
+    width: 100%;
+}
+
+.pack-cards-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+/* Pack cards */
+.pack-card {
+    position: relative;
+    width: 180px;
+    height: 250px;
+    perspective: 1000px;
+    cursor: pointer;
+  }
+
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 5;
+  }
+
+.pack-card.reveal .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-front {
+    background-image: url('assets/cards/card_back.png'), linear-gradient(45deg, #333, #111);
+    background-size: contain; /* Changed from cover to maintain aspect ratio */
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+  .card-back {
+    transform: rotateY(180deg);
+    border: 8px solid #5a4634;
+    display: flex;
+    flex-direction: column;
+  }
+
+/* Card color schemes by tier */
+.pack-card.C-tier .card-back { border-color: #72bc56; }
+.pack-card.B-tier .card-back { border-color: #4a94fd; }
+.pack-card.A-tier .card-back { border-color: #f15bb5; }
+.pack-card.S-tier .card-back { 
+    border-color: #ffc93c;
+    animation: rainbow-border 3s infinite;
+}
+
+.card-back .card-inner-content {
+    background: white;
+    width: calc(100% - 16px); /* Full width minus consistent margins */
+    height: calc(100% - 16px); /* Full height minus consistent margins */
+    margin: 8px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Distribute content evenly */
+    align-items: center; /* Center horizontally */
+    box-sizing: border-box;
+}
+
+.card-back .card-header {
+    width: 100%;
+    background: #f2f2f2;
+    padding: 5px;
+    display: flex;
+    justify-content: center; /* Center content */
+    align-items: center;
+    border-bottom: 2px solid #e0e0e0;
+    text-align: center;
+}
+
+  .card-back .card-image {
+    background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+    width: 90%;  /* Slightly smaller than parent to allow for padding */
+    height: auto; /* Keep aspect ratio */
+    max-height: 120px;
+    object-fit: contain;
+    padding: 10px;
+    box-sizing: border-box;
+    margin: 0 auto; /* Center horizontally */
+    display: block;
+}
+
+  .card-back .card-tier {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .C-tier .card-tier { background: #72bc56; }
+.B-tier .card-tier { background: #4a94fd; }
+.A-tier .card-tier { background: #f15bb5; }
+.S-tier .card-tier { 
+  background: #ffc93c; 
+  color: #333;
+  box-shadow: 0 0 5px #ffd700;
+}
+
+.collection-progress {
+    margin: 10px 15px;
+}
+
+.progress-text {
+    color: #ffcb05;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.progress-bar {
+    height: 15px;
+    background: #2b2622;
+    border: 1px solid #5a4634;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(to right, #c17b07, #ffcb05);
+}
+
+@keyframes glow {
+    from { box-shadow: 0 0 5px #ffd700; }
+    to { box-shadow: 0 0 20px #ffd700; }
+}
+
+/* Card Pack Opening Modal - add to your existing card.css file */
+
+.card-pack-modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex; /* Make sure this is set to flex */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+  
+  .card-pack-modal-container.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  .card-pack-modal {
+    background: url('../assets/interface/parchment_bg.png') center/cover no-repeat, #2b2622;
+    border: 4px solid #c8a355;
+    border-radius: 8px;
+    box-shadow: 0 0 30px rgba(200, 163, 85, 0.6);
+    width: 80%;
+    max-width: 800px;
+    padding: 20px;
+    text-align: center;
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+  }
+  
+  .card-pack-modal-container.visible .card-pack-modal {
+    transform: scale(1);
+  }
+  
+  .card-pack-modal h2 {
+    color: #c8a355;
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.6);
+  }
+  
+  .pack-cards-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin: 20px 0;
+  }
+  
+  .pack-card {
+    perspective: 1000px;
+    width: 150px;
+    height: 200px;
+    cursor: pointer;
+  }
+  
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .pack-card.reveal .card-inner {
+    transform: rotateY(180deg);
+  }
+  
+  .card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 6px solid #5a4634; /* Same border width for both */
+    box-sizing: border-box; /* Include borders in width/height calculations */
+    display: flex;  /* Use flexbox for centering */
+    flex-direction: column;
+    justify-content: center; /* Center content vertically */
+    align-items: center;     /* Center content horizontally */
+}
+  
+  .card-front {
+    background: linear-gradient(45deg, #333, #111);
+  }
+  
+  .card-back {
+    background: linear-gradient(135deg, #264b81, #1a2f4e);
+    transform: rotateY(180deg);
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+/* Card glow effect */
+.card-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 10;
+  }
+  
+  .pack-card.reveal .card-glow {
+    opacity: 1;
+  }
+  
+  .S-tier .card-glow {
+    box-shadow: 0 0 25px 8px rgba(255, 215, 0, 0.8);
+    border: 2px solid gold;
+  }
+  
+  .A-tier .card-glow {
+    box-shadow: 0 0 20px 5px rgba(255, 0, 0, 0.6);
+    border: 2px solid crimson;
+  }
+  
+  .B-tier .card-glow {
+    box-shadow: 0 0 15px 5px rgba(0, 150, 255, 0.6);
+    border: 2px solid dodgerblue;
+  }
+  
+  .C-tier .card-glow {
+    box-shadow: 0 0 10px 3px rgba(255, 255, 255, 0.5);
+    border: 2px solid white;
+  }
+  
+  .card-pack-close-btn {
+    margin-top: 20px;
+    padding: 8px 20px;
+    font-size: 16px;
+  }
+  
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #f00;
+    animation: confetti-fall 3s linear forwards;
+    opacity: 0;
+  }
+  
+  @keyframes confetti-fall {
+    0% {
+      opacity: 1;
+      transform: translateY(-10px) rotate(0deg);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(100vh) rotate(720deg);
+    }
+  }
+
+  /* Gold Card Styling */
+.gold-card {
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 20px #ffdf00;
+  position: relative;
+}
+
+.gold-glow {
+  background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.7) 0%, rgba(255, 215, 0, 0.3) 50%, rgba(255, 215, 0, 0) 70%);
+}
+
+.gold-back {
+  background: linear-gradient(135deg, #ffd700 0%, #ffec8e 20%, #ffd700 40%, #ffec8e 60%, #ffd700 80%, #ffec8e 100%);
+}
+
+.gold-tier {
+  background-color: #ffd700;
+  color: #000;
+  font-weight: bold;
+  text-shadow: 0 0 5px #ffec8e;
+}
+
+.card-effect img.coin {
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 5px;
+}
+
+/* Add animation for gold cards */
+@keyframes goldShine {
+  0% { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.gold-card .card-back {
+  background-size: 200% 100%;
+  animation: goldShine 3s linear infinite;
+}
+
+/* Hide gold card effects before reveal */
+.pack-card.gold-card:not(.reveal) .gold-glow,
+.pack-card.gold-card:not(.reveal)::before,
+.pack-card.gold-card:not(.reveal)::after {
+  display: none;
+}
+
+.pack-card.gold-card:not(.reveal) {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border: none;
+  background: none;
+}
+
+/* Only apply gold effects after reveal */
+.pack-card.gold-card.reveal .card-glow {
+  box-shadow: 0 0 25px 8px rgba(255, 215, 0, 0.8);
+  border: 2px solid #ffd700;
+  opacity: 1;
+  z-index: 3;
+}
+
+/* Enhanced shine effect for gold cards after reveal */
+.pack-card.gold-card.reveal::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  left: -50%;
+  width: 200%;
+  height: 140%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 10%,
+    rgba(255, 255, 255, 0.8) 30%,
+    rgba(255, 255, 255, 0.5) 40%,
+    rgba(255, 215, 0, 0.2) 50%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  transform: rotate(30deg);
+  animation: enhanced-gold-shine 3s infinite linear;
+  pointer-events: none;
+  z-index: 4;
+  overflow: hidden;
+}
+
+.pack-card.gold-card {
+  overflow: hidden;
+}
+
+@keyframes enhanced-gold-shine {
+  0% {
+    transform: rotate(30deg) translateX(-100%);
+  }
+  100% {
+    transform: rotate(30deg) translateX(100%);
+  }
+}

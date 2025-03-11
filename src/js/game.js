@@ -9,6 +9,8 @@ import { updateZoneBackground, getMonsterVariantsForLevel, getZoneTitleForLevel 
 import { calculateWeaponPrice } from './utils.js';
 import { saveSystem } from './saveSystem.js';
 import { ACHIEVEMENTS, checkAchievements, getAchievementRequirementText, formatReward } from './achievements.js';
+import { MONSTER_CARDS, applyCardEffects, renderMonsterCardsPanel } from './monsterCards.js';
+
 
 const DOMCache = {
     elements: new Map(),
@@ -84,43 +86,59 @@ function initDOMCache() {
 // Game Constants
 const GAME_CONFIG = {
     VERSION: {
-        NUMBER: "0.7.0",
-        NAME: "Champion and UI Overhaul Update",
+        NUMBER: "1.1.0",
+        NAME: "New Features:",
         CHANGELOG: [
             {
-                subtitle: "Achievements System:",
+                subtitle: "Introduced the Monster Cards system:",
                 changes: [
-                    "Moved achievements logic to a separate file (achievements.js).",
-                    "Added new achievements and their criteria.",
-                    "Improved achievements rendering and checking logic"
+                    "Collect cards from various monsters.",
+                    "Cards have different tiers (C, B, A, S) and can be holographic or gold.",
+                    "Cards provide gold multipliers and other effects.",
+                    "Added a new Monster Cards tab in the UI to view and manage your collection.",
+                    "Added a Card Shop to buy card packs and individual card rolls.",
+                    "Added Zone specific Card Packs that guarantee a card from that zone.",
+                    "Implemented a new UI for the Monster Cards system, including collection and shop tabs.",
+                    "Added animations and sound effects for card pack openings."
                 ]
             },
             {
-                subtitle: "Champions Pause Functionality",
+                subtitle: "UI Improvements:",
                 changes: [
-                    "Added Champions pause functionality:",
-                    "Added a new settings toggle to pause/resume champion DPS",
-                    "Added visual feedback when pausing/resuming"
+                    "Updated the tab switching mechanism to use CSS classes for better performance.",
+                    "Improved the layout and styling of various UI elements.",
+                    "Added new backgrounds for specific zones.",
+                    "Enhanced the modal system for better user experience."
                 ]
             },
             {
-                subtitle: "Scrolling Fixes",
+                subtitle: "Bug Fixes:",
                 changes: [
-                    "Fixed scrolling in Champions panel:",
-                    "Restored proper scrollbar functionality while maintaining tooltip visibility"
+                    "Fixed issues with gold display not updating correctly.",
+                    "Resolved errors related to uninitialized player data.",
+                    "Corrected various UI glitches and inconsistencies."
                 ]
             },
             {
-                subtitle: "Save System Improvements",
+                subtitle: "Performance Enhancements:",
                 changes: [
-                    "Enhanced save data structure and validation",
-                    "Improved error handling for save/load operations"
+                    "Optimized the rendering of the Monster Cards panel.",
+                    "Improved the efficiency of card effect calculations."
                 ]
-            }
+            },
+            {
+                subtitle: "Miscellaneous:",
+                changes: [
+                    "Updated the game data structure to support new features.",
+                    "Added new assets for cards and backgrounds.",
+                    "Various code refactoring and cleanup."
+                ]
+            },
+            
         ],
         GUIDELINES: [
-            "Maintain a structured changelog to document changes in each version.",
-            "Use sub-headlines for section titles to categorize changes."
+            "This update brings a lot of new content and improvements,",
+            "enhancing the overall gameplay experience."
         ]
     },
     AUTO_PROGRESS: {
@@ -179,8 +197,8 @@ function handleGoldEarned(amount) {
 
 function showTab(tabId) {
     const tabs = document.querySelectorAll('.osrs-panel');
-    tabs.forEach(tab => tab.style.display = 'none');
-    document.getElementById(`${tabId}-panel`).style.display = 'block';
+    tabs.forEach(tab => tab.classList.remove('active'));
+    document.getElementById(`${tabId}-panel`).classList.add('active');
 
     const tabButtons = document.querySelectorAll('.osrs-interface-tab');
     tabButtons.forEach(button => button.classList.remove('active'));
@@ -188,6 +206,8 @@ function showTab(tabId) {
 
     if (tabId === 'achievements') {
         renderAchievements();
+    } else if (tabId === 'monster-cards') {
+        renderMonsterCardsPanel();
     }
 }
 
@@ -260,7 +280,7 @@ function showVersionInfo() {
                         `).join('')}
                     </div>
                     <div class="guidelines">
-                        <h4>Versioning Guidelines:</h4>
+                        <h4>Last notes:</h4>
                         <ul>
                             ${GAME_CONFIG.VERSION.GUIDELINES.map(guideline => `<li>${guideline}</li>`).join('')}
                         </ul>
@@ -402,10 +422,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 autoSave: true,
                 notifications: true
             },
-            upgrades: [],  // Explicitly initialize upgrades as an array
-            collectionLog: [], // Explicitly initialize collection log as an array
-            selectedSellAmount: 1
+            upgrades: [],
+            collectionLog: [],
+            selectedSellAmount: 1,
+            cards: [] // Initialize cards as an empty array
         };
+    }
+
+    const showVersionModal = false; // Set to false to prevent the modal from showing
+
+    if (showVersionModal) {
+        showVersionInfo();
     }
 
     // Make sure championsData is available globally
@@ -3186,7 +3213,12 @@ function getCurrentMonsterStats(zone) {
     try {
         if (!zone) return null;
 
-        const effectiveLevel = getEffectiveLevel(zone);
+        // Adjust effective level for Lumbridge Swamps
+        let effectiveLevel = getEffectiveLevel(zone);
+        if (currentRegion === "lumbridge" && currentZone === "lumbridgeswamp") {
+            effectiveLevel += 49; // Start at level 50 difficulty
+        }
+
         const regionMultiplier = REGION_DIFFICULTY_MULTIPLIERS[currentRegion] || 1;
 
         // Filter variants based on zone and level requirements
@@ -3849,6 +3881,64 @@ function getEffectiveLevel(zone) {
     const regionCap = GAME_CONFIG.REGIONS[currentRegion].levelCap;
     return Math.min(zone.currentLevel, regionCap);
 }
+
+function renderMonsterCardsTab() {
+    const container = document.getElementById('monster-cards-panel');
+    if (!container) return;
+
+    container.innerHTML = ''; // Clear existing content
+
+    Object.values(MONSTER_CARDS).forEach(card => {
+        const cardElement = document.createElement('div');
+        cardElement.className = 'card-container';
+        cardElement.innerHTML = `
+            <div class="card-header">${card.name}</div>
+            <img src="assets/cards/${card.name.toLowerCase().replace(' ', '_')}.png" alt="${card.name}" class="card-image">
+            <div class="card-body">
+                <div class="card-effect">Gold Multiplier: ${card.effect.goldMultiplier * 100}%</div>
+                <div class="card-tier">Tier: ${card.tier}</div>
+            </div>
+        `;
+        container.appendChild(cardElement);
+    });
+}
+
+// Add the new tab to the UI
+document.addEventListener('DOMContentLoaded', () => {
+    const tabsContainer = document.querySelector('.osrs-interface-tabs');
+    if (tabsContainer) {
+        // Add Monster Cards tab if it doesn't exist
+        if (!tabsContainer.querySelector('[data-panel="monster-cards"]')) {
+            const monsterCardsTab = document.createElement('button');
+            monsterCardsTab.className = 'osrs-interface-tab';
+            monsterCardsTab.setAttribute('data-panel', 'monster-cards');
+            monsterCardsTab.textContent = 'Monster Cards';
+            tabsContainer.appendChild(monsterCardsTab);
+            
+            // Add click handler
+            monsterCardsTab.addEventListener('click', () => {
+                document.querySelectorAll('.osrs-panel').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.osrs-interface-tab').forEach(t => t.classList.remove('active'));
+                document.getElementById('monster-cards-panel').classList.add('active');
+                monsterCardsTab.classList.add('active');
+                renderMonsterCardsPanel(); // Re-render when tab is clicked
+            });
+        }
+    }
+
+    const panelsContainer = document.querySelector('.osrs-panels');
+    if (panelsContainer && !document.getElementById('monster-cards-panel')) {
+        // Create panel container if it doesn't exist
+        const panel = document.createElement('div');
+        panel.id = 'monster-cards-panel';
+        panel.className = 'osrs-panel';
+        panelsContainer.appendChild(panel);
+    }
+
+    // Now call the rendering function
+    renderMonsterCardsPanel();
+    applyCardEffects(player);
+});
 
 function checkRegionCompletion(region) {
     try {
@@ -5816,7 +5906,7 @@ function updateUI() {
     renderAchievements(); // Add this line
     const goldDisplay = document.getElementById('gold-display');
     if (goldDisplay) {
-        goldDisplay.textContent = formatNumber(player.gold);
+        goldDisplay.textContent = formatNumber(window.player.gold);
     }
       UIManager.queueUpdate('all');
   } catch (error) {
@@ -6818,6 +6908,7 @@ window.calculateChampionBonusMultiplier = calculateChampionBonusMultiplier;
 window.calculateChampionCost = calculateChampionCost;
 window.calculateChampionDPS = calculateChampionDPS;
 window.buyChampion = buyChampion;
+window.renderMonsterCardsTab = renderMonsterCardsTab;
 window.updateTotalChampionDPS = updateTotalChampionDPS;
 window.applyChampionDPS = applyChampionDPS;
 window.initializeChampions = initializeChampions;

@@ -81,13 +81,12 @@ export const gameData = {
                     currentLevel: 1,
                     highestLevel: 1,
                     completedLevels: [],
-                    monstersPerLevel: 10,
                     currentKills: 0,
-                    monster: null,
-                    unlocked: false,  // Start locked
+                    monstersPerLevel: 10,
+                    unlocked: false,
                     requiredForUnlock: {
-                        zone: 'cowpen',
-                        level: 50    // Requires level 50 in cowpen to unlock
+                        zone: "cowpen",
+                        level: 50
                     },
                     variants: [
                         {

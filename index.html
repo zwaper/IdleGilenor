@@ -4,6 +4,7 @@
 <head>
   <title>OSRS Incremental</title>
   <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="card.css">
   <link rel="stylesheet" href="css.css">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -23,166 +24,170 @@
     <!-- Main Content Area -->
     <div class="main-content">
       <!-- Left Panel (Tabs + Inventory/Shop/Stats) -->
-<!-- Left Panel -->
-<div class="left-panel">
-  <!-- Add gold display -->
-  <div class="gold-display">
-    <span class="gold-icon">💰</span>
-    <span class="gold-amount" id="gold-display">${formatNumber(player.gold)}</span>
-</div>
-  <!-- Top Tabs -->
-  <div class="osrs-interface-tabs top-tabs">
-      <button class="osrs-interface-tab" data-panel="champions">⚔️ Champions</button>
-      <button class="osrs-interface-tab" data-panel="stats">📊 Stats</button>
-  </div>
+      <div class="left-panel">
+        <!-- Add gold display -->
+        <div class="gold-display">
+          <span class="gold-icon">💰</span>
+          <span class="gold-amount" id="gold-display">${formatNumber(player.gold)}</span>
+        </div>
+        <!-- Top Tabs -->
+        <div class="osrs-interface-tabs top-tabs">
+          <button class="osrs-interface-tab" data-panel="champions">⚔️ Champions</button>
+          <button class="osrs-interface-tab" data-panel="stats">📊 Stats</button>
+          <button class="osrs-interface-tab" data-panel="monster-cards">🃏 Monster Cards</button>
+        </div>
 
-  <!-- Panel Content -->
-  <div class="osrs-panels">
-      <!-- Champions Panel -->
-      <div class="osrs-panel champions-panel" id="champions-panel">
-          <!-- Champions content -->
-      </div>
+        <!-- Panel Content -->
+        <div class="osrs-panels">
+          <!-- Champions Panel -->
+          <div class="osrs-panel champions-panel" id="champions-panel">
+            <!-- Champions content -->
+          </div>
 
-      <!-- Stats Panel -->
-<!-- Replace the existing stats panel in index.html -->
-<div class="osrs-panel stats-panel" id="stats-panel">
-    <div class="stats-container">
-        <div class="stats-grid">
-            <!-- Combat Stats -->
-            <div class="stat-box">
-                <img src="assets/icons/damage.png" alt="Damage" class="stat-icon">
-                <div class="stat-info">
+          <!-- Stats Panel -->
+          <div class="osrs-panel stats-panel" id="stats-panel">
+            <div class="stats-container">
+              <div class="stats-grid">
+                <!-- Combat Stats -->
+                <div class="stat-box">
+                  <img src="assets/icons/damage.png" alt="Damage" class="stat-icon">
+                  <div class="stat-info">
                     <div class="stat-name">Damage</div>
                     <div class="stat-value" id="damage-stat">0</div>
+                  </div>
                 </div>
-            </div>
-            <div class="stat-box">
-                <img src="assets/icons/dps.png" alt="DPS" class="stat-icon">
-                <div class="stat-info">
+                <div class="stat-box">
+                  <img src="assets/icons/dps.png" alt="DPS" class="stat-icon">
+                  <div class="stat-info">
                     <div class="stat-name">Champion DPS</div>
                     <div class="stat-value" id="champion-dps-stat">0</div>
+                  </div>
                 </div>
-            </div>
-            <div class="stat-box">
-                <img src="assets/icons/luck.png" alt="Luck" class="stat-icon">
-                <div class="stat-info">
+                <div class="stat-box">
+                  <img src="assets/icons/luck.png" alt="Luck" class="stat-icon">
+                  <div class="stat-info">
                     <div class="stat-name">Luck</div>
                     <div class="stat-value" id="player-luck-stat">1.0x</div>
+                  </div>
                 </div>
-            </div>
-            <!-- Progress Stats -->
-            <div class="stat-box">
-                <img src="assets/icons/kills.png" alt="Kills" class="stat-icon">
-                <div class="stat-info">
+                <!-- Progress Stats -->
+                <div class="stat-box">
+                  <img src="assets/icons/kills.png" alt="Kills" class="stat-icon">
+                  <div class="stat-info">
                     <div class="stat-name">Monster Kills</div>
                     <div class="stat-value" id="monsters-killed-stat">0</div>
+                  </div>
                 </div>
-            </div>
-            <div class="stat-box">
-                <img src="assets/icons/combat_achievements.png" alt="Bosses" class="stat-icon">
-                <div class="stat-info">
+                <div class="stat-box">
+                  <img src="assets/icons/combat_achievements.png" alt="Bosses" class="stat-icon">
+                  <div class="stat-info">
                     <div class="stat-name">Boss Kills</div>
                     <div class="stat-value" id="bosses-killed-stat">0</div>
+                  </div>
                 </div>
-            </div>
-            <div class="stat-box">
-                <img src="assets/icons/gold.png" alt="Gold" class="stat-icon">
-                <div class="stat-info">
+                <div class="stat-box">
+                  <img src="assets/icons/gold.png" alt="Gold" class="stat-icon">
+                  <div class="stat-info">
                     <div class="stat-name">Total Gold</div>
                     <div class="stat-value" id="total-gold-stat">0</div>
+                  </div>
                 </div>
-            </div>
-            <!-- Game Stats -->
-            <div class="stat-box">
-                <img src="assets/icons/prestige.png" alt="Prestige" class="stat-icon">
-                <div class="stat-info">
+                <!-- Game Stats -->
+                <div class="stat-box">
+                  <img src="assets/icons/prestige.png" alt="Prestige" class="stat-icon">
+                  <div class="stat-info">
                     <div class="stat-name">Prestige</div>
                     <div class="stat-value" id="prestige-stat">0</div>
+                  </div>
                 </div>
-            </div>
-            <div class="stat-box">
-                <img src="assets/icons/collection_log.png" alt="Collection" class="stat-icon">
-                <div class="stat-info">
+                <div class="stat-box">
+                  <img src="assets/icons/collection_log.png" alt="Collection" class="stat-icon">
+                  <div class="stat-info">
                     <div class="stat-name">Collection</div>
                     <div class="stat-value" id="collection-stat">0/0</div>
+                  </div>
                 </div>
-            </div>
-            <div class="stat-box">
-                <img src="assets/icons/achievements_icon.png" alt="Achievements" class="stat-icon">
-                <div class="stat-info">
+                <div class="stat-box">
+                  <img src="assets/icons/achievements_icon.png" alt="Achievements" class="stat-icon">
+                  <div class="stat-info">
                     <div class="stat-name">Achievements</div>
                     <div class="stat-value" id="achievements-stat">0/0</div>
+                  </div>
                 </div>
+              </div>
             </div>
+          </div>
+
+          <!-- Monster Cards Panel -->
+          <div id="monster-cards-panel" class="osrs-panel">
+            <!-- Monster Cards content will be rendered here -->
         </div>
-    </div>
-</div>
 
-      <!-- Collection Log Panel -->
-      <div id="collection-panel" class="osrs-panel collection-panel">
-          <div id="collection-log"></div>
-      </div>
+          <!-- Collection Log Panel -->
+          <div id="collection-panel" class="osrs-panel collection-panel">
+            <div id="collection-log"></div>
+          </div>
 
-      <!-- Loot Feed Panel -->
-      <div class="osrs-panel loot-panel" id="loot-panel">
-          <div class="osrs-loot-feed" id="loot-feed"></div>
-      </div>
+          <!-- Loot Feed Panel -->
+          <div class="osrs-panel loot-panel" id="loot-panel">
+            <div class="osrs-loot-feed" id="loot-feed"></div>
+          </div>
 
-      <!-- Achievements Panel -->
-      <div class="osrs-panel achievements-panel" id="achievements-panel">
-          <div id="achievements-container" class="achievements-grid"></div>
-      </div>
+          <!-- Achievements Panel -->
+          <div class="osrs-panel achievements-panel" id="achievements-panel">
+            <div id="achievements-container" class="achievements-grid"></div>
+          </div>
 
-      <!-- Settings Panel -->
-      <div class="settings-container">
-        <div class="settings-section">
-            <h3>Game Settings</h3>
-            <div class="setting-row">
+          <!-- Settings Panel -->
+          <div class="settings-container">
+            <div class="settings-section">
+              <h3>Game Settings</h3>
+              <div class="setting-row">
                 <span class="setting-label">Auto-Save</span>
                 <label class="setting-toggle">
-                    <input type="checkbox" id="auto-save-toggle" checked>
-                    <span class="toggle-slider"></span>
+                  <input type="checkbox" id="auto-save-toggle" checked>
+                  <span class="toggle-slider"></span>
                 </label>
+              </div>
             </div>
-        </div>
 
-        <div class="settings-section">
-          <h3>Data Management</h3>
-          <div class="settings-buttons">
-              <button class="osrs-button" id="save-game-btn">💾 Save Game</button>
-              <button class="osrs-button" id="load-backup-btn">🔄 Load Backup</button>
-              <button class="osrs-button danger-button" id="reset-game-btn">
+            <div class="settings-section">
+              <h3>Data Management</h3>
+              <div class="settings-buttons">
+                <button class="osrs-button" id="save-game-btn">💾 Save Game</button>
+                <button class="osrs-button" id="load-backup-btn">🔄 Load Backup</button>
+                <button class="osrs-button danger-button" id="reset-game-btn">
                   ⚠️ Hard Reset
-              </button>
-          </div>
-      </div>
+                </button>
+              </div>
+            </div>
 
-        <div class="settings-section">
-            <h3>Game Information</h3>
-            <div class="game-info">
+            <div class="settings-section">
+              <h3>Game Information</h3>
+              <div class="game-info">
                 <p>Version: <span id="game-version"></span></p>
                 <p>Last Saved: <span id="last-saved"></span></p>
+              </div>
             </div>
+
+            <div class="setting-row">
+              <span class="setting-label">Pause Champions</span>
+              <label class="setting-toggle">
+                <input type="checkbox" id="champions-pause-toggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
         </div>
 
-        <div class="setting-row">
-          <span class="setting-label">Pause Champions</span>
-          <label class="setting-toggle">
-              <input type="checkbox" id="champions-pause-toggle">
-              <span class="toggle-slider"></span>
-          </label>
+        <!-- Bottom Tabs -->
+        <div class="osrs-interface-tabs bottom-tabs">
+          <button class="osrs-interface-tab" data-panel="collection">📚 Collection Log</button>
+          <button class="osrs-interface-tab" data-panel="loot">💎 Loot Feed</button>
+          <button class="osrs-interface-tab" data-panel="achievements">🏆 Achievements</button>
+          <button class="osrs-interface-tab" data-panel="settings">⚙️ Settings</button>
+        </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Bottom Tabs -->
-  <div class="osrs-interface-tabs bottom-tabs">
-    <button class="osrs-interface-tab" data-panel="collection">📚 Collection Log</button>
-    <button class="osrs-interface-tab" data-panel="loot">💎 Loot Feed</button>
-    <button class="osrs-interface-tab" data-panel="achievements">🏆 Achievements</button>
-    <button class="osrs-interface-tab" data-panel="settings">⚙️ Settings</button>
-</div>
-</div>
 
       <!-- Center Panel (Combat) -->
       <div class="center-panel">
@@ -190,20 +195,20 @@
         <!-- Level Select -->
         <div class="level-select-container">
           <button id="map-button" class="osrs-button" onclick="openMapModal()">
-              🗺️ Map
+            🗺️ Map
           </button>
           <div class="level-navigation-wrapper">
-              <div class="level-navigation">
-                  <button class="level-nav-btn" id="prev-levels">←</button>
-                  <div class="level-select" id="level-select"></div>
-                  <button class="level-nav-btn" id="next-levels">→</button>
-              </div>
+            <div class="level-navigation">
+              <button class="level-nav-btn" id="prev-levels">←</button>
+              <div class="level-select" id="level-select"></div>
+              <button class="level-nav-btn" id="next-levels">→</button>
+            </div>
           </div>
           <button id="auto-progress" class="auto-progress-btn">
-              <span class="auto-icon">▶️</span>
-              <span class="status-text">Auto</span>
+            <span class="auto-icon">▶️</span>
+            <span class="status-text">Auto</span>
           </button>
-      </div>
+        </div>
 
         <!-- Combat Panel -->
         <div class="combat-panel">
@@ -262,6 +267,7 @@
       <script type="module" src="src/js/champions.js"></script>
       <script type="module" src="src/js/gameData.js"></script>
       <script type="module" src="src/js/dropTables.js"></script>
+      <script type="module" src="src/js/monsterCards.js"></script>
     </div>
     <!-- Add this before the closing body tag -->
     <div id="mapModal" class="map-modal">
@@ -314,37 +320,38 @@
               </div>
             </div>
           </div>
-        <div class="map-container">
-          <div id="base-view" class="map-view">
-            <img id="base-map" src="assets/maps/runescape_map.png" alt="RuneScape Map">
-            <div class="map-buttons">
-              <!-- Region Buttons -->
-              <button class="zone-button region-button" style="top: 55%; left: 70%;" data-region="misthalin">
-                Misthalin
-              </button>
-              <button class="zone-button region-button locked" style="top: 35%; left: 40%;" data-region="asgarnia">
-                Asgarnia
-              </button>
+          <div class="map-container">
+            <div id="base-view" class="map-view">
+              <img id="base-map" src="assets/maps/runescape_map.png" alt="RuneScape Map">
+              <div class="map-buttons">
+                <!-- Region Buttons -->
+                <button class="zone-button region-button" style="top: 55%; left: 70%;" data-region="misthalin">
+                  Misthalin
+                </button>
+                <button class="zone-button region-button locked" style="top: 35%; left: 40%;" data-region="asgarnia">
+                  Asgarnia
+                </button>
 
-              <!-- Kingdom Buttons (Initially hidden) -->
-              <button class="zone-button kingdom-button hidden" style="top: 57%; left: 75%;" data-kingdom="lumbridge"
-                data-parent="misthalin">
-                Lumbridge
-              </button>
-              <button class="zone-button kingdom-button locked hidden" style="top: 30%; left: 45%;"
-                data-kingdom="varrock" data-parent="misthalin">
-                Varrock
-              </button>
+                <!-- Kingdom Buttons (Initially hidden) -->
+                <button class="zone-button kingdom-button hidden" style="top: 57%; left: 75%;" data-kingdom="lumbridge"
+                  data-parent="misthalin">
+                  Lumbridge
+                </button>
+                <button class="zone-button kingdom-button locked hidden" style="top: 30%; left: 45%;"
+                  data-kingdom="varrock" data-parent="misthalin">
+                  Varrock
+                </button>
 
-              <!-- Subzone Buttons for Lumbridge (Initially hidden) -->
-              <button class="zone-button subzone-button hidden" style="top: 30%; left: 45%;" data-subzone="cowpen"
-                data-parent="lumbridge">
-                Cow Pen
-              </button>
-              <button class="zone-button subzone-button hidden" style="top: 30%; left: 40%;"
-                data-subzone="lumbridgeswamp" data-parent="lumbridge">
-                Lumbridge Swamp
-              </button>
+                <!-- Subzone Buttons for Lumbridge (Initially hidden) -->
+                <button class="zone-button subzone-button hidden" style="top: 30%; left: 45%;" data-subzone="cowpen"
+                  data-parent="lumbridge">
+                  Cow Pen
+                </button>
+                <button class="zone-button subzone-button hidden" style="top: 30%; left: 40%;"
+                  data-subzone="lumbridgeswamp" data-parent="lumbridge">
+                  Lumbridge Swamp
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -352,4 +359,5 @@
     </div>
   </div>
 </body>
+
 </html>
