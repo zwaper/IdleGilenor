@@ -12,7 +12,7 @@ Explore Lumbridge, Varrock, and more regions as you progress
 Fight various monsters with increasing difficulty
 
 ### Champion System: 
-Unlock and upgrade champions that deal automatic DPS**
+Unlock and upgrade champions that deal automatic DPS
 ### Collection Log: 
 Track all the items you've discovered
 ### Prestige System: 
@@ -24,15 +24,22 @@ Fight challenging mini-bosses and region bosses
 ### Zone Progression: 
 Level up different zones to unlock new areas and monsters
 ## How to Play
-Combat: Click on monsters to deal damage based on your current attack power
-Progress: Defeat monsters to fill the progress bar and level up zones
-Champions: Purchase champions to deal automatic damage over time
-Upgrades: Spend gold on equipment upgrades in the shop
-Inventory: Collect and sell items dropped by monsters
-Bosses: Every 10 levels contains a mini-boss, defeat all mini-bosses to unlock the region boss
-Prestige: After defeating a region boss, prestige to gain permanent bonuses and unlock new regions
-Game Mechanics
-Regions & Zones
+### Combat: 
+Click on monsters to deal damage based on your current attack power
+### Progress: 
+Defeat monsters to fill the progress bar and level up zones
+### Champions: 
+Purchase champions to deal automatic damage over time
+### Upgrades: 
+Spend gold on equipment upgrades in the shop
+### Inventory: 
+Collect and sell items dropped by monsters
+### Bosses: 
+Every 10 levels contains a mini-boss, defeat all mini-bosses to unlock the region boss
+### Prestige: 
+After defeating a region boss, prestige to gain permanent bonuses and unlock new regions
+##Game Mechanics
+###Regions & Zones
 Each region contains multiple zones with unique monsters and drops. Complete all zones in a region to fight the region boss.
 
 Champions
