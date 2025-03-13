@@ -11,8 +11,8 @@ Explore Lumbridge, Varrock, and more regions as you progress
 ### Combat System: 
 Fight various monsters with increasing difficulty
 
-## Champion System: 
-**Unlock and upgrade champions that deal automatic DPS**
+### Champion System: 
+Unlock and upgrade champions that deal automatic DPS**
 ### Collection Log: 
 Track all the items you've discovered
 ### Prestige System: 
