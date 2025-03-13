@@ -86,8 +86,8 @@ Roadmap
 <input disabled="" type="checkbox"> Achievements
 <input disabled="" type="checkbox"> PvP arena
 <input disabled="" type="checkbox"> Mobile-friendly UI improvements
-Credits
-Game assets inspired by RuneScape
-Created as a fan project, not affiliated with Jagex
-License
-This project is open source and available under the MIT License.
+## Credits
+### Game assets inspired by RuneScape
+### Created as a fan project, not affiliated with Jagex
+## License
+### This project is open source and available under the MIT License.
