@@ -11,10 +11,12 @@ Explore Lumbridge, Varrock, and more regions as you progress
 ### Combat System: 
 Fight various monsters with increasing difficulty
 
-### Champion System: 
-Unlock and upgrade champions that deal automatic DPS
-Collection Log: Track all the items you've discovered
-Prestige System: Reset progress for permanent bonuses
+## Champion System: 
+**Unlock and upgrade champions that deal automatic DPS**
+### Collection Log: 
+Track all the items you've discovered
+### Prestige System: 
+Reset progress for permanent bonuses
 Upgrades: Purchase equipment upgrades to increase your damage and luck
 Boss Battles: Fight challenging mini-bosses and region bosses
 Zone Progression: Level up different zones to unlock new areas and monsters
