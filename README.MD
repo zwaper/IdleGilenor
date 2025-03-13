@@ -44,8 +44,9 @@ After defeating a region boss, prestige to gain permanent bonuses and unlock new
 ###Regions & Zones
 Each region contains multiple zones with unique monsters and drops. Complete all zones in a region to fight the region boss.
 
-Champions
-Champion Levels: Purchase levels for champions to increase their DPS
+###Champions
+####Champion Levels: 
+Purchase levels for champions to increase their DPS
 Champion Upgrades: Unlock powerful upgrades at specific champion levels
 Special Champions: Some champions provide unique bonuses like increased click damage
 Combat
