@@ -52,14 +52,20 @@ Unlock powerful upgrades at specific champion levels
 #### Special Champions: 
 Some champions provide unique bonuses like increased click damage 
 ### Combat
-Monster Scaling: Monster HP and gold rewards scale with level
-Mini-Bosses: Appear every 10 levels with higher HP and better rewards
-Region Bosses: Defeat all mini-bosses to unlock the final boss of each region
-Progression
-Auto-Progress: Toggle automatic level progression when completing a level
-Level Selection: Manually choose levels you've already completed
-Prestige: Reset current region progress for permanent bonuses
-Installation
+#### Monster Scaling: 
+Monster HP and gold rewards scale with level
+#### Mini-Bosses: 
+Appear every 10 levels with higher HP and better rewards
+#### Region Bosses: 
+Defeat all mini-bosses to unlock the final boss of each region
+### Progression
+#### Auto-Progress: 
+Toggle automatic level progression when completing a level
+#### Level Selection: 
+Manually choose levels you've already completed
+#### Prestige: 
+Reset current region progress for permanent bonuses
+### Installation
 Clone the repository and open index.html in your browser:
 
 There are no external dependencies required - just open index.html in any modern browser to play.
