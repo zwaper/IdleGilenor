@@ -2,7 +2,9 @@
 **A browser-based idle RPG game inspired by RuneScape, where you can battle monsters, collect loot, upgrade champions, and progress through various regions of Gielinor.**
 
 <img alt="IdleGilenor Screenshot" src="https://placeholder-for-game-screenshot.png/">
-## Features
+
+## Feature
+
 ### Multiple Regions: Explore Lumbridge, Varrock, and more regions as you progress
 Combat System: Fight various monsters with increasing difficulty
 Champion System: Unlock and upgrade champions that deal automatic DPS
