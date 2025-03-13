@@ -38,7 +38,9 @@ Collect and sell items dropped by monsters
 Every 10 levels contains a mini-boss, defeat all mini-bosses to unlock the region boss
 ### Prestige: 
 After defeating a region boss, prestige to gain permanent bonuses and unlock new regions
+
 ##Game Mechanics
+
 ###Regions & Zones
 Each region contains multiple zones with unique monsters and drops. Complete all zones in a region to fight the region boss.
 
