@@ -47,9 +47,11 @@ Each region contains multiple zones with unique monsters and drops. Complete all
 ### Champions
 #### Champion Levels: 
 Purchase levels for champions to increase their DPS
-Champion Upgrades: Unlock powerful upgrades at specific champion levels
-Special Champions: Some champions provide unique bonuses like increased click damage
-Combat
+#### Champion Upgrades: 
+Unlock powerful upgrades at specific champion levels
+#### Special Champions: 
+Some champions provide unique bonuses like increased click damage 
+### Combat
 Monster Scaling: Monster HP and gold rewards scale with level
 Mini-Bosses: Appear every 10 levels with higher HP and better rewards
 Region Bosses: Defeat all mini-bosses to unlock the final boss of each region
