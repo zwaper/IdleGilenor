@@ -1,5 +1,5 @@
 # IdleGilenor
-A browser-based idle RPG game inspired by RuneScape, where you can battle monsters, collect loot, upgrade champions, and progress through various regions of Gielinor.
+## A browser-based idle RPG game inspired by RuneScape, where you can battle monsters, collect loot, upgrade champions, and progress through various regions of Gielinor.
 
 <img alt="IdleGilenor Screenshot" src="https://placeholder-for-game-screenshot.png/">
 Features
