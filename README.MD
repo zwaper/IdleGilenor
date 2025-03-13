@@ -17,10 +17,13 @@ Fight various monsters with increasing difficulty
 Track all the items you've discovered
 ### Prestige System: 
 Reset progress for permanent bonuses
-Upgrades: Purchase equipment upgrades to increase your damage and luck
-Boss Battles: Fight challenging mini-bosses and region bosses
-Zone Progression: Level up different zones to unlock new areas and monsters
-How to Play
+### Upgrades: 
+Purchase equipment upgrades to increase your damage and luck
+### Boss Battles: 
+Fight challenging mini-bosses and region bosses
+### Zone Progression: 
+Level up different zones to unlock new areas and monsters
+## How to Play
 Combat: Click on monsters to deal damage based on your current attack power
 Progress: Defeat monsters to fill the progress bar and level up zones
 Champions: Purchase champions to deal automatic damage over time
