@@ -1,3 +1,10 @@
+<div align="center">
+
+![GitHub last commit](https://img.shields.io/github/last-commit/zwaper/idlegilenor?style=for-the-badge&logo=github&label=Updated)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/zwaper/idlegilenor/main?style=for-the-badge&logo=github&label=Game%20Version&color=green)
+
+</div>
+
 # IdleGilenor
 **A browser-based idle RPG game inspired by RuneScape, where you can battle monsters, collect loot, upgrade champions, and progress through various regions of Gielinor.**
 
