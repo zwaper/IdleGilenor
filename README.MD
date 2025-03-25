@@ -34,6 +34,7 @@
 - **Upgrades:** Purchase equipment upgrades to increase your damage and luck.
 - **Boss Battles:** Fight challenging mini-bosses and region bosses.
 - **Zone Progression:** Level up different zones to unlock new areas and monsters.
+- **TCG Minigame:** Engage in a fun Trading Card Game (TCG) to collect and battle with unique cards.
 
 ## How to Play
 
@@ -44,6 +45,7 @@
 5. **Inventory:** Collect and sell items dropped by monsters.
 6. **Bosses:** Every 10 levels contains a mini-boss. Defeat all mini-bosses to unlock the region boss.
 7. **Prestige:** After defeating a region boss, prestige to gain permanent bonuses and unlock new regions.
+8. **TCG Minigame:** Collect cards, build decks, and battle against other players to earn rewards and unlock new cards.
 
 ## Game Mechanics
 
@@ -68,6 +70,13 @@ Each region contains multiple zones with unique monsters and drops. Complete all
 - **Auto-Progress:** Toggle automatic level progression when completing a level.
 - **Level Selection:** Manually choose levels you've already completed.
 - **Prestige:** Reset current region progress for permanent bonuses.
+
+### TCG Minigame
+
+- **Card Collection:** Collect unique cards by defeating monsters or purchasing packs.
+- **Deck Building:** Create powerful decks from your card collection.
+- **Battles:** Challenge other players in strategic card battles.
+- **Rewards:** Earn rewards and unlock new cards by winning battles.
 
 ## Installation
 
